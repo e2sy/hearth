@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1344" height="64" viewBox="0 0 1344 64" role="img" aria-label="hearth features marquee">
+  <defs>
+    <clipPath id="h-marquee-clip">
+      <rect x="0" y="0" width="1344" height="64"/>
+    </clipPath>
+    <linearGradient id="h-fade-left" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0d1117" stop-opacity="1"/>
+      <stop offset="1" stop-color="#0d1117" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="h-fade-right" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0d1117" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0d1117" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1344" height="64" fill="#0d1117" opacity="0.5"/>
+
+  <g clip-path="url(#h-marquee-clip)">
+    <g font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="18" letter-spacing="3">
+      <text x="0" y="40" fill="#f78166" font-weight="600">
+        <tspan>SYNCED LYRICS  ·  CROSSFADE  ·  DISCORD RPC  ·  PLUGIN SYSTEM  ·  MULTI-PLATFORM  ·  LINUX-FIRST  ·  OPEN SOURCE  ·  MIT LICENSED  ·  3-PANE LAYOUT  ·  YOUTUBE MUSIC  ·  GLOBAL MEDIA KEYS  ·  PYQT  ✦  </tspan>
+        <animate attributeName="x" from="0" to="-672" dur="14s" repeatCount="indefinite"/>
+      </text>
+      <text x="672" y="40" fill="#f78166" font-weight="600">
+        <tspan>SYNCED LYRICS  ·  CROSSFADE  ·  DISCORD RPC  ·  PLUGIN SYSTEM  ·  MULTI-PLATFORM  ·  LINUX-FIRST  ·  OPEN SOURCE  ·  MIT LICENSED  ·  3-PANE LAYOUT  ·  YOUTUBE MUSIC  ·  GLOBAL MEDIA KEYS  ·  PYQT  ✦  </tspan>
+        <animate attributeName="x" from="672" to="0" dur="14s" repeatCount="indefinite"/>
+      </text>
+    </g>
+  </g>
+
+  <rect x="0" y="0" width="80" height="64" fill="url(#h-fade-left)"/>
+  <rect x="1264" y="0" width="80" height="64" fill="url(#h-fade-right)"/>
+</svg>
