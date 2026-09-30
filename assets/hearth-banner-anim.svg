@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1344" height="480" viewBox="0 0 1344 480" role="img" aria-label="hearth — animated banner">
+  <defs>
+    <linearGradient id="h-scan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f78166" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#f78166" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#f78166" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="h-glow">
+      <stop offset="0" stop-color="#f78166" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#f78166" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="h-dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#30363d" opacity="0.45"/>
+    </pattern>
+    <linearGradient id="h-sweep" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f78166" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#f78166" stop-opacity="1"/>
+      <stop offset="1" stop-color="#f78166" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1344" height="480" fill="#0d1117"/>
+  <rect width="1344" height="480" fill="url(#h-dots)"/>
+
+  <!-- Corner brackets (pulse) -->
+  <g stroke="#f78166" stroke-width="3" fill="none">
+    <path d="M 40 40 L 40 80 M 40 40 L 80 40">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 1304 40 L 1304 80 M 1304 40 L 1264 40">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 40 440 L 40 400 M 40 440 L 80 440">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" begin="1s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 1304 440 L 1304 400 M 1304 440 L 1264 440">
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" begin="1.5s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Horizontal light sweep (top) -->
+  <rect x="-260" y="0" width="260" height="3" fill="url(#h-sweep)">
+    <animate attributeName="x" values="-260;1604" dur="5s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Center glow -->
+  <circle cx="672" cy="240" r="220" fill="url(#h-glow)"/>
+
+  <!-- Vertical scan line -->
+  <rect x="0" y="0" width="1344" height="60" fill="url(#h-scan)">
+    <animate attributeName="y" values="0;420;0" dur="4s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Title: hearth -->
+  <text x="672" y="220" text-anchor="middle" font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="84" font-weight="700" fill="#e6edf3" letter-spacing="4">
+    hearth
+    <animate attributeName="opacity" values="0.88;1;0.88" dur="3s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Subtitle -->
+  <text x="672" y="270" text-anchor="middle" font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="22" font-weight="600" fill="#f78166" letter-spacing="4">
+    THREE-PANE DESKTOP YOUTUBE MUSIC PLAYER
+  </text>
+
+  <text x="672" y="306" text-anchor="middle" font-family="'JetBrains Mono','SF Mono',Consolas,monospace" font-size="14" fill="#8b949e" letter-spacing="3">
+    SYNCED LYRICS · CROSSFADE · DISCORD RPC · PLUGINS · LINUX-FIRST
+  </text>
+
+  <!-- Animated equalizer bars (music player motif) -->
+  <g fill="#f78166" opacity="0.85">
+    <!-- 9 bars across the bottom, each animating height with different timing -->
+    <rect x="540" y="380" width="14" height="40" rx="3">
+      <animate attributeName="height" values="40;70;20;55;40" dur="1.4s" begin="-0.00s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="380;350;400;365;380" dur="1.4s" begin="-0.00s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="566" y="380" width="14" height="40" rx="3">
+      <animate attributeName="height" values="55;25;65;35;55" dur="1.4s" begin="-0.18s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="365;395;355;385;365" dur="1.4s" begin="-0.18s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="592" y="380" width="14" height="40" rx="3">
+      <animate attributeName="height" values="30;60;40;75;30" dur="1.4s" begin="-0.36s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="390;360;380;345;390" dur="1.4s" begin="-0.36s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="618" y="380" width="14" height="40" rx="3">
+      <animate attributeName="height" values="65;35;50;25;65" dur="1.4s" begin="-0.54s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="355;385;370;395;355" dur="1.4s" begin="-0.54s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="644" y="380" width="14" height="40" rx="3">
+      <animate attributeName="height" values="45;75;25;60;45" dur="1.4s" begin="-0.72s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="375;345;395;360;375" dur="1.4s" begin="-0.72s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="670" y="380" width="14" height="40" rx="3">
+      <animate attributeName="height" values="55;30;70;40;55" dur="1.4s" begin="-0.90s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="365;390;350;380;365" dur="1.4s" begin="-0.90s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="696" y="380" width="14" height="40" rx="3">
+      <animate attributeName="height" values="35;65;45;75;35" dur="1.4s" begin="-1.08s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="385;355;375;345;385" dur="1.4s" begin="-1.08s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="722" y="380" width="14" height="40" rx="3">
+      <animate attributeName="height" values="60;30;50;20;60" dur="1.4s" begin="-1.26s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="360;390;370;400;360" dur="1.4s" begin="-1.26s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="748" y="380" width="14" height="40" rx="3">
+      <animate attributeName="height" values="40;70;25;55;40" dur="1.4s" begin="-1.44s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="380;350;395;365;380" dur="1.4s" begin="-1.44s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+</svg>
