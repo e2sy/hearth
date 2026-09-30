@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="360" viewBox="0 0 880 360" role="img" aria-label="qtjg/hearth 3D language stack">
+<defs>
+<linearGradient id="bgd077c7f8" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#180d0c"/>
+<stop offset="1" stop-color="#2d1815"/>
+</linearGradient>
+<clipPath id="clip"><rect width="880" height="360"/></clipPath>
+</defs>
+<rect width="880" height="360" fill="url(#bgd077c7f8)"/>
+<text x="44" y="48" font-family="'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="15" font-weight="800" letter-spacing="5" fill="#dfc6c3">LANGUAGE STACK</text>
+<text x="44" y="70" font-family="'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="12" letter-spacing="2" fill="#a88d8a">qtjg/hearth</text>
+<ellipse cx="190" cy="257" rx="64" ry="11" fill="#dd4c3c" opacity="0.20">
+<animate attributeName="opacity" values="0.12;0.30;0.12" dur="4s" repeatCount="indefinite"/>
+</ellipse>
+<polygon points="60,270 440,202 820,270 440,338" fill="#271817" stroke="#c27870" stroke-opacity="0.35" stroke-width="1.2"/><polygon points="60,270 440,202 820,270 440,338" fill="none" stroke="#e08e85" stroke-opacity="0.10" stroke-width="6"/>
+<polygon points="190.0,146.7 238.0,122.7 190.0,98.7 142.0,122.7" fill="#4996d4" stroke="#abd5f8" stroke-width="0.8"/><polygon points="142.0,224.7 190.0,248.7 190.0,146.7 142.0,122.7" fill="#266aa2"/><polygon points="190.0,248.7 238.0,224.7 238.0,122.7 190.0,146.7" fill="#1b4c74"/><polygon points="376.7,189.6 424.7,165.6 376.7,141.6 328.7,165.6" fill="#7fd449" stroke="#c8f8ab" stroke-width="0.8"/><polygon points="328.7,191.3 376.7,215.3 376.7,189.6 328.7,165.6" fill="#55a226"/><polygon points="376.7,215.3 424.7,191.3 424.7,165.6 376.7,189.6" fill="#3d741b"/><polygon points="563.3,202.0 611.3,178.0 563.3,154.0 515.3,178.0" fill="#b2d449" stroke="#e4f8ab" stroke-width="0.8"/><polygon points="515.3,202.1 563.3,226.1 563.3,202.0 515.3,178.0" fill="#83a226"/><polygon points="563.3,226.1 611.3,202.1 611.3,178.0 563.3,202.0" fill="#5e741b"/><polygon points="750.0,235.8 798.0,211.8 750.0,187.8 702.0,211.8" fill="#d4494c" stroke="#f8abac" stroke-width="0.8"/><polygon points="702.0,235.5 750.0,259.5 750.0,235.8 702.0,211.8" fill="#a22628"/><polygon points="750.0,259.5 798.0,235.5 798.0,211.8 750.0,235.8" fill="#741b1d"/>
+<text x="190" y="279" font-family="'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#c9d6e8">Python</text><text x="190" y="299" font-family="'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="14" font-weight="800" text-anchor="middle" fill="#7ebdf1">99.4%</text><text x="377" y="245" font-family="'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#c9d6e8">Shell</text><text x="377" y="265" font-family="'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="14" font-weight="800" text-anchor="middle" fill="#aaf17e">0.4%</text><text x="563" y="256" font-family="'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#c9d6e8">Batchfile</text><text x="563" y="276" font-family="'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="14" font-weight="800" text-anchor="middle" fill="#d4f17e">0.1%</text><text x="750" y="289" font-family="'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="#c9d6e8">Ruby</text><text x="750" y="309" font-family="'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="14" font-weight="800" text-anchor="middle" fill="#f17e80">0.1%</text>
+<g clip-path="url(#clip)"><polygon points="0,0 150,0 60,360 -90,360" fill="#ffffff" opacity="0.045"><animateTransform attributeName="transform" type="translate" from="-260 0" to="1140 0" dur="8.0s" repeatCount="indefinite"/></polygon></g>
+<rect x="0" y="0" width="880" height="3" fill="#e06052" opacity="0.85"/>
+<rect x="0" y="356" width="880" height="4" fill="#a14036" opacity="0.5"/>
+</svg>

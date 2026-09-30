@@ -1,0 +1,6 @@
+# Pinned dependencies for Hearth
+PyQt6>=6.6.0,<7
+ytmusicapi>=1.7.0,<2
+yt-dlp>=2024.8.0
+requests>=2.31.0,<3
+pytest>=8.0.0,<10

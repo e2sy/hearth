@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="64" viewBox="0 0 1200 64" role="img" aria-labelledby="eTitle eDesc">
+  <title id="eTitle">Hearth ember divider</title>
+  <desc id="eDesc">A thin animated divider: glowing equalizer bars dancing between two fading hairlines while embers drift across.</desc>
+  <defs>
+    <linearGradient id="eqb" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#7b2ff7"/>
+      <stop offset="0.5" stop-color="#ff2d55"/>
+      <stop offset="1" stop-color="#ff7a18"/>
+    </linearGradient>
+    <linearGradient id="hline" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff7a18" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#ff7a18" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#ff7a18" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hlineR" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#ff7a18" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#ff7a18" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#ff7a18" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="eGlow" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect x="60" y="31" width="404" height="2" rx="1" fill="url(#hline)"/>
+  <rect x="736" y="31" width="404" height="2" rx="1" fill="url(#hlineR)"/>
+
+  <!-- equalizer bars (baseline y=48): height and y animate in synced pairs -->
+  <g fill="url(#eqb)">
+    <rect x="490" width="12" rx="3" y="38" height="10"><animate attributeName="height" values="10;30;16;10" dur="1.6s" repeatCount="indefinite"/><animate attributeName="y" values="38;18;32;38" dur="1.6s" repeatCount="indefinite"/></rect>
+    <rect x="516" width="12" rx="3" y="32" height="16"><animate attributeName="height" values="16;40;24;16" dur="1.9s" begin="-0.3s" repeatCount="indefinite"/><animate attributeName="y" values="32;8;24;32" dur="1.9s" begin="-0.3s" repeatCount="indefinite"/></rect>
+    <rect x="542" width="12" rx="3" y="36" height="12"><animate attributeName="height" values="12;46;20;12" dur="1.7s" begin="-0.6s" repeatCount="indefinite"/><animate attributeName="y" values="36;2;28;36" dur="1.7s" begin="-0.6s" repeatCount="indefinite"/></rect>
+    <rect x="568" width="12" rx="3" y="30" height="18"><animate attributeName="height" values="18;34;26;18" dur="2.1s" begin="-0.9s" repeatCount="indefinite"/><animate attributeName="y" values="30;14;22;30" dur="2.1s" begin="-0.9s" repeatCount="indefinite"/></rect>
+    <rect x="594" width="12" rx="3" y="26" height="22"><animate attributeName="height" values="22;46;26;22" dur="1.8s" begin="-0.4s" repeatCount="indefinite"/><animate attributeName="y" values="26;2;22;26" dur="1.8s" begin="-0.4s" repeatCount="indefinite"/></rect>
+    <rect x="620" width="12" rx="3" y="30" height="18"><animate attributeName="height" values="18;38;22;18" dur="2.0s" begin="-1.2s" repeatCount="indefinite"/><animate attributeName="y" values="30;10;26;30" dur="2.0s" begin="-1.2s" repeatCount="indefinite"/></rect>
+    <rect x="646" width="12" rx="3" y="36" height="12"><animate attributeName="height" values="12;42;18;12" dur="1.75s" begin="-0.7s" repeatCount="indefinite"/><animate attributeName="y" values="36;6;30;36" dur="1.75s" begin="-0.7s" repeatCount="indefinite"/></rect>
+    <rect x="672" width="12" rx="3" y="32" height="16"><animate attributeName="height" values="16;36;20;16" dur="1.95s" begin="-1.0s" repeatCount="indefinite"/><animate attributeName="y" values="32;12;28;32" dur="1.95s" begin="-1.0s" repeatCount="indefinite"/></rect>
+    <rect x="698" width="12" rx="3" y="38" height="10"><animate attributeName="height" values="10;28;14;10" dur="1.65s" begin="-0.5s" repeatCount="indefinite"/><animate attributeName="y" values="38;20;34;38" dur="1.65s" begin="-0.5s" repeatCount="indefinite"/></rect>
+  </g>
+
+  <!-- bright caps riding each bar -->
+  <g fill="#ffd9a8" filter="url(#eGlow)">
+    <rect x="490" width="12" height="3.5" rx="1.75" y="32"><animate attributeName="y" values="32;12;26;32" dur="1.6s" repeatCount="indefinite"/></rect>
+    <rect x="516" width="12" height="3.5" rx="1.75" y="26"><animate attributeName="y" values="26;2;18;26" dur="1.9s" begin="-0.3s" repeatCount="indefinite"/></rect>
+    <rect x="542" width="12" height="3.5" rx="1.75" y="30"><animate attributeName="y" values="30;-4;22;30" dur="1.7s" begin="-0.6s" repeatCount="indefinite"/></rect>
+    <rect x="568" width="12" height="3.5" rx="1.75" y="24"><animate attributeName="y" values="24;8;16;24" dur="2.1s" begin="-0.9s" repeatCount="indefinite"/></rect>
+    <rect x="594" width="12" height="3.5" rx="1.75" y="20"><animate attributeName="y" values="20;-4;16;20" dur="1.8s" begin="-0.4s" repeatCount="indefinite"/></rect>
+    <rect x="620" width="12" height="3.5" rx="1.75" y="24"><animate attributeName="y" values="24;4;20;24" dur="2.0s" begin="-1.2s" repeatCount="indefinite"/></rect>
+    <rect x="646" width="12" height="3.5" rx="1.75" y="30"><animate attributeName="y" values="30;0;24;30" dur="1.75s" begin="-0.7s" repeatCount="indefinite"/></rect>
+    <rect x="672" width="12" height="3.5" rx="1.75" y="26"><animate attributeName="y" values="26;6;22;26" dur="1.95s" begin="-1.0s" repeatCount="indefinite"/></rect>
+    <rect x="698" width="12" height="3.5" rx="1.75" y="32"><animate attributeName="y" values="32;14;28;32" dur="1.65s" begin="-0.5s" repeatCount="indefinite"/></rect>
+  </g>
+
+  <!-- drifting embers -->
+  <g filter="url(#eGlow)">
+    <circle r="2.4" fill="#ffb36b">
+      <animateMotion path="M 90 44 Q 400 6 760 36 T 1120 18" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.8;1" dur="9s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="1.8" fill="#ff8d7e">
+      <animateMotion path="M 1120 40 Q 800 10 480 34 T 80 22" dur="11s" begin="-4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0.9;0.9;0" keyTimes="0;0.12;0.82;1" dur="11s" begin="-4s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="2.8" fill="#ffcf9e">
+      <animateMotion path="M 60 30 Q 380 50 700 12 T 1140 38" dur="13s" begin="-8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.85;1" dur="13s" begin="-8s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>

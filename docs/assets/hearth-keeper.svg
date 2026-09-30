@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 480 540" width="480" height="540" role="img" aria-labelledby="hk-title hk-desc">
+  <title id="hk-title">The Hearth Keeper — Hearth's 3D mascot</title>
+  <desc id="hk-desc">A friendly deep-blue 3D robot firekeeper with glowing orange headphones and a flickering hearth flame in its chest, waving hello amid rising embers, floating music notes and soft equalizer bars.</desc>
+  <defs>
+    <linearGradient id="hk-body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a5d8a"/><stop offset=".45" stop-color="#33406b"/><stop offset="1" stop-color="#1d2547"/>
+    </linearGradient>
+    <linearGradient id="hk-head" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a6ea6"/><stop offset="1" stop-color="#2a3560"/>
+    </linearGradient>
+    <radialGradient id="hk-shine" cx=".32" cy=".22" r="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".32"/><stop offset=".45" stop-color="#ffffff" stop-opacity=".07"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="hk-rim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7b2ff7" stop-opacity=".6"/><stop offset="1" stop-color="#7b2ff7" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hk-visor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1124"/><stop offset="1" stop-color="#1c2440"/>
+    </linearGradient>
+    <radialGradient id="hk-eye" cx=".5" cy=".42" r=".7">
+      <stop offset="0" stop-color="#eaffff"/><stop offset=".4" stop-color="#7ee8ff"/><stop offset="1" stop-color="#2b6cff"/>
+    </radialGradient>
+    <radialGradient id="hk-flame" cx=".5" cy=".72" r=".8">
+      <stop offset="0" stop-color="#fff7c2"/><stop offset=".38" stop-color="#ffd166"/><stop offset=".72" stop-color="#ff7a18"/><stop offset="1" stop-color="#ff2d55"/>
+    </radialGradient>
+    <linearGradient id="hk-cup" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff9a3d"/><stop offset=".5" stop-color="#ff7a18"/><stop offset="1" stop-color="#c2460c"/>
+    </linearGradient>
+    <linearGradient id="hk-plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd166"/><stop offset=".55" stop-color="#ff9a3d"/><stop offset="1" stop-color="#b83f08"/>
+    </linearGradient>
+    <radialGradient id="hk-glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ff7a18" stop-opacity=".5"/><stop offset=".55" stop-color="#ff2d55" stop-opacity=".16"/><stop offset="1" stop-color="#ff2d55" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="hk-blur7" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="hk-blur3" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="3"/></filter>
+    <g id="hk-note">
+      <ellipse cx="0" cy="0" rx="6.2" ry="4.6" transform="rotate(-18)" stroke="none"/>
+      <path d="M5.4 -1.6 L5.4 -24 c7.2 1.7 10.8 4.8 11.8 10.8" fill="none" stroke-width="3.4" stroke-linecap="round"/>
+    </g>
+  </defs>
+
+  <!-- distant sparkles -->
+  <circle cx="92" cy="118" r="2.2" fill="#7ee8ff"><animate attributeName="opacity" values=".12;.65;.12" dur="3.4s" repeatCount="indefinite"/></circle>
+  <circle cx="392" cy="164" r="2.6" fill="#ffd166"><animate attributeName="opacity" values=".6;.1;.6" dur="4.1s" repeatCount="indefinite"/></circle>
+  <circle cx="70" cy="252" r="1.8" fill="#b18cff"><animate attributeName="opacity" values=".15;.55;.15" dur="2.9s" repeatCount="indefinite"/></circle>
+  <circle cx="410" cy="300" r="1.8" fill="#7ee8ff"><animate attributeName="opacity" values=".5;.12;.5" dur="3.7s" repeatCount="indefinite"/></circle>
+
+  <!-- equalizer bars behind the keeper -->
+  <g opacity=".22">
+    <rect x="118" y="448" width="22" height="24" rx="11" fill="#7b2ff7">
+      <animate attributeName="height" values="24;60;28;70;24" keyTimes="0;.25;.5;.75;1" dur="2.6s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="448;412;444;402;448" keyTimes="0;.25;.5;.75;1" dur="2.6s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="150" y="442" width="22" height="30" rx="11" fill="#ff7a18">
+      <animate attributeName="height" values="30;68;24;56;30" keyTimes="0;.25;.5;.75;1" dur="3.1s" begin="-1.2s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="442;404;448;416;442" keyTimes="0;.25;.5;.75;1" dur="3.1s" begin="-1.2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="308" y="446" width="22" height="26" rx="11" fill="#ff2d55">
+      <animate attributeName="height" values="26;72;30;58;26" keyTimes="0;.25;.5;.75;1" dur="2.8s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="446;400;442;414;446" keyTimes="0;.25;.5;.75;1" dur="2.8s" begin="-0.6s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="340" y="438" width="22" height="34" rx="11" fill="#7b2ff7">
+      <animate attributeName="height" values="34;58;70;26;34" keyTimes="0;.25;.5;.75;1" dur="3.3s" begin="-1.8s" repeatCount="indefinite"/>
+      <animate attributeName="y" values="438;414;402;446;438" keyTimes="0;.25;.5;.75;1" dur="3.3s" begin="-1.8s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- floor glow + contact shadow -->
+  <ellipse cx="240" cy="492" rx="165" ry="38" fill="url(#hk-glow)">
+    <animate attributeName="opacity" values=".6;1;.6" dur="3.4s" repeatCount="indefinite"/>
+  </ellipse>
+  <ellipse cx="240" cy="497" rx="100" ry="17" fill="#04060f" opacity=".55" filter="url(#hk-blur7)"/>
+
+  <!-- THE KEEPER -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -9; 0 0" keyTimes="0;.5;1" calcMode="spline" keySplines=".42 0 .58 1;.42 0 .58 1" dur="3.6s" repeatCount="indefinite"/>
+
+    <!-- feet -->
+    <rect x="196" y="462" width="36" height="22" rx="11" fill="#16203f"/>
+    <rect x="248" y="462" width="36" height="22" rx="11" fill="#16203f"/>
+
+    <!-- left arm (resting) -->
+    <path d="M181 330 C 167 348, 163 368, 170 390" fill="none" stroke="#33406b" stroke-width="20" stroke-linecap="round"/>
+    <circle cx="171" cy="394" r="10.5" fill="#ffb347"/>
+    <circle cx="171" cy="394" r="14" fill="#ffb347" opacity=".4" filter="url(#hk-blur3)"/>
+
+    <!-- right arm (waving) -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-4 299 332; 15 299 332; -4 299 332; -4 299 332" keyTimes="0;.35;.7;1" calcMode="spline" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1" dur="3.6s" repeatCount="indefinite"/>
+      <path d="M299 332 C 315 318, 327 300, 333 279" fill="none" stroke="#33406b" stroke-width="20" stroke-linecap="round"/>
+      <circle cx="335" cy="275" r="10.5" fill="#ffb347"/>
+      <circle cx="335" cy="275" r="14" fill="#ffb347" opacity=".4" filter="url(#hk-blur3)"/>
+    </g>
+
+    <!-- neck -->
+    <rect x="227" y="272" width="26" height="32" rx="8" fill="#1d2547"/>
+
+    <!-- body -->
+    <rect x="175" y="298" width="130" height="172" rx="36" fill="url(#hk-body)" stroke="#5a6ea6" stroke-opacity=".35" stroke-width="1.5"/>
+    <rect x="243" y="298" width="62" height="172" rx="31" fill="url(#hk-rim)" opacity=".3"/>
+    <rect x="175" y="298" width="130" height="172" rx="36" fill="url(#hk-shine)"/>
+
+    <!-- chest hearth screen -->
+    <rect x="199" y="333" width="82" height="88" rx="20" fill="#0c1024" stroke="#2c3866" stroke-width="2"/>
+    <circle cx="240" cy="383" r="32" fill="url(#hk-glow)" opacity=".85">
+      <animate attributeName="opacity" values=".6;.95;.6" dur="2.2s" repeatCount="indefinite"/>
+    </circle>
+    <path d="M240 346 C 244 358 256 366 256 383 C 256 395 249 403 240 403 C 231 403 224 395 224 383 C 224 366 236 358 240 346 Z"
+          fill="#ff7a18" opacity=".5" filter="url(#hk-blur3)">
+      <animate attributeName="opacity" values=".4;.65;.35;.6;.4" dur="2.2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M240 346 C 244 358 256 366 256 383 C 256 395 249 403 240 403 C 231 403 224 395 224 383 C 224 366 236 358 240 346 Z" fill="url(#hk-flame)">
+      <animate attributeName="opacity" values=".85;1;.78;1;.85" dur="2.2s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="scale" values="1 1;1.05 1.06;0.98 0.97;1.03 1;1 1" keyTimes="0;.25;.5;.75;1" dur="2.2s" additive="sum" repeatCount="indefinite"/>
+    </path>
+    <path d="M240 366 C 243 373 250 378 250 388 C 250 395 245 399 240 399 C 235 399 230 395 230 388 C 230 378 237 373 240 366 Z" fill="#fff7c2" opacity=".9">
+      <animate attributeName="opacity" values=".65;.95;.55;.9;.65" dur="1.5s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- head -->
+    <rect x="180" y="168" width="120" height="112" rx="32" fill="url(#hk-head)" stroke="#6a7fbd" stroke-opacity=".35" stroke-width="1.5"/>
+    <rect x="246" y="168" width="54" height="112" rx="27" fill="url(#hk-rim)" opacity=".28"/>
+    <rect x="180" y="168" width="120" height="112" rx="32" fill="url(#hk-shine)"/>
+
+    <!-- visor + face -->
+    <rect x="199" y="196" width="82" height="56" rx="26" fill="url(#hk-visor)" stroke="#35426f" stroke-width="2"/>
+    <ellipse cx="222" cy="222" rx="8.5" ry="8.5" fill="url(#hk-eye)">
+      <animate attributeName="ry" values="8.5;8.5;1.2;8.5;8.5" keyTimes="0;.4;.46;.52;1" dur="4.6s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="258" cy="222" rx="8.5" ry="8.5" fill="url(#hk-eye)">
+      <animate attributeName="ry" values="8.5;8.5;1.2;8.5;8.5" keyTimes="0;.4;.46;.52;1" dur="4.6s" repeatCount="indefinite"/>
+    </ellipse>
+    <path d="M227 238 Q240 247 253 238" fill="none" stroke="#7ee8ff" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+
+    <!-- antenna with pulsing ember orb -->
+    <line x1="240" y1="168" x2="240" y2="146" stroke="#33406b" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="240" cy="140" r="11" fill="#ff7a18" opacity=".45" filter="url(#hk-blur3)">
+      <animate attributeName="r" values="9;13;9" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="240" cy="140" r="6.5" fill="url(#hk-flame)">
+      <animate attributeName="opacity" values=".85;1;.85" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- headphones -->
+    <path d="M184 220 C 186 172, 294 172, 296 220" fill="none" stroke="#ff7a18" stroke-width="9" stroke-linecap="round"/>
+    <rect x="168" y="212" width="27" height="50" rx="13" fill="url(#hk-cup)" stroke="#8a3708" stroke-width="1.5"/>
+    <rect x="285" y="212" width="27" height="50" rx="13" fill="url(#hk-cup)" stroke="#8a3708" stroke-width="1.5"/>
+    <circle cx="181.5" cy="237" r="8" fill="#fff3b0">
+      <animate attributeName="opacity" values=".3;.9;.3" dur="1.15s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="298.5" cy="237" r="8" fill="#fff3b0">
+      <animate attributeName="opacity" values=".9;.3;.9" dur="1.15s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- rising embers -->
+  <circle cx="150" cy="452" r="3" fill="#ffb347" opacity="0">
+    <animate attributeName="cy" values="452;300" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="cx" values="150;138" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;.9;0" keyTimes="0;.25;1" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="338" cy="455" r="2.4" fill="#ffd166" opacity="0">
+    <animate attributeName="cy" values="455;310" dur="4.8s" begin="-2s" repeatCount="indefinite"/>
+    <animate attributeName="cx" values="338;350" dur="4.8s" begin="-2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;.85;0" keyTimes="0;.25;1" dur="4.8s" begin="-2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="298" cy="448" r="2" fill="#ff7a18" opacity="0">
+    <animate attributeName="cy" values="448;330" dur="3.6s" begin="-1s" repeatCount="indefinite"/>
+    <animate attributeName="cx" values="298;290" dur="3.6s" begin="-1s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;.8;0" keyTimes="0;.3;1" dur="3.6s" begin="-1s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- floating music notes -->
+  <g transform="translate(150 300)" opacity="0">
+    <use href="#hk-note" xlink:href="#hk-note" stroke="#ffb347" fill="#ffb347"/>
+    <animateMotion path="M0 0 C -22 -55, 12 -105, -8 -160" dur="5.2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;.95;.95;0" keyTimes="0;.12;.72;1" dur="5.2s" repeatCount="indefinite"/>
+  </g>
+  <g transform="translate(345 330)" opacity="0">
+    <use href="#hk-note" xlink:href="#hk-note" stroke="#7ee8ff" fill="#7ee8ff" transform="scale(.85)"/>
+    <animateMotion path="M0 0 C 24 -60, -10 -110, 10 -165" dur="6.1s" begin="-2.4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;.9;.9;0" keyTimes="0;.12;.7;1" dur="6.1s" begin="-2.4s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- floating MB maker plate -->
+  <g transform="translate(330 112)">
+    <circle cx="0" cy="0" r="44" fill="#ff9a3d" opacity=".22" filter="url(#hk-blur7)">
+      <animate attributeName="opacity" values=".14;.3;.14" dur="3.2s" repeatCount="indefinite"/>
+    </circle>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0;0 -7;0 0" keyTimes="0;.5;1" dur="4.2s" repeatCount="indefinite"/>
+      <g transform="rotate(8)">
+        <rect x="-40" y="-24" width="80" height="48" rx="14" fill="url(#hk-plate)" stroke="#7a2f05" stroke-width="1.5"/>
+        <rect x="-33" y="-17" width="66" height="34" rx="10" fill="none" stroke="#7a2f05" stroke-opacity=".35" stroke-width="2"/>
+        <text x="0" y="8" text-anchor="middle" font-family="'Segoe UI', 'DejaVu Sans', Verdana, sans-serif" font-size="21" font-weight="700" letter-spacing="1.5" fill="#40200a">MB</text>
+      </g>
+    </g>
+  </g>
+</svg>

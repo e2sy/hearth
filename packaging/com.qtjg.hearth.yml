@@ -1,0 +1,30 @@
+# DRAFT winget manifest (single-file style) — not yet submitted to
+# microsoft/winget-pkgs. The installer URL and sha256 are placeholders
+# until the first GitHub release artifact exists; SilentSwitch values
+# are the Inno Setup defaults and must be re-verified against the real
+# installer before submission.
+PackageIdentifier: qtjg.hearth
+PackageVersion: 0.6.3
+PackageLocale: en-US
+Publisher: qtjg
+PublisherUrl: https://github.com/qtjg/hearth
+PackageName: Hearth
+PackageUrl: https://github.com/qtjg/hearth
+License: MIT
+LicenseUrl: https://github.com/qtjg/hearth/blob/main/LICENSE
+ShortDescription: A cozy floating YouTube Music companion for every desktop.
+Tags:
+  - music
+  - player
+  - youtube-music
+Installers:
+  - Architecture: x64
+    InstallerType: inno
+    InstallerUrl: https://github.com/qtjg/hearth/releases/download/v0.6.3/Hearth-0.6.3-Setup.exe
+    InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
+    InstallerSwitches:
+      Silent: /SILENT
+      SilentWithProgress: /SILENT
+      Interactive: ''
+ManifestType: singleton
+ManifestVersion: 1.4.0

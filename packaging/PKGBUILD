@@ -1,0 +1,41 @@
+# Maintainer: qtjg <317509829+qtjg@users.noreply.github.com>
+# Hearth — a cozy floating YouTube Music companion for every desktop.
+# AUR-style PKGBUILD on the git-tag flow: point it at a real v0.7.0 tag,
+# swap the SKIP checksums for real digests, and it is makepkg -si ready.
+# (packaging/arch/PKGBUILD is the older hearth-player draft; this one
+# follows pyproject.toml's actual package name, hearth-music.)
+
+pkgname=hearth-music
+pkgver=0.6.3
+pkgrel=1
+pkgdesc="🔥 A cozy floating YouTube Music companion for every desktop"
+arch=('any')
+url="https://github.com/qtjg/hearth"
+license=('MIT')
+depends=(
+    'python'
+    'python-pyqt6'
+    'qt6-multimedia'
+    'gst-plugins-good'
+    'gst-plugins-bad'
+    'gst-libav'
+    'python-ytmusicapi'
+    'python-yt-dlp'
+    'python-requests'
+)
+makedepends=('python-build' 'python-installer' 'python-wheel')
+source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('SKIP')  # placeholder — replace with real digests at tag time
+options=('!strip')
+
+build() {
+    cd "hearth-${pkgver}"   # the tag tarball extracts as hearth-<pkgver>
+    python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "hearth-${pkgver}"
+    python -m installer --destdir="${pkgdir}" dist/*.whl
+    install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+}

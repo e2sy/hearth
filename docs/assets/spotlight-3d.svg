@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" role="img" aria-labelledby="sTitle sDesc">
+  <title id="sTitle">Hearth — Spotlight: the artist stage and the lyric sync</title>
+  <desc id="sDesc">Isometric 3D scene: an artist stage with floating avatar and top-tracks button on the left, a time-cued lyric tower with a glowing active line on the right, an LRCLIB beam feeding the lyrics, and a click-a-line seek arrow flowing back to the stage.</desc>
+  <defs>
+    <linearGradient id="sbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1017"/>
+      <stop offset="0.55" stop-color="#12101f"/>
+      <stop offset="1" stop-color="#0d1017"/>
+    </linearGradient>
+    <linearGradient id="lrcTile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b2050"/>
+      <stop offset="1" stop-color="#1c1636"/>
+    </linearGradient>
+    <linearGradient id="avatar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#241d17"/>
+      <stop offset="1" stop-color="#171310"/>
+    </linearGradient>
+    <filter id="sGlow" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="bigGlow" x="-160%" y="-160%" width="420%" height="420%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="card"><rect x="12" y="12" width="1176" height="616" rx="20"/></clipPath>
+  </defs>
+
+  <rect x="12" y="12" width="1176" height="616" rx="20" fill="url(#sbg)" stroke="#232b3a"/>
+
+  <text x="600" y="52" text-anchor="middle" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="19" font-weight="600" letter-spacing="5" fill="#9aa4b2">HEARTH &#8212; SPOTLIGHT: ARTIST STAGE &#183; LYRIC SYNC</text>
+
+  <!-- faint isometric floor grid -->
+  <g clip-path="url(#card)" fill="none" stroke="#1a2230" stroke-width="1.2" opacity="0.7">
+    <polygon points="330,540 760,680 330,820 -100,680" transform="translate(0,-160)"/>
+    <polygon points="330,575 630,675 330,775 30,675" transform="translate(0,-160)"/>
+    <polygon points="870,560 1150,650 870,740 590,650" transform="translate(0,-120)"/>
+  </g>
+
+  <!-- soft floor shadows -->
+  <ellipse cx="330" cy="436" rx="215" ry="14" fill="#05070b" opacity="0.75"/>
+  <ellipse cx="870" cy="470" rx="180" ry="12" fill="#05070b" opacity="0.7"/>
+
+  <!-- ================= LEFT: THE ARTIST STAGE ================= -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0;0 -7;0 0" dur="6s" repeatCount="indefinite"/>
+    <!-- platform -->
+    <polygon points="330,252 545,330 330,408 115,330" fill="#ff7a18" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
+    <polygon points="115,330 330,408 330,452 115,374" fill="#9c4a0c"/>
+    <polygon points="330,408 545,330 545,374 330,452" fill="#d9670f"/>
+    <text x="330" y="322" text-anchor="middle" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="21" font-weight="700" fill="#14100c">EMBER FIELDS</text>
+    <text x="330" y="344" text-anchor="middle" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" fill="#14100c" opacity="0.85">128K subscribers &#183; folktronica</text>
+
+    <!-- floating avatar tile with flame mark -->
+    <g filter="url(#bigGlow)">
+      <rect x="272" y="118" width="116" height="116" rx="20" fill="url(#avatar)" stroke="#3a2c1e" stroke-width="1.5"/>
+    </g>
+    <g transform="translate(330,178)">
+      <path d="M0,44 C-20,31 -22,11 -9,-7 C-4,-15 -2,-22 0,-34 C3,-22 7,-17 11,-9 C20,5 18,30 0,44 Z" fill="#ff7a18"/>
+      <path d="M0,32 C-10,24 -11,12 -4,2 C-1,-3 0,-8 0,-14 C2,-7 4,-4 6,1 C11,9 10,23 0,32 Z" fill="#ffd166"/>
+    </g>
+    <text x="330" y="252" text-anchor="middle" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" letter-spacing="3" fill="#9aa4b2">ARTIST PAGE</text>
+
+    <!-- play top tracks chip -->
+    <rect x="352" y="470" width="150" height="30" rx="15" fill="#12221a" stroke="#3fb950" stroke-width="1.4"/>
+    <text x="427" y="490" text-anchor="middle" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#3fb950">&#9654; Play top tracks</text>
+  </g>
+
+  <!-- ================= CENTER: LRCLIB SOURCE TILE + BEAM ================= -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="4.6s" begin="-2s" repeatCount="indefinite"/>
+    <rect x="512" y="76" width="176" height="58" rx="14" fill="url(#lrcTile)" stroke="#4c3a86" stroke-width="1.4"/>
+    <text x="600" y="100" text-anchor="middle" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="700" fill="#c9b8ff">LRCLIB</text>
+    <text x="600" y="120" text-anchor="middle" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="10.5" fill="#9aa4b2">free &#183; keyless &#183; no account</text>
+  </g>
+  <path d="M600,138 C690,168 790,240 856,300" fill="none" stroke="#7b2ff7" stroke-width="2" stroke-dasharray="7 9" opacity="0.85">
+    <animate attributeName="stroke-dashoffset" from="0" to="-96" dur="1.8s" repeatCount="indefinite"/>
+  </path>
+  <circle r="4.5" fill="#ff7a18" filter="url(#sGlow)">
+    <animateMotion dur="1.8s" repeatCount="indefinite" path="M600,138 C690,168 790,240 856,300"/>
+  </circle>
+
+  <!-- ================= RIGHT: THE LYRIC TOWER ================= -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0;0 -6;0 0" dur="7s" begin="-3s" repeatCount="indefinite"/>
+    <!-- sung lines -->
+    <g>
+      <rect x="766" y="150" width="208" height="12" rx="6" fill="#232b36"/>
+      <rect x="784" y="186" width="172" height="12" rx="6" fill="#232b36"/>
+      <rect x="757" y="222" width="226" height="12" rx="6" fill="#232b36"/>
+      <rect x="791" y="258" width="158" height="12" rx="6" fill="#232b36"/>
+      <rect x="751" y="294" width="238" height="12" rx="6" fill="#232b36"/>
+      <!-- THE ACTIVE LINE -->
+      <rect x="747" y="314" width="246" height="16" rx="8" fill="#3a2413"/>
+      <rect x="747" y="314" width="246" height="16" rx="8" fill="#ff7a18" filter="url(#sGlow)">
+        <animate attributeName="width" values="14;246" dur="8s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0.82;1" dur="2.4s" repeatCount="indefinite"/>
+      </rect>
+      <polygon points="730,314 742,322 730,330" fill="#ff7a18">
+        <animate attributeName="opacity" values="1;0.45;1" dur="1.6s" repeatCount="indefinite"/>
+      </polygon>
+      <text x="724" y="327" text-anchor="end" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" fill="#ff9a4d">0:52</text>
+      <rect x="778" y="366" width="184" height="12" rx="6" fill="#232b36"/>
+      <rect x="763" y="402" width="214" height="12" rx="6" fill="#232b36"/>
+      <rect x="795" y="438" width="150" height="12" rx="6" fill="#232b36"/>
+    </g>
+    <text x="870" y="132" text-anchor="middle" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11" letter-spacing="3" fill="#9aa4b2">SYNCED LYRICS</text>
+  </g>
+
+  <!-- click-a-line seek arrow (tower back to stage) -->
+  <path d="M744,330 C640,338 560,346 486,352" fill="none" stroke="#ff2d55" stroke-width="2" stroke-dasharray="6 8" opacity="0.9">
+    <animate attributeName="stroke-dashoffset" from="0" to="112" dur="1.7s" repeatCount="indefinite"/>
+  </path>
+  <polygon points="480,351 502,343 500,363" fill="#ff2d55"/>
+  <text x="622" y="392" text-anchor="middle" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="11.5" fill="#ff7a95">click a line &#8594; seek to the moment</text>
+
+  <!-- caption chips -->
+  <g font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" fill="#9aa4b2">
+    <rect x="96" y="560" width="212" height="32" rx="16" fill="#161c26" stroke="#232b3a"/>
+    <text x="202" y="581" text-anchor="middle">&#127908; right-click &#8594; artist page</text>
+    <rect x="484" y="560" width="232" height="32" rx="16" fill="#161c26" stroke="#232b3a"/>
+    <text x="600" y="581" text-anchor="middle">&#10024; lines glow with the song</text>
+    <rect x="800" y="560" width="264" height="32" rx="16" fill="#161c26" stroke="#232b3a"/>
+    <text x="932" y="581" text-anchor="middle">&#9201; plain-text ladder when LRCLIB is quiet</text>
+  </g>
+</svg>

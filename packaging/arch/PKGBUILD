@@ -1,0 +1,37 @@
+# Maintainer: qtjg <317509829+qtjg@users.noreply.github.com>
+# Hearth — a cozy floating music companion for every desktop.
+# Build: makepkg -si   (installs system-wide using Arch's Python stack)
+
+pkgname=hearth-player
+pkgver=0.5.0
+pkgrel=1
+pkgdesc="A cozy three-pane YouTube Music player for your desktop"
+arch=('any')
+url="https://github.com/qtjg/hearth"
+license=('MIT')
+depends=(
+    'python'
+    'python-pyqt6'
+    'qt6-multimedia'
+    'gst-plugins-good'
+    'gst-plugins-bad'
+    'gst-libav'
+    'python-ytmusicapi'
+    'python-yt-dlp'
+    'python-requests'
+)
+makedepends=('python-setuptools')
+source=("${pkgname}-${pkgver}.tar.gz::${url}/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "${srcdir}/hearth-${pkgver}"
+    python -m build --wheel --no-isolation || python setup.py bdist_wheel
+}
+
+package() {
+    cd "${srcdir}/hearth-${pkgver}"
+    python -m installer --destdir="${pkgdir}" dist/*.whl 2>/dev/null \
+        || pip install --root="${pkgdir}" --no-deps .
+    install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
