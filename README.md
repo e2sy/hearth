@@ -1,3 +1,11 @@
+<div align="center">
+
+<img src="assets/hearth-banner-anim.svg" alt="hearth — animated banner" width="100%"/>
+
+</div>
+
+<p align="center"><img src="assets/hearth-divider.svg" width="100%" alt=""/></p>
+
 <p align="center">
   <img src="docs/assets/3d-banner.svg" alt="hearth 3D banner" width="880" />
 </p>
@@ -691,3 +699,22 @@ Regenerate the graphics any time with the built-in generator — stdlib only, ze
 ```bash
 python tools/generate_3d_assets.py
 ```
+
+
+<p align="center"><img src="assets/hearth-divider.svg" width="100%" alt=""/></p>
+
+## 🎵 Features Marquee
+
+<p align="center">
+  <img src="assets/hearth-marquee.svg" width="100%" alt="scrolling features marquee"/>
+</p>
+
+<p align="center"><img src="assets/hearth-divider.svg" width="100%" alt=""/></p>
+
+---
+
+<div align="center">
+
+<sub>Built &amp; maintained by <a href="https://github.com/indiancybersecz">@indiancybersecz</a> · MIT Licensed · Issues &amp; PRs welcome</sub>
+
+</div>
