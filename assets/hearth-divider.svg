@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="20" viewBox="0 0 800 20" preserveAspectRatio="none" role="img" aria-label="hearth section divider">
+  <line x1="0" y1="10" x2="800" y2="10" stroke="#30363d" stroke-width="1"/>
+  <circle cx="400" cy="10" r="4" fill="#f78166">
+    <animate attributeName="opacity" values="0.45;1;0.45" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="220" cy="10" r="2" fill="#f78166" opacity="0.55">
+    <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="580" cy="10" r="2" fill="#f78166" opacity="0.55">
+    <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="80" cy="10" r="1.5" fill="#f78166" opacity="0.35">
+    <animate attributeName="opacity" values="0.1;0.5;0.1" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="720" cy="10" r="1.5" fill="#f78166" opacity="0.35">
+    <animate attributeName="opacity" values="0.1;0.5;0.1" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+  </circle>
+</svg>
