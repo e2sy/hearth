@@ -207,3 +207,79 @@ def test_party_dialog_skip_leaves_nothing_behind(qapp):
     skip_btns[1].click()
     assert len(box) == 0
     assert "empty" in dialog._head.text().lower()
+
+
+# --- the 🎚️ Sound Forge panel ----------------------------------------------------
+
+
+def test_sound_forge_roundtrips_a_state_through_the_knobs(qapp):
+    from hearth.sound_panel import SoundForgeDialog
+    from hearth.sound_shape import SoundState
+
+    state = SoundState(gains=(6, 4, 2, 0, 0, 0, 0, 0, -2, -4),
+                       preamp_db=-3, karaoke=True, karaoke_strength=0.7)
+    dialog = SoundForgeDialog(state=state)
+    loaded = dialog.current_state()
+    assert loaded.gains == state.gains
+    assert loaded.preamp_db == -3
+    assert loaded.karaoke is True
+    assert loaded.karaoke_strength == pytest.approx(0.7)
+
+
+def test_sound_forge_slider_move_emits_state(qapp):
+    from hearth.sound_panel import SoundForgeDialog
+    from hearth.sound_shape import SoundState
+
+    dialog = SoundForgeDialog(state=SoundState())
+    seen = []
+    dialog.state_changed.connect(seen.append)
+    dialog._band_sliders[0].setValue(6)          # drag the 31 Hz band up
+    assert len(seen) == 1
+    assert seen[0].gains[0] == 6.0
+    dialog._preamp.setValue(-4)
+    assert seen[-1].preamp_db == -4
+
+
+def test_sound_forge_preset_loads_curve_and_names_itself(qapp):
+    from hearth.sound_panel import SoundForgeDialog
+    from hearth.sound_shape import SoundState
+
+    dialog = SoundForgeDialog(state=SoundState())
+    seen = []
+    dialog.state_changed.connect(seen.append)
+    index = dialog._preset.findData("Bass Boost")
+    dialog._preset.setCurrentIndex(index)
+    loaded = dialog.current_state()
+    assert loaded.gains[0] > 0                    # the low end lifts
+    assert dialog._preset.currentData() == "Bass Boost"   # box stays honest
+
+
+def test_sound_forge_programmatic_set_stays_quiet(qapp):
+    from hearth.sound_panel import SoundForgeDialog
+    from hearth.sound_shape import SoundState
+
+    dialog = SoundForgeDialog(state=SoundState())
+    seen = []
+    dialog.state_changed.connect(seen.append)
+    dialog.set_state(SoundState(gains=(3, 0, 0, 0, 0, 0, 0, 0, 0, 0)))
+    assert seen == []                             # loading must not echo
+
+
+def test_playback_core_preamp_shapes_volume(tmp_path):
+    from PyQt6.QtCore import QCoreApplication
+
+    app = QCoreApplication.instance() or QCoreApplication([])
+    from hearth.player import PlaybackCore
+    from hearth.sound_shape import db_to_linear
+
+    core = PlaybackCore()
+    core.set_volume(0.8)
+    core.set_preamp(-6.0)
+    assert core.preamp_db == -6.0
+    assert core.effective_volume() == pytest.approx(0.8 * db_to_linear(-6.0))
+    core.set_preamp(99)                           # clamps, never raises
+    assert core.preamp_db == 6.0
+    core.set_volume(0.5)                          # volume changes keep the preamp
+    assert core.effective_volume() == pytest.approx(0.5 * db_to_linear(6.0))
+    core.set_preamp(0.0)
+    assert core.effective_volume() == pytest.approx(0.5)

@@ -68,6 +68,9 @@ from .panel import FloatingPanel
 from .party_dialog import PartyInboxDialog
 from .player import PlaybackCore
 from .remote import RemoteServer, SuggestionInbox
+from .sound_panel import SoundForgeDialog
+from . import sound_shape
+from .sound_shape import SoundState
 from .storage import HearthStore
 from .theme import lyrics_font
 from .toast import NowPlayingToast
@@ -441,6 +444,8 @@ class Hearth:
         self._party_poll.setInterval(4000)
         self._party_poll.timeout.connect(self._check_party_inbox)
         self._party_poll.start()
+        # the Sound Forge bench: one dialog per run, knobs out
+        self._sound_dialog: SoundForgeDialog | None = None
         # wake-up alarm: one-shot, tray-scheduled, fades the room back in
         self.alarm = AlarmController(parent=self.qapp)
         self.alarm.fired.connect(self._fire_alarm)
@@ -1294,6 +1299,8 @@ class Hearth:
                           "pin heart like"),
             CommandAction("Party suggestions", self._review_party_suggestions,
                           "party guest inbox suggest review queue"),
+            CommandAction("Sound Forge (equalizer)", self._open_sound_forge,
+                          "eq equalizer sound karaoke preamp audio forge"),
         ]
         view_labels = {
             "home": "Go to Home",
@@ -1666,6 +1673,27 @@ class Hearth:
     def _party_box_emptied(self) -> None:
         self._party_seen = 0
         self.surface.set_status("Party inbox cleared — every pick had its answer")
+
+    # --- the Sound Forge bench -----------------------------------------------
+
+    def _open_sound_forge(self) -> None:
+        """🎚️ EQ bands, preamp, karaoke — knobs for the room's sound."""
+        if self._sound_dialog is None:
+            saved = self.store.sound_settings() if self.store is not None else {}
+            self._sound_dialog = SoundForgeDialog(
+                parent=self.window, state=SoundState.from_dict(saved)
+            )
+            self._sound_dialog.state_changed.connect(self._on_sound_state)
+        self._sound_dialog.show()
+        self._sound_dialog.raise_()
+        self._sound_dialog.activateWindow()
+
+    def _on_sound_state(self, state) -> None:
+        """Every knob move: persist it, apply what the backend honors today."""
+        if self.store is not None:
+            self.store.save_sound_settings(state.to_dict())
+        self.core.set_preamp(state.preamp_db)
+        self.surface.set_status(f"🎚️ {sound_shape.sound_summary(state)}")
 
     def _glow_mix(self) -> None:
         """✨ One tap in the On Repeat shelf: your rotation plus kindred fire."""
@@ -2075,6 +2103,8 @@ class Hearth:
 
     def _restore_settings(self) -> None:
         self.core.set_volume(float(self.settings.value("volume", 0.8)))
+        saved_sound = self.store.sound_settings() if self.store is not None else {}
+        self.core.set_preamp(SoundState.from_dict(saved_sound).preamp_db)
         self.panel.set_volume(self.core.volume)
         rate = float(self.settings.value("rate", 1.0))
         self.core.set_rate(rate)
