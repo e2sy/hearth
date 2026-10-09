@@ -338,7 +338,8 @@ class SearchView(TrackListView):
     search_scoped = pyqtSignal(str, str)      # query, scope ("songs"/"videos"/"albums")
     album_opened = pyqtSignal(object)         # Album (double-click an album result)
 
-    SCOPES = (("songs", "♪ Songs"), ("videos", "▶ Videos"), ("albums", "💿 Albums"))
+    SCOPES = (("songs", "♪ Songs"), ("videos", "▶ Videos"), ("albums", "💿 Albums"),
+              ("lyrics", "📝 Lyrics"))
 
     def __init__(self, palette: Palette):
         super().__init__(palette)

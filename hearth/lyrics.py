@@ -15,6 +15,7 @@ import re
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
+from typing import Callable
 
 from . import config
 
@@ -349,3 +350,57 @@ def search_online(
         ))
     hits.sort(key=lambda h: (-h.score, h.artist.lower(), h.title.lower()))
     return hits[: max(1, int(limit))]
+
+
+def resolve_lyric_hits(
+    hits: list[LyricHit],
+    search: Callable[[str], "Track | list | None"],
+    limit: int | None = None,
+) -> list:
+    """Lyric hits → playable tracks, deduped, in match-quality order.
+
+    The bridge from "I remember the line" to "play it now". Cache hits
+    already know their video, so they become tracks directly; LRCLIB
+    hits only know artist + title, so each earns one catalog search.
+    A search that raises or returns junk costs its hit nothing — the
+    rest of the list keeps flowing. Never raises.
+    """
+    from .models import Track  # leaf module — safe here, avoids import cycles
+
+    limit = limit or config.LYRIC_SEARCH_LIMIT
+    tracks: list[Track] = []
+    seen: set[str] = set()
+    for hit in hits:
+        if len(tracks) >= max(1, int(limit)):
+            break
+        if hit.source == "cache" and hit.video_id:
+            if hit.video_id in seen:
+                continue
+            seen.add(hit.video_id)
+            tracks.append(Track(
+                video_id=hit.video_id,
+                title=hit.title or "Unknown title",
+                artist=hit.artist or "",
+            ))
+            continue
+        query = " ".join(part for part in (hit.artist, hit.title) if part).strip()
+        if not query:
+            continue
+        try:
+            result = search(query)
+        except Exception as exc:  # noqa: BLE001 - the catalog may hiccup
+            log.info("lyric resolve search failed for %r: %s", query, exc)
+            continue
+        found: Track | None = None
+        if isinstance(result, Track):
+            found = result
+        elif isinstance(result, list):
+            found = next(
+                (t for t in result if isinstance(t, Track) and t.video_id),
+                None,
+            )
+        if found is None or not found.video_id or found.video_id in seen:
+            continue
+        seen.add(found.video_id)
+        tracks.append(found)
+    return tracks

@@ -48,6 +48,7 @@ from .jobs import (
     DiscoverJob,
     LoadJob,
     LyricsJob,
+    LyricSearchJob,
     RadioJob,
     ScopedSearchJob,
     SearchJob,
@@ -673,15 +674,35 @@ class Hearth:
         self._launch(job)
 
     def _run_scoped_search(self, query: str, scope: str) -> None:
-        """Songs / Videos / Albums scopes from the search-page chips."""
+        """Songs / Videos / Albums / Lyrics scopes from the search-page chips."""
         if scope == "songs":
             self._run_search(query)
+            return
+        if scope == "lyrics":
+            self._run_lyric_search(query)
             return
         self.surface.set_status(f"Searching {scope}…")
         job = ScopedSearchJob(self.catalog, query, scope=scope)
         job.signals.finished.connect(self._show_scoped_results)
         job.signals.failed.connect(lambda msg: self.surface.set_status(f"Search failed: {msg}"))
         self._launch(job)
+
+    def _run_lyric_search(self, query: str) -> None:
+        """📝 A remembered line becomes the song: cache first, LRCLIB second."""
+        self.window.search_view.set_header("Lyric matches")
+        self.surface.set_status("Searching lyrics…")
+        job = LyricSearchJob(self.catalog, self.store, query)
+        job.signals.finished.connect(self._show_lyric_results)
+        job.signals.failed.connect(lambda msg: self.surface.set_status(f"Lyric search failed: {msg}"))
+        self._launch(job)
+
+    def _show_lyric_results(self, tracks: list) -> None:
+        tracks = [t for t in (tracks or []) if isinstance(t, Track)]
+        self._show_search_results(tracks)
+        self.surface.set_status(
+            f"{len(tracks)} lyric matches" if tracks
+            else "No lyric matches — try a longer, more exact line"
+        )
 
     def _show_scoped_results(self, payload) -> None:
         scope, results = payload
