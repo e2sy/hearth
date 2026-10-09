@@ -8,6 +8,29 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - This changelog.
+- **Wave-2 wiring — the engines became buttons** (827 tests green):
+  - **📝 Lyrics chip** on the search page: a remembered line becomes the
+    song. Cache hits play directly; LRCLIB hits earn one catalog search
+    each via `resolve_lyric_hits` (pure, injected, never raises).
+    `LyricSearchJob` runs both legs off the UI thread.
+  - **✨ Enhance button** on every playlist: `EnhanceJob` sprinkles
+    radio-shaped picks via `catalog.radio` and refreshes the view.
+  - **🟢 From Spotify** button in Your Library: the `ImportDialog` takes
+    a pasted JSON export / Exportify CSV / embed page (name + format
+    override), `ImportJob` runs `switchboard.import_spotify` on the
+    worker pool, and the rebuilt playlist opens itself.
+  - **🎉 Party suggestions reach the host**: the remote Bridge gained
+    `suggest`/`pending_suggestions` (the `/api/suggest` route was live
+    but unanswered), a 4 s poller nudges the status bar, and the
+    `PartyInboxDialog` (Ctrl+K → "Party suggestions") queues or skips
+    every guest pick. Host playback stays authoritative.
+  - **🎚️ Sound Forge bench**: `hearth/sound_shape.py` (10-band EQ table,
+    presets, karaoke mid/side DSP, preamp math — all clamped, pure,
+    tested) plus the `SoundForgeDialog` panel. The **preamp is real
+    today**: `PlaybackCore.set_preamp` folds it into the master volume
+    and the crossfade ramp; band gains and the karaoke cut wait for a
+    PCM tap (Qt Multimedia exposes none). Settings persist in the new
+    `sound_settings` table and restore at startup.
 - **Room 10 — The Ember Feed (engines)**: `hearth/feeds.py` — the weekly
   Ember Feed (cooling rotation + deep cuts + rotation B-sides), the
   Daylist (hour-of-day mixes from history), release radar
