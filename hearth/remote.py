@@ -27,12 +27,17 @@ instead of a hung socket.
 from __future__ import annotations
 
 import json
+import re
 import secrets
 import socket
 import threading
+import time
+from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Callable
 from urllib.parse import parse_qs, urlparse
+
+from . import config
 
 COMMANDS = ("toggle", "play", "pause", "next", "prev", "vol")
 
@@ -62,6 +67,7 @@ button.sec{background:#33261d;color:#f4e9dd}input[type=range]{width:100%;accent-
 <button onclick="cmd('toggle')">⏯</button>
 <button class="sec" onclick="cmd('next')">⏭</button></div></div>
 <div class="card"><input id="vol" type="range" min="0" max="100" value="80" oninput="vol(this.value)"></div>
+<div class="card"><button class="sec" style="width:100%" onclick="suggestSong()">➕ Suggest a song for the host</button></div>
 <script>
 const k = new URLSearchParams(location.search).get('k') || '';
 async function paint(s){document.getElementById('title').textContent=s.title||'Nothing playing';
@@ -71,6 +77,9 @@ const v=document.getElementById('vol');if(document.activeElement!==v)v.value=Mat
 async function refresh(){try{const r=await fetch('/api/status?k='+encodeURIComponent(k));paint(await r.json());}catch(e){}}
 async function cmd(name){try{const r=await fetch('/api/cmd?k='+encodeURIComponent(k)+'&name='+name);paint((await r.json()).status||{});}catch(e){}}
 async function vol(v){try{await fetch('/api/cmd?k='+encodeURIComponent(k)+'&name=vol&volume='+(v/100));}catch(e){}}
+async function suggestSong(){const t=prompt('Paste a YouTube link (or just the video id):');if(!t)return;
+try{const r=await fetch('/api/suggest?k='+encodeURIComponent(k)+'&video='+encodeURIComponent(t));const j=await r.json();
+alert(j.ok?(j.accepted?'🔥 Suggested — the host will see it.':'Already suggested — the host has it.'):'Nope: '+(j.error||'not possible'));}catch(e){}}
 refresh();setInterval(refresh,4000);
 </script></body></html>
 """
@@ -79,6 +88,72 @@ refresh();setInterval(refresh,4000);
 def make_token() -> str:
     """A short, URL-safe session key — the link is the permission."""
     return secrets.token_hex(4)
+
+
+_VIDEO_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
+_VIDEO_ID_IN_URL = re.compile(r"(?:[?&]v=|youtu\.be/|/shorts/|/embed/)([A-Za-z0-9_-]{11})")
+
+
+def parse_video_id(text: str) -> str:
+    """A raw id, a youtu.be link, a watch?v= link — the id inside, or ''.
+
+    Guests paste whatever their phone copied; every reasonable shape
+    lands on the same 11-character id.
+    """
+    text = (text or "").strip().strip('"<>')
+    if _VIDEO_ID.match(text):
+        return text
+    match = _VIDEO_ID_IN_URL.search(text)
+    return match.group(1) if match else ""
+
+
+class SuggestionInbox:
+    """The party hat: guest suggestions waiting for the host's nod.
+
+    Bounded (config.PARTY_INBOX_MAX), deduped by video id (a repeat
+    bumps the entry instead of stacking), and purely passive — the
+    host's app drains it whenever the UI gets around to it. Host
+    playback stays authoritative; nothing here touches the queue.
+    """
+
+    def __init__(self, max_items: int | None = None):
+        self._max = int(max_items or config.PARTY_INBOX_MAX)
+        self._items: deque[dict] = deque()
+
+    def push(self, item: dict, *, now: float | None = None) -> bool:
+        """Add a suggestion; True = new, False = duplicate or junk."""
+        video_id = parse_video_id(str(item.get("video_id") or ""))
+        if not video_id:
+            return False
+        entry = {
+            "video_id": video_id,
+            "title": str(item.get("title") or "").strip()[:200] or video_id,
+            "artist": str(item.get("artist") or "").strip()[:120],
+            "duration_sec": item.get("duration_sec"),
+            "at": float(now if now is not None else time.time()),
+        }
+        for existing in self._items:               # a repeat bumps, not stacks
+            if existing["video_id"] == video_id:
+                self._items.remove(existing)
+                self._items.append(entry)
+                return False
+        self._items.append(entry)
+        while len(self._items) > self._max:
+            self._items.popleft()
+        return True
+
+    def pending(self) -> list[dict]:
+        """Oldest-first snapshot; the inbox keeps its contents."""
+        return list(self._items)
+
+    def drain(self) -> list[dict]:
+        """Hand over everything and clear — the host just reviewed it."""
+        items = list(self._items)
+        self._items.clear()
+        return items
+
+    def __len__(self) -> int:
+        return len(self._items)
 
 
 def lan_address() -> str:
@@ -166,6 +241,42 @@ def _make_handler(
                             return
                     controller.cmd(name, volume=volume)
                     self._send_json(200, {"ok": True, "status": controller.status()})
+                    return
+                if url.path == "/api/suggest":
+                    if not self._authorized(qs):
+                        self._send_json(403, {"ok": False, "error": "forbidden"})
+                        return
+                    suggest_hook = getattr(controller, "suggest", None)
+                    if not callable(suggest_hook):
+                        self._send_json(400, {
+                            "ok": False,
+                            "error": "party mode is not enabled on this hearth",
+                        })
+                        return
+                    video_id = parse_video_id((qs.get("video") or [""])[0])
+                    if not video_id:
+                        self._send_json(400, {"ok": False, "error": "no video id in paste"})
+                        return
+                    duration_sec: int | None = None
+                    try:
+                        duration_sec = int((qs.get("dur") or [""])[0])
+                        if not 0 <= duration_sec <= 86400:
+                            duration_sec = None
+                    except ValueError:
+                        duration_sec = None
+                    item = {
+                        "video_id": video_id,
+                        "title": (qs.get("title") or [""])[0],
+                        "artist": (qs.get("artist") or [""])[0],
+                        "duration_sec": duration_sec,
+                    }
+                    accepted = bool(suggest_hook(item))
+                    pending_hook = getattr(controller, "pending_suggestions", None)
+                    pending = pending_hook() if callable(pending_hook) else None
+                    payload: dict[str, Any] = {"ok": True, "accepted": accepted}
+                    if isinstance(pending, int):
+                        payload["pending"] = pending
+                    self._send_json(200, payload)
                     return
                 self._send_json(404, {"ok": False, "error": "not found"})
             except (BrokenPipeError, ConnectionResetError):
