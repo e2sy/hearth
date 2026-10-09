@@ -24,6 +24,7 @@ from PyQt6.QtCore import (
 from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
+    QDialog,
     QFileDialog,
     QMenu,
     QMessageBox,
@@ -46,6 +47,8 @@ from .jobs import (
     ArtistJob,
     ArtistLookupJob,
     DiscoverJob,
+    EnhanceJob,
+    ImportJob,
     LoadJob,
     LyricsJob,
     LyricSearchJob,
@@ -56,6 +59,7 @@ from .jobs import (
     _SignalCarrier,
 )
 from .local_scan import LocalScanJob
+from .import_dialog import ImportDialog
 from .lyrics import SyncedLyrics
 from .lyrics_overlay import LyricsOverlay
 from .models import Album, Artist, Collection, Track
@@ -530,6 +534,8 @@ class Hearth:
         w.local_rescan_requested.connect(self._local_rescan)
         w.glow_mix_requested.connect(self._glow_mix)
         w.remote_requested.connect(self._open_remote)
+        w.enhance_playlist_requested.connect(self._enhance_playlist)
+        w.spotify_import_requested.connect(self._open_spotify_import)
         w.play_pause_requested.connect(self.core.toggle)
         w.next_requested.connect(self.core.next)
         w.prev_requested.connect(self.core.previous)
@@ -1537,6 +1543,61 @@ class Hearth:
             f"{self._remote.url()}\n\n"
             "The link is the key — anyone who has it can control playback.",
         )
+
+    def _enhance_playlist(self, playlist_id: int) -> None:
+        """✨ Ask the radio for a few more like the ones already here."""
+        if self.store is None:
+            return
+        self.surface.set_status("Enhancing playlist…")
+        job = EnhanceJob(
+            self.store, playlist_id,
+            lambda seed, n: self.catalog.radio(seed.video_id, limit=n),
+        )
+        job.signals.finished.connect(
+            lambda payload: self._enhance_done(playlist_id, payload)
+        )
+        job.signals.failed.connect(
+            lambda msg: self.surface.set_status(f"Enhance failed: {msg}")
+        )
+        self._launch(job)
+
+    def _enhance_done(self, playlist_id: int, payload) -> None:
+        added, picks = payload
+        self.window.refresh_playlists()
+        if added:
+            self.window.open_playlist(playlist_id)
+        self.surface.set_status(
+            f"✨ Enhanced — {len(added)} new tracks sprinkled in"
+            if added else "Enhance found nothing new — this playlist already covers its radio"
+        )
+
+    def _open_spotify_import(self) -> None:
+        """🟢 Paste a Spotify playlist; Hearth rebuilds it on YouTube Music."""
+        dialog = ImportDialog(self.window)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        text = dialog.paste_text()
+        if not text.strip():
+            self.surface.set_status("Nothing to import — the paste was empty")
+            return
+        self.surface.set_status("Importing from Spotify… (matching every song)")
+        job = ImportJob(
+            self.store, text,
+            lambda q: self.catalog.search_songs(q, limit=3),
+            name=dialog.playlist_name(),
+            fmt=dialog.format_choice(),
+        )
+        job.signals.finished.connect(self._spotify_import_done)
+        job.signals.failed.connect(
+            lambda msg: self.surface.set_status(f"Import failed: {msg}")
+        )
+        self._launch(job)
+
+    def _spotify_import_done(self, report) -> None:
+        self.surface.set_status(report.summary())
+        if report.playlist_id:
+            self.window.refresh_playlists()
+            self.window.open_playlist(report.playlist_id)
 
     def _glow_mix(self) -> None:
         """✨ One tap in the On Repeat shelf: your rotation plus kindred fire."""

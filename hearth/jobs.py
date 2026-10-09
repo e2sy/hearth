@@ -107,6 +107,63 @@ class LyricSearchJob(QRunnable):
         self.signals.emit_safe(self.signals.finished, tracks)
 
 
+class EnhanceJob(QRunnable):
+    """Sprinkle radio-shaped picks into a stored playlist; emits (added, picks).
+
+    The suggester is injected (the app wires it to ``catalog.radio``), so
+    tests run the exact same code path with a fake radio.
+    """
+
+    def __init__(self, store, playlist_id: int, suggester, n: int | None = None):
+        super().__init__()
+        self.setAutoDelete(False)
+        self.signals = _SignalCarrier()
+        self.store = store
+        self.playlist_id = playlist_id
+        self.suggester = suggester
+        self.n = n
+
+    def run(self) -> None:  # noqa: D102
+        from .enhance import enhance_into_playlist
+
+        try:
+            added, picks = enhance_into_playlist(
+                self.store, self.playlist_id, self.suggester, n=self.n
+            )
+        except Exception as exc:  # noqa: BLE001 - honest failure beats a hang
+            self.signals.emit_safe(self.signals.failed, str(exc))
+            return
+        self.signals.emit_safe(self.signals.finished, (added, picks))
+
+
+class ImportJob(QRunnable):
+    """Rebuild a pasted Spotify playlist on YouTube Music; emits ImportReport."""
+
+    def __init__(self, store, text: str, search, name: str | None = None,
+                 fmt: str = "auto"):
+        super().__init__()
+        self.setAutoDelete(False)
+        self.signals = _SignalCarrier()
+        self.store = store
+        self.text = text
+        self.search = search
+        self.name = name
+        self.fmt = fmt
+
+    def run(self) -> None:  # noqa: D102
+        from .switchboard import import_spotify
+
+        try:
+            report = import_spotify(
+                self.store, self.text, self.search,
+                name=self.name, fmt=self.fmt,
+            )
+        except Exception as exc:  # noqa: BLE001 - import never hangs the UI
+            self.signals.emit_safe(self.signals.failed, str(exc))
+            return
+        self.signals.emit_safe(self.signals.finished, report)
+
+
 class AlbumJob(QRunnable):
     """Opens an album page; emits (Album, [Track])."""
 
