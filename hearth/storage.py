@@ -65,6 +65,36 @@ CREATE TABLE IF NOT EXISTS local_tracks (
     duration_s REAL NOT NULL DEFAULT 0,
     added_at   REAL NOT NULL DEFAULT (unixepoch('now'))
 );
+CREATE TABLE IF NOT EXISTS follows (
+    artist_id  TEXT PRIMARY KEY,
+    name       TEXT NOT NULL,
+    thumbnail  TEXT NOT NULL DEFAULT '',
+    added_at   REAL NOT NULL DEFAULT (unixepoch('now')),
+    last_sweep REAL NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS radar_releases (
+    artist_id  TEXT NOT NULL REFERENCES follows(artist_id) ON DELETE CASCADE,
+    video_id   TEXT NOT NULL,
+    payload    TEXT NOT NULL,
+    seen_at    REAL NOT NULL DEFAULT (unixepoch('now')),
+    PRIMARY KEY (artist_id, video_id)
+);
+CREATE INDEX IF NOT EXISTS idx_radar_seen ON radar_releases (seen_at DESC);
+CREATE TABLE IF NOT EXISTS podcast_feeds (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    url        TEXT NOT NULL UNIQUE,
+    title      TEXT NOT NULL DEFAULT '',
+    added_at   REAL NOT NULL DEFAULT (unixepoch('now'))
+);
+CREATE TABLE IF NOT EXISTS podcast_episodes (
+    feed_id    INTEGER NOT NULL REFERENCES podcast_feeds(id) ON DELETE CASCADE,
+    guid       TEXT NOT NULL,
+    payload    TEXT NOT NULL,
+    position_s REAL NOT NULL DEFAULT 0,
+    played     INTEGER NOT NULL DEFAULT 0,
+    added_at   REAL NOT NULL DEFAULT (unixepoch('now')),
+    PRIMARY KEY (feed_id, guid)
+);
 """
 
 # Bare URLs in an .m3u carry the video id in a v= query parameter.
@@ -658,6 +688,260 @@ class HearthStore:
             (playlist_id,),
         ).fetchall()
         return [Track.from_json(payload) for (payload,) in rows]
+
+    # --- artist follows & release radar (v0.9.0 Room 10) ---
+
+    def follow_artist(self, artist_id: str, name: str, thumbnail: str = "") -> bool:
+        """Follow an artist for release radar. True when newly followed.
+
+        Re-following refreshes the name/thumbnail but never the added_at,
+        so 'followed since' stays honest.
+        """
+        artist_id = str(artist_id or "").strip()
+        if not artist_id:
+            return False
+        row = self._db.execute(
+            "SELECT 1 FROM follows WHERE artist_id = ?", (artist_id,)
+        ).fetchone()
+        self._db.execute(
+            "INSERT INTO follows (artist_id, name, thumbnail) VALUES (?, ?, ?) "
+            "ON CONFLICT(artist_id) DO UPDATE SET name = excluded.name, "
+            "thumbnail = excluded.thumbnail",
+            (artist_id, str(name or ""), str(thumbnail or "")),
+        )
+        self._db.commit()
+        return row is None
+
+    def unfollow_artist(self, artist_id: str) -> bool:
+        """Stop following an artist; radar rows go with them (CASCADE)."""
+        cur = self._db.execute(
+            "DELETE FROM follows WHERE artist_id = ?", (str(artist_id or ""),)
+        )
+        self._db.commit()
+        return cur.rowcount > 0
+
+    def is_following(self, artist_id: str) -> bool:
+        row = self._db.execute(
+            "SELECT 1 FROM follows WHERE artist_id = ?", (str(artist_id or ""),)
+        ).fetchone()
+        return row is not None
+
+    def follows(self) -> list[dict]:
+        """Every followed artist, oldest follow first — stable page order."""
+        rows = self._db.execute(
+            "SELECT artist_id, name, thumbnail, added_at, last_sweep "
+            "FROM follows ORDER BY added_at, artist_id"
+        ).fetchall()
+        return [
+            {
+                "artist_id": str(a), "name": str(n), "thumbnail": str(th),
+                "added_at": float(ad), "last_sweep": float(ls),
+            }
+            for a, n, th, ad, ls in rows
+        ]
+
+    def follow_count(self) -> int:
+        (count,) = self._db.execute("SELECT COUNT(*) FROM follows").fetchone()
+        return int(count)
+
+    def radar_sweep_seen(self, artist_id: str, releases: list[Track],
+                         now: float | None = None) -> set[str]:
+        """Mark releases as seen for an artist; returns the *new* video ids.
+
+        The radar's heart: the caller fetches the artist's releases and
+        hands them here; the subset never seen before comes back as
+        "new since your last listen", and every payload is kept so the
+        shelf reads offline later. Also refreshes the artist's
+        last_sweep so a sweep cadence can be honored upstream.
+        """
+        artist_id = str(artist_id or "").strip()
+        if not artist_id:
+            return set()
+        stamp = time.time() if now is None else float(now)
+        clean: dict[str, str] = {}
+        for track in releases or []:
+            if isinstance(track, Track) and track.video_id:
+                clean.setdefault(str(track.video_id), track.to_json())
+        known = {
+            str(row[0]) for row in self._db.execute(
+                "SELECT video_id FROM radar_releases WHERE artist_id = ?",
+                (artist_id,),
+            ).fetchall()
+        }
+        fresh = [vid for vid in clean if vid not in known]
+        self._db.executemany(
+            "INSERT OR IGNORE INTO radar_releases "
+            "(artist_id, video_id, payload, seen_at) VALUES (?, ?, ?, ?)",
+            [(artist_id, vid, clean[vid], stamp) for vid in fresh],
+        )
+        self._db.execute(
+            "UPDATE follows SET last_sweep = ? WHERE artist_id = ?",
+            (stamp, artist_id),
+        )
+        self._db.commit()
+        return set(fresh)
+
+    def radar_new_releases(self, limit: int = 25) -> list[Track]:
+        """Newest radar releases across all follows, newest first.
+
+        The "new since your last listen" shelf — payloads were kept at
+        sweep time, so this reads entirely offline.
+        """
+        rows = self._db.execute(
+            "SELECT r.payload FROM radar_releases r "
+            "WHERE r.payload != '' "
+            "ORDER BY r.seen_at DESC, r.video_id LIMIT ?",
+            (max(int(limit), 0),),
+        ).fetchall()
+        tracks: list[Track] = []
+        for (payload,) in rows:
+            try:
+                tracks.append(Track.from_json(payload))
+            except (TypeError, ValueError):
+                continue
+        return tracks
+
+    def radar_new_count(self, since: float) -> int:
+        """How many radar releases landed after `since` (badge number)."""
+        (count,) = self._db.execute(
+            "SELECT COUNT(*) FROM radar_releases WHERE seen_at >= ?",
+            (float(since),),
+        ).fetchone()
+        return int(count)
+
+    # --- podcasts (v0.9.0 Room 13): RSS subscriptions by the fire ---
+
+    def podcast_subscribe(self, url: str, title: str = "") -> int:
+        """Subscribe to a feed URL; returns the feed id (idempotent on URL)."""
+        url = str(url or "").strip()
+        if not url:
+            return 0
+        row = self._db.execute(
+            "SELECT id FROM podcast_feeds WHERE url = ?", (url,)
+        ).fetchone()
+        if row is not None:
+            if title:
+                self._db.execute(
+                    "UPDATE podcast_feeds SET title = ? WHERE id = ?",
+                    (str(title), int(row[0])),
+                )
+                self._db.commit()
+            return int(row[0])
+        cur = self._db.execute(
+            "INSERT INTO podcast_feeds (url, title) VALUES (?, ?)",
+            (url, str(title or "")),
+        )
+        self._db.commit()
+        return int(cur.lastrowid)
+
+    def podcast_unsubscribe(self, feed_id: int) -> bool:
+        """Drop a feed and its episodes. True when it was there."""
+        cur = self._db.execute(
+            "DELETE FROM podcast_feeds WHERE id = ?", (int(feed_id),)
+        )
+        self._db.commit()
+        return cur.rowcount > 0
+
+    def podcast_feeds(self) -> list[dict]:
+        """[(id, url, title, episode_count)] oldest subscription first."""
+        rows = self._db.execute(
+            "SELECT f.id, f.url, f.title, COUNT(e.guid) FROM podcast_feeds f "
+            "LEFT JOIN podcast_episodes e ON e.feed_id = f.id "
+            "GROUP BY f.id ORDER BY f.id"
+        ).fetchall()
+        return [
+            {"id": int(fid), "url": str(u), "title": str(t), "episodes": int(c)}
+            for fid, u, t, c in rows
+        ]
+
+    def podcast_upsert_episodes(self, feed_id: int, entries: list[dict],
+                                now: float | None = None) -> int:
+        """Insert episodes for a feed; returns how many were new.
+
+        Entries are ``{guid, payload}`` dicts (payload = episode JSON).
+        Malformed entries and empty guids are skipped; known guids keep
+        their position/played state — a refresh never loses your place.
+        """
+        if not entries:
+            return 0
+        known = {
+            str(row[0]) for row in self._db.execute(
+                "SELECT guid FROM podcast_episodes WHERE feed_id = ?",
+                (int(feed_id),),
+            ).fetchall()
+        }
+        stamp = time.time() if now is None else float(now)
+        fresh: list[tuple] = []
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            guid = str(entry.get("guid") or "").strip()
+            payload = entry.get("payload") or ""
+            if not guid or guid in known or not payload:
+                continue
+            known.add(guid)
+            fresh.append((int(feed_id), guid, str(payload), stamp))
+        if not fresh:
+            return 0
+        self._db.executemany(
+            "INSERT INTO podcast_episodes (feed_id, guid, payload, added_at) "
+            "VALUES (?, ?, ?, ?)",
+            fresh,
+        )
+        self._db.commit()
+        return len(fresh)
+
+    def podcast_episodes(self, feed_id: int, limit: int = 100) -> list[dict]:
+        """Episodes of a feed, newest feed-order first, with play state.
+
+        Returns ``{guid, payload, position_s, played}`` dicts; corrupt
+        payloads are skipped, never allowed to blank the shelf.
+        """
+        rows = self._db.execute(
+            "SELECT guid, payload, position_s, played FROM podcast_episodes "
+            "WHERE feed_id = ? ORDER BY added_at DESC, guid LIMIT ?",
+            (int(feed_id), max(int(limit), 0)),
+        ).fetchall()
+        out: list[dict] = []
+        for guid, payload, position_s, played in rows:
+            try:
+                json.loads(payload)
+            except ValueError:
+                continue
+            out.append({
+                "guid": str(guid),
+                "payload": str(payload),
+                "position_s": float(position_s),
+                "played": bool(played),
+            })
+        return out
+
+    def podcast_set_position(self, feed_id: int, guid: str, position_s: float) -> None:
+        """Remember where you stopped an episode — upsert, never complains."""
+        self._db.execute(
+            "UPDATE podcast_episodes SET position_s = max(0.0, ?) "
+            "WHERE feed_id = ? AND guid = ?",
+            (float(max(0.0, position_s)), int(feed_id), str(guid or "")),
+        )
+        self._db.commit()
+
+    def podcast_mark_played(self, feed_id: int, guid: str,
+                            played: bool = True) -> None:
+        self._db.execute(
+            "UPDATE podcast_episodes SET played = ? "
+            "WHERE feed_id = ? AND guid = ?",
+            (1 if played else 0, int(feed_id), str(guid or "")),
+        )
+        self._db.commit()
+
+    def podcast_episode_state(self, feed_id: int, guid: str) -> tuple[float, bool] | None:
+        """(position_s, played) for one episode, or None when unknown."""
+        row = self._db.execute(
+            "SELECT position_s, played FROM podcast_episodes "
+            "WHERE feed_id = ? AND guid = ?",
+            (int(feed_id), str(guid or "")),
+        ).fetchone()
+        return (float(row[0]), bool(row[1])) if row else None
 
     # --- library backup (portable JSON, favorites + playlists) ---
 

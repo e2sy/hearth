@@ -168,6 +168,19 @@ GLOW_MIX_ARTISTS = 3            # top rotation artists whose kindred tracks feed
 GLOW_MIX_ROTATION_SHARE = 0.6   # ~60% of the blend comes from your rotation
 HISTORY_CHIP_DAYS = 14          # day-jump chips shown on the history page
 
+# --- v0.9.0: the Mindful Flame (Room 10 feeds + Room 12 Pantry + Room 13 podcasts) ---
+EMBER_FEED_SIZE = 30            # tracks laid into the weekly Ember Feed
+EMBER_FEED_COOLING_SHARE = 0.4  # share of the feed from rotation that's cooling off
+DAYLIST_SIZE = 25               # tracks in a daylist mix
+RADAR_SWEEP_MIN_GAP_S = 3600    # release-radar sweeps at most once an hour per artist
+QUEUE_AUTOCOMPLETE = False      # radio suggestions when the queue runs dry (opt-in)
+QUEUE_AUTOCOMPLETE_N = 3        # suggestions appended per dry queue
+STREAM_CACHE_ENABLED = False    # LRU stream cache, the Pantry (opt-in)
+STREAM_CACHE_MAX_MB = 512       # default Pantry cap
+PODCAST_UPDATE_HOURS = 12       # podcast feed refresh cadence
+PROMPT_QUERY_LIMIT = 3          # search queries assembled per natural-language prompt
+PROMPT_TRACKS_PER_QUERY = 10    # candidates pulled per prompt query
+
 VERSION = "0.7.2"
 
 REPEAT_OFF = "off"
