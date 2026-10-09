@@ -187,3 +187,165 @@ def fetch_lyrics(
             return (payload.get("plainLyrics") or None,
                     payload.get("syncedLyrics") or None)
     return None, None
+
+
+# ----------------------------------------------------------------- Room 6.4
+# Lyrics-line search: paste a line you half-remember, get the song back.
+# Two legs — the offline cache the player already owns (works with the
+# network unplugged), and a keyless LRCLIB sweep for lines nobody has
+# played yet. Both legs score honestly and never raise.
+
+
+@dataclass(frozen=True)
+class LyricHit:
+    """One matched line, where it was found, and how well it matched."""
+
+    line: str
+    score: float
+    source: str            # "cache" | "lrclib"
+    artist: str = ""
+    title: str = ""
+    video_id: str = ""     # cache hits know their video; LRCLIB hits don't
+
+
+_PUNCT = re.compile(r"[^\w\s]", re.UNICODE)
+
+
+def normalize_line(text: str) -> str:
+    """Lowercase, punctuation-free, single-spaced — the comparison shape."""
+    return re.sub(r"\s{2,}", " ", _PUNCT.sub(" ", (text or "").lower())).strip()
+
+
+def score_line(query: str, line: str) -> float:
+    """How well a remembered line matches a sung line, in 0.0–1.0.
+
+    Exact normalized match tops out at 1.0; a contained phrase scores
+    by how much of the line the query accounts for; a full-word match
+    in order beats a scrambled one; stray shared words get a small
+    share. 0.0 when nothing overlaps.
+    """
+    query = normalize_line(query)
+    line = normalize_line(line)
+    if not query or not line:
+        return 0.0
+    if query == line:
+        return 1.0
+    if query in line:
+        return 0.9 + 0.1 * min(1.0, len(query) / max(1, len(line)))
+    q_tokens = query.split()
+    l_tokens = line.split()
+    if not q_tokens:
+        return 0.0
+    overlap = sum(1 for tok in set(q_tokens) if tok in l_tokens)
+    if overlap == len(set(q_tokens)):
+        # every word present — in order beats shuffled
+        pos = 0
+        in_order = True
+        for tok in q_tokens:
+            try:
+                found = l_tokens.index(tok, pos)
+            except ValueError:
+                in_order = False
+                break
+            pos = found + 1
+        return 0.8 if in_order else 0.72
+    return round(0.6 * overlap / len(set(q_tokens)), 4)
+
+
+def _best_line_in_text(query: str, lines: list[str]) -> tuple[str, float]:
+    """The highest-scoring line in a lyric sheet (ties → earliest)."""
+    best_line, best_score = "", 0.0
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        score = score_line(query, line)
+        if score > best_score:
+            best_line, best_score = line, score
+    return best_line, best_score
+
+
+def _text_lines(plain: str, synced: str) -> list[str]:
+    """Singable lines from a payload.
+
+    LRC stamps are stripped when the text really is LRC; stampless
+    plain text (a cache entry, or a payload that only shipped plain)
+    falls back to raw lines instead of vanishing through the parser.
+    """
+    source = (synced or "").strip() or (plain or "").strip()
+    if not source:
+        return []
+    if synced and synced.strip():
+        lines = [line.text for line in parse_lrc(synced)]
+        if lines:
+            return lines
+    return source.splitlines()
+
+
+def search_cache_entries(
+    entries: list[tuple[str, str, str, str]],
+    query: str,
+    limit: int | None = None,
+) -> list[LyricHit]:
+    """Score cached entries against a remembered line. Pure and offline.
+
+    ``entries`` are ``(video_id, artist, title, lyric_text)`` tuples —
+    exactly what ``HearthStore.lyric_entries()`` produces — so callers
+    can hand-fold any source. Zero-score hits are dropped; ties sort by
+    artist, then title.
+    """
+    limit = limit or config.LYRIC_SEARCH_LIMIT
+    hits: list[LyricHit] = []
+    for video_id, artist, title, text in entries:
+        line, score = _best_line_in_text(query, _text_lines("", text))
+        if score <= 0.0:
+            continue
+        hits.append(LyricHit(
+            line=line, score=score, source="cache",
+            artist=artist, title=title, video_id=video_id,
+        ))
+    hits.sort(key=lambda h: (-h.score, h.artist.lower(), h.title.lower()))
+    return hits[: max(1, int(limit))]
+
+
+def search_cache(store, query: str, limit: int | None = None) -> list[LyricHit]:
+    """The offline leg: search the player's own lyrics cache."""
+    try:
+        entries = store.lyric_entries()
+    except Exception as exc:  # noqa: BLE001 - a broken cache is an empty shelf
+        log.info("lyric cache read failed: %s", exc)
+        return []
+    return search_cache_entries(entries, query, limit=limit)
+
+
+def search_online(
+    query: str,
+    limit: int | None = None,
+    timeout: int | None = None,
+) -> list[LyricHit]:
+    """The LRCLIB leg: keyless sweep for the remembered line. Never raises."""
+    query = (query or "").strip()
+    if not query:
+        return []
+    limit = limit or config.LYRIC_SEARCH_LIMIT
+    timeout = timeout or config.LRCLIB_TIMEOUT
+    payload = _http_get_json(_query_url("search", q=query), timeout)
+    if not isinstance(payload, list):
+        return []
+    hits: list[LyricHit] = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        line, score = _best_line_in_text(
+            query, _text_lines(item.get("plainLyrics") or "",
+                                item.get("syncedLyrics") or "")
+        )
+        if score <= 0.0:
+            continue
+        hits.append(LyricHit(
+            line=line, score=score, source="lrclib",
+            artist=(item.get("artistName") or "").strip(),
+            title=(item.get("trackName") or "").strip(),
+        ))
+    hits.sort(key=lambda h: (-h.score, h.artist.lower(), h.title.lower()))
+    return hits[: max(1, int(limit))]

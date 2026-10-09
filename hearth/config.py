@@ -181,6 +181,15 @@ PODCAST_UPDATE_HOURS = 12       # podcast feed refresh cadence
 PROMPT_QUERY_LIMIT = 3          # search queries assembled per natural-language prompt
 PROMPT_TRACKS_PER_QUERY = 10    # candidates pulled per prompt query
 
+# --- v0.8.0 engine work, wave 2 (Room 6.4 lyric search, Room 8.2/8.3 reach) ---
+LYRICS_CACHE_MAX = 600          # cached LRCLIB payloads kept for offline line search
+LYRIC_SEARCH_LIMIT = 12         # hits returned per lyrics-line search
+
+# --- wave 2 add-ons: the Welcome Mat + the party inbox ---
+IMPORT_MAX_TRACKS = 1000        # parsed songs accepted per Spotify import
+PARTY_INBOX_MAX = 50            # pending guest suggestions the host keeps
+ENHANCE_SIZE = 5                # default tracks sprinkled by the Enhance service
+
 VERSION = "0.7.2"
 
 REPEAT_OFF = "off"
