@@ -27,6 +27,30 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (no LLM in the loop, zero-network fallback always exists), with
   round-robin, dedupe, and per-query failure isolation in assembly.
 - 60 new headless tests covering the four engine rooms (706 total).
+- **Room 6.4 groundwork — lyrics-line search**: a capped
+  `lyrics_cache` table in the store plus scoring and search in
+  `hearth/lyrics.py` — the offline leg (`search_cache`) works with the
+  network unplugged, the keyless LRCLIB leg (`search_online`) sweeps
+  for lines nobody has played yet, and both return ranked `LyricHit`s
+  without ever raising.
+- **Room 8.2 groundwork — party suggestions**: `hearth/remote.py`
+  grows a bounded, dedupe-bumping `SuggestionInbox`, a token-gated
+  `/api/suggest` route, a paste-anything `parse_video_id`, and a
+  "Suggest a song for the host" card on the remote page. Host playback
+  stays authoritative — guests can only whisper into the inbox.
+- **Room 8.3 groundwork — Windows SMTC shim**: `hearth/smtc.py` — pure
+  `metadata_map` / `timeline_map` / `button_command` mappers and a
+  fake-bus `SmtcService`, mirroring the MPRIS guarded-import
+  discipline (silent no-op wherever winsdk is absent).
+- **The Welcome Mat — Spotify playlist importer**: `hearth/switchboard.py`
+  — parses Spotify JSON exports, Exportify CSVs, and embed-page HTML;
+  cleans video-noise, queries under the lead artist, collapses
+  duplicate videos, and files an honest `ImportReport` into a real
+  playlist. No login, no keys, no crawler.
+- **Playlist Enhance**: `hearth/enhance.py` — the one-tap sprinkle
+  with per-pick seed attribution ("radio from …") and store
+  integration.
+- 75 new headless tests (781 total).
 
 ## [0.1.0] — earlier
 

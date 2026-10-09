@@ -4,8 +4,11 @@
 > [README](README.md). It is revisited every release — waves get promoted,
 > re-scoped, or retired, but the fire never gets a "maybe".
 >
-> Last stoked: **2026-10-09** (v0.7.2 shipped; v0.8.0 "The Long Winter Nights"
-> and v0.9.0 "The Mindful Flame" charted). Earlier, by crew decision, every wave was folded into
+> Last stoked: **2026-10-09** (v0.7.2 shipped; v0.8.0 "The Long Winter
+> Nights" and v0.9.0 "The Mindful Flame" charted; wave-2 engines —
+> lyric-line search, the party suggestion inbox, the SMTC shim, the
+> Welcome Mat importer, and Playlist Enhance — landed behind the
+> charted rows, 781 tests green). Earlier, by crew decision, every wave was folded into
 > **one main version** — all four themes, one fire, built in order. Every
 > add-on discussed with the crew has a row here; nothing lives only in a
 > chat log anymore.
@@ -366,6 +369,13 @@ collaborative spark.*
    quietly appends three tracks from the current radio signal, marked
    as suggestions and one-tap removable. *(accepts: off by default,
    suggested rows visually distinct, never interrupts manual queueing)*
+5. **Playlist Enhance** *(built, wave 2)* — a one-tap sprinkle: the
+   playlist's most-frequent-artist seed asks the radio for a few more
+   tracks like the ones already burning; every pick carries its seed
+   ("radio from …"), echoes and duplicates never land, and a shy radio
+   is an honest short list. Engines in `hearth/enhance.py`.
+   *(accepts: deterministic against a fixed suggester, playlist tracks
+   never suggested back, UI wiring pending)*
 
 **Room bar:** every feed is explainable ("because you played …"), every
 feed is dismissible, and none of them ever touch the audio path.
@@ -493,6 +503,14 @@ replaces; none of them adds a dependency on the audio thread.
 4. **window.py decomposition** — the 3.8k-line window becomes view
    modules behind a thin shell before more shelves land. *(accepts:
    no behavior change, smoke suite green, imports documented)*
+5. **Playlist importer — the Welcome Mat** *(built, wave 2)* — move in
+   without retyping: paste a Spotify JSON export, an Exportify CSV, or
+   an embed-page HTML, and Hearth matches every song on YT Music
+   (video-noise cleaned, lead-artist queries, duplicates collapsed)
+   into a real playlist with an honest receipt. Engines in
+   `hearth/switchboard.py`. *(accepts: never raises on a bad paste,
+   unmatched songs are listed not hidden, no Spotify login or keys,
+   UI wiring pending)*
 
 **Room bar:** small rows still land with headless tests; the sync
 bridge never sees a key until the user types it.
