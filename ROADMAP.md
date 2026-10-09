@@ -4,8 +4,8 @@
 > [README](README.md). It is revisited every release — waves get promoted,
 > re-scoped, or retired, but the fire never gets a "maybe".
 >
-> Last stoked: **2026-09-18** (v0.7.2 shipped; v0.8.0 "The Long Winter Nights"
-> charted). Earlier, by crew decision, every wave was folded into
+> Last stoked: **2026-10-09** (v0.7.2 shipped; v0.8.0 "The Long Winter Nights"
+> and v0.9.0 "The Mindful Flame" charted). Earlier, by crew decision, every wave was folded into
 > **one main version** — all four themes, one fire, built in order. Every
 > add-on discussed with the crew has a row here; nothing lives only in a
 > chat log anymore.
@@ -26,6 +26,7 @@
 | v0.7.1 | Smarts & reach | smart shelves (Most played, Recently loved, Rare gems), Rewind story, phone remote (LAN web remote) |
 | v0.7.2 | Ember tending | the completers: ☕ café ambience, per-track volume nudges, play-count-weighted smart shuffle, per-leg fetch counters in diagnostics, the shareable Rewind card (📋 copy + 🖼 save-PNG) |
 | v0.8.0 | The Long Winter Nights *(charted)* | the Sound Forge (EQ, loudness, karaoke, gapless), the Memory Palace (Rewind, rules, scrobbles, lyrics search, cache), Around the Fire (ambient mode, visualizer, share cards), the Far Reaches (web remote, parties, SMTC), the Open Hearth (gallery, docs, community kit) |
+| v0.9.0 | The Mindful Flame *(charted)* | the Ember Feed (weekly mix, release radar, daylist, queue autocomplete), the Long Arm (remote v2, device handoff, cast), the Pantry (stream cache, pre-fetch, offline replays), the Broadcast Tower (podcasts), the Parlor (collab playlists, Blend), the Wise Fire (prompt playlists, voice search, auto-tag), the Small Hours (folders, quality picker, YTM sync bridge) |
 
 646 tests and counting, headless on a 3 OS × 2 Python CI matrix. Every
 network layer is *never-raises*; the UI never blocks on the world.
@@ -331,6 +332,173 @@ standing guardrails.
 
 ---
 
+## 🔮 v0.9.0 — The Mindful Flame *(the next wave — charted 2026-10-09)*
+
+*The wave that closes the last real gap to the big commercial players:
+the hearth should not only play what you loved — it should know what
+you'll love next, follow you around the house, and keep singing when
+the Wi-Fi doesn't. Seven rooms, same rules as always.*
+
+### 🔥 Room 10 — The Ember Feed
+
+*Spotify calls it Discover Weekly. Here it burns local-first: your play
+log is the kindling, and an opt-in ListenBrainz bridge adds the
+collaborative spark.*
+
+1. **Weekly Ember Feed** — every Friday the hearth lays a fresh
+   30-track mix: heavy rotation that's cooling off, kindred artists
+   from the v0.6.1 pages, deep cuts from your own history. Computed on
+   the job pool from the SQLite play log; an opt-in ListenBrainz
+   recommendations bridge (open API, one token) enriches it when the
+   local signal is thin. *(accepts: deterministic against a fixed log
+   snapshot in tests, bridge failure degrades to local-only, refresh
+   never blocks the UI)*
+2. **Release Radar** — follow artists straight from their pages (a ❤️
+   on the artist header); a weekly sweep polls YTM for new releases
+   and pins a "new since your last listen" shelf on Home.
+   *(accepts: sweep on the job pool, per-artist last-seen watermark,
+   honest empty state)*
+3. **The Daylist** — the day has a sound: morning warm, midnight slow.
+   An hour-of-day × day-of-week model over the history table builds a
+   mix that follows your clock. *(accepts: pure SQL over existing
+   rows, cold start falls back to On Repeat, zero network)*
+4. **Queue autocomplete** — when the queue runs dry, the hearth
+   quietly appends three tracks from the current radio signal, marked
+   as suggestions and one-tap removable. *(accepts: off by default,
+   suggested rows visually distinct, never interrupts manual queueing)*
+
+**Room bar:** every feed is explainable ("because you played …"), every
+feed is dismissible, and none of them ever touch the audio path.
+
+### 📡 Room 11 — The Long Arm
+
+*The hearth follows you around the house. Spotify Connect's shape, zero
+accounts, LAN only.*
+
+1. **Web remote v2** — the LAN page grows from a transport strip into a
+   full client: browse shelves, search, "send to queue", volume and
+   queue reorder — served by the same local server, paired by QR
+   token. *(accepts: headless API tests for every endpoint,
+   token-paired first scan, no WAN exposure ever)*
+2. **Device handoff** — mDNS discovery between desktop instances;
+   "play here" carries the queue and beat-position to another machine
+   running Hearth. Close the laptop, keep the fire. *(accepts: state
+   round-trips exactly, handoff fails soft with a toast, LAN-only
+   binding with a confirm dialog)*
+3. **The cast button** — Chromecast/DLNA output: the audio goes to the
+   speaker, the controls stay at the hearth. *(accepts: graceful
+   failure when no devices answer, stream URL cached per cast session,
+   never blocks the UI thread)*
+
+**Room bar:** the remote server starts only from an explicit user
+action; handoff and cast are transport-only — the audio path never
+forks.
+
+### 🍞 Room 12 — The Pantry
+
+*Spotify's quietest superpower: press play and it's already there. The
+Pantry keeps yesterday's warmth for tomorrow's cold start.*
+
+1. **Smart stream cache** — an LRU cache of resolved streams
+   (configurable size, broom in diagnostics) so replayed tracks start
+   instantly and ride through short drops. *(accepts: a cache hit
+   serves identical playback, size cap honored, safe-while-playing
+   clear)*
+2. **Queue pre-fetch** — the next two queue entries resolve and warm
+   the Pantry while the current song plays, building on the v0.7.0
+   pre-resolve groundwork. *(accepts: zero added latency to controls,
+   pre-fetch failures stay silent)*
+3. **Offline replays** — recently played tracks stay playable when the
+   network is gone; the UI marks what's cached. Honest scope: the
+   Pantry is a replay shelf, not a download store. *(accepts:
+   airplane-mode smoke test, cached-only toggle, per-item origin
+   label)*
+
+**Room bar:** the Pantry never grows past its cap, never fetches on
+its own initiative, and clears with one broom tap.
+
+### 📻 Room 13 — The Broadcast Tower
+
+*The wish-pool podcast shelf graduates: talk radio for the hearth,
+still keyless.*
+
+1. **Podcast engine** — subscribe by RSS URL; episodes surface as
+   tracks with per-episode position memory (the per-track rate memory
+   already fits like a glove). *(accepts: OPML import/export, a dead
+   feed is an empty shelf with a note, resume lands within 1 s)*
+2. **Discovery shelf** — charts and genres from the open iTunes
+   podcast index; search maps to the same index. *(accepts: no keys,
+   no accounts, results cached in the Pantry)*
+3. **Listener comforts** — chapter markers where the feed provides
+   them, silence-skip on the mpv core, and the global speed dial
+   respected per-show. *(accepts: DSP comforts degrade cleanly when
+   the backend can't)*
+
+**Room bar:** podcasts never block music shelves; playback plumbing
+stays 100% shared with music.
+
+### 🫂 Room 14 — The Parlor
+
+*Music is a shared fire. The party link becomes a place to stay.*
+
+1. **Collaborative playlists** — the v0.8 party link grows a second
+   mode: guests add tracks to a host playlist, the host keeps veto.
+   *(accepts: host-authoritative merge, works from the stock web
+   remote, degrades to solo when peers vanish)*
+2. **Blend** — two hearths exchange anonymized play-count JSON over
+   the link; both get a shared mix shelf. No accounts, no cloud, one
+   file. *(accepts: the export carries no identifiers unless the user
+   adds a name, round-trip tested, the mix recomputes weekly)*
+
+**Room bar:** nothing leaves the LAN unless the user prints the file;
+guest actions can never pause the host's music.
+
+### 🧙 Room 15 — The Wise Fire
+
+*Cozy intelligence — the hearth thinks out loud, locally, and never
+pretends to be a cloud.*
+
+1. **Prompt playlists** — type "rainy midnight study"; the words map
+   to YTM mood/search queries and your own tags, and a mix assembles.
+   No LLM required; an optional local model sharpens it later.
+   *(accepts: zero-network fallback path, the result is an editable
+   playlist, never blocks the UI)*
+2. **Voice search** — a local whisper.cpp pass turns "play something
+   calm" into a search. The model downloads on explicit opt-in only.
+   *(accepts: off by default, a visible mic indicator, graceful
+   failure back to the search box)*
+3. **Local-file auto-tagging** — Chromaprint fingerprints + AcoustID +
+   MusicBrainz clean up the 📁 Local tab: right artist, right title,
+   no more "Track 07". *(accepts: keyless services only, per-file
+   undo, batching on the job pool)*
+
+**Room bar:** every thinking feature degrades to the manual path it
+replaces; none of them adds a dependency on the audio thread.
+
+### 🌙 Room 16 — The Small Hours
+
+*The tending shelf: small rows that make 1.0 feel inevitable.*
+
+1. **Playlist folders & tags** — group playlists, tag tracks, filter
+   the Library by both. *(accepts: storage migration tested,
+   drag-to-folder in the panel)*
+2. **Quality picker + stats-for-nerds** — preferred bitrate and a live
+   codec/bitrate overlay on the player bar. *(accepts: the picker
+   never interrupts playback, the overlay toggles from Ctrl+K)*
+3. **YT Music playlist sync bridge** *(opt-in)* — push/pull Hearth
+   playlists to a YT Music account so they surface on phones. The
+   keyed-bridge rule applies: opt-in, never gating playback.
+   *(accepts: full round-trip test, conflict = local wins, sign-in
+   lives in settings only)*
+4. **window.py decomposition** — the 3.8k-line window becomes view
+   modules behind a thin shell before more shelves land. *(accepts:
+   no behavior change, smoke suite green, imports documented)*
+
+**Room bar:** small rows still land with headless tests; the sync
+bridge never sees a key until the user types it.
+
+---
+
 ## 🌱 Wish pool
 
 *Not scheduled, not forgotten — promoted into a room when the fire is ready:*
@@ -341,7 +509,8 @@ standing guardrails.
   onboarding)*
 - ✅ Local music library side-by-side with YT Music shelves — *(shipped in
   v0.7.0 as the 📁 Local tab + folder scanner)*
-- Podcasts & audiobooks shelf (per-track speed memory makes this sing)
+- ✅ Podcasts & audiobooks shelf (per-track speed memory makes this
+  sing) — *(promoted into v0.9 Room 13 — The Broadcast Tower)*
 - Listening parties — share a queue link, synced "next track" voting —
   *(promoted into v0.8 Room 8 — The Far Reaches)*
 - ✅ Mini-visualizer in the player bar (palette-colored, GPU-cheap) —
@@ -360,3 +529,7 @@ standing guardrails.
 - New in v0.8: **audio DSP may add latency to *start*, never to
   *control*** — seek/pause/volume respond instantly even while the Forge
   is churning.
+- New in v0.9: **reach features bind to the LAN by default** — WAN
+  exposure requires an explicit, confirmed opt-in; the Pantry never
+  fetches on its own initiative; every feed is explainable and
+  dismissible.
