@@ -106,6 +106,11 @@ CREATE TABLE IF NOT EXISTS lyrics_cache (
     cached_at  REAL NOT NULL DEFAULT (unixepoch('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_lyrics_cached ON lyrics_cache (cached_at DESC);
+CREATE TABLE IF NOT EXISTS sound_settings (
+    id         INTEGER PRIMARY KEY CHECK (id = 1),
+    payload    TEXT NOT NULL DEFAULT '{}',
+    saved_at   REAL NOT NULL DEFAULT (unixepoch('now'))
+);
 """
 
 # Bare URLs in an .m3u carry the video id in a v= query parameter.
@@ -1214,3 +1219,29 @@ class HearthStore:
         cur = self._db.execute("DELETE FROM lyrics_cache")
         self._db.commit()
         return int(cur.rowcount or 0)
+
+    # --- sound settings (the forge bench remembers its knobs) ---
+
+    def save_sound_settings(self, payload: dict) -> None:
+        """Store the SoundState dict (one row, id=1, replaced wholesale)."""
+        blob = json.dumps(payload or {}, ensure_ascii=False)
+        self._db.execute(
+            "INSERT INTO sound_settings (id, payload) VALUES (1, ?)"
+            " ON CONFLICT(id) DO UPDATE SET payload = excluded.payload,"
+            " saved_at = unixepoch('now')",
+            (blob,),
+        )
+        self._db.commit()
+
+    def sound_settings(self) -> dict:
+        """The stored sound dict, or {} when nothing was saved yet."""
+        row = self._db.execute(
+            "SELECT payload FROM sound_settings WHERE id = 1"
+        ).fetchone()
+        if not row:
+            return {}
+        try:
+            data = json.loads(row[0])
+            return data if isinstance(data, dict) else {}
+        except (ValueError, TypeError):
+            return {}
