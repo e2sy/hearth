@@ -2,7 +2,7 @@
 sound panel — the engines made visible. Built offscreen, tested headless."""
 
 import pytest
-from PyQt6.QtWidgets import QPushButton
+from PyQt6.QtWidgets import QLabel, QPushButton
 
 from hearth.jobs import EnhanceJob, ImportJob
 from hearth.storage import HearthStore
@@ -153,3 +153,57 @@ def test_import_dialog_default_format_is_auto(qapp):
 
     dialog = ImportDialog()
     assert dialog.format_choice() == "auto"
+
+
+# --- the 🎉 party inbox dialog --------------------------------------------------
+
+
+def _inbox_with_two():
+    from hearth.remote import SuggestionInbox
+
+    box = SuggestionInbox()
+    box.push({"video_id": "aaaaaaaaaaa", "title": "Guest song", "artist": "DJ Ember"})
+    box.push({"video_id": "bbbbbbbbbbb", "title": "Second pick"})
+    return box
+
+
+def test_party_dialog_lists_pending_guests(qapp):
+    from hearth.party_dialog import PartyInboxDialog
+
+    dialog = PartyInboxDialog(_inbox_with_two())
+    assert "2 guest suggestion(s)" in dialog._head.text()
+    labels = [w.text() for w in dialog.findChildren(QLabel)
+              if "🎵" in (w.text() or "")]
+    assert any("Guest song" in t for t in labels)
+    assert any("DJ Ember" in t for t in labels)
+
+
+def test_party_dialog_accept_emits_and_empties(qapp):
+    from hearth.party_dialog import PartyInboxDialog
+
+    box = _inbox_with_two()
+    dialog = PartyInboxDialog(box)
+    accepted = []
+    dialog.accept_requested.connect(accepted.append)
+    queue_btns = [b for b in dialog.findChildren(QPushButton) if "Queue" in b.text()]
+    assert len(queue_btns) == 2
+    queue_btns[0].click()                    # the first guest's pick
+    assert len(accepted) == 1
+    assert accepted[0]["video_id"] == "aaaaaaaaaaa"
+    assert len(box) == 1                     # the pick left the inbox
+    queue_btns[1].click()                    # the second guest's pick
+    assert len(accepted) == 2
+    assert len(box) == 0
+    assert "empty" in dialog._head.text().lower()
+
+
+def test_party_dialog_skip_leaves_nothing_behind(qapp):
+    from hearth.party_dialog import PartyInboxDialog
+
+    box = _inbox_with_two()
+    dialog = PartyInboxDialog(box)
+    skip_btns = [b for b in dialog.findChildren(QPushButton) if b.text() == "Skip"]
+    skip_btns[0].click()
+    skip_btns[1].click()
+    assert len(box) == 0
+    assert "empty" in dialog._head.text().lower()

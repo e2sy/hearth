@@ -65,8 +65,9 @@ from .lyrics_overlay import LyricsOverlay
 from .models import Album, Artist, Collection, Track
 from .mpris import MPRIS_AVAILABLE, MprisService
 from .panel import FloatingPanel
+from .party_dialog import PartyInboxDialog
 from .player import PlaybackCore
-from .remote import RemoteServer
+from .remote import RemoteServer, SuggestionInbox
 from .storage import HearthStore
 from .theme import lyrics_font
 from .toast import NowPlayingToast
@@ -432,6 +433,14 @@ class Hearth:
         self.command_palette = CommandPalette(palette_key, parent=self.window)
         # the phone remote: created lazily on first 📱, one session per run
         self._remote: RemoteServer | None = None
+        # the party hat: guest suggestions from the LAN remote (created with it)
+        self._party_inbox: SuggestionInbox | None = None
+        self._party_dialog: PartyInboxDialog | None = None
+        self._party_seen = 0
+        self._party_poll = QTimer(self.qapp)
+        self._party_poll.setInterval(4000)
+        self._party_poll.timeout.connect(self._check_party_inbox)
+        self._party_poll.start()
         # wake-up alarm: one-shot, tray-scheduled, fades the room back in
         self.alarm = AlarmController(parent=self.qapp)
         self.alarm.fired.connect(self._fire_alarm)
@@ -1283,6 +1292,8 @@ class Hearth:
             CommandAction("Mute / Unmute", self._toggle_mute, "silence volume"),
             CommandAction("Toggle favorite", self._palette_toggle_favorite,
                           "pin heart like"),
+            CommandAction("Party suggestions", self._review_party_suggestions,
+                          "party guest inbox suggest review queue"),
         ]
         view_labels = {
             "home": "Go to Home",
@@ -1524,6 +1535,15 @@ class Hearth:
                 elif name == "vol" and volume is not None:
                     core.set_volume(max(0.0, min(1.0, float(volume))))
 
+            def suggest(self_inner, item: dict) -> bool:
+                """The party hat: a guest's paste lands in the host's inbox."""
+                if self._party_inbox is None:
+                    self._party_inbox = SuggestionInbox()
+                return self._party_inbox.push(item)
+
+            def pending_suggestions(self_inner) -> int:
+                return len(self._party_inbox) if self._party_inbox else 0
+
         return Bridge()
 
     def _open_remote(self) -> None:
@@ -1598,6 +1618,54 @@ class Hearth:
         if report.playlist_id:
             self.window.refresh_playlists()
             self.window.open_playlist(report.playlist_id)
+
+    # --- the party hat: guest suggestions -----------------------------------
+
+    def _check_party_inbox(self) -> None:
+        """Nudge the host when guests suggest songs (and refresh an open view)."""
+        if not self._party_inbox:
+            return
+        pending = len(self._party_inbox)
+        if pending == self._party_seen:
+            if self._party_dialog is not None:
+                self._party_dialog.refresh()
+            return
+        self._party_seen = pending
+        if self._party_dialog is not None:
+            self._party_dialog.refresh()
+        if pending:
+            self.surface.set_status(
+                f"🎉 {pending} guest suggestion(s) waiting — Ctrl+K → 'Party suggestions'"
+            )
+
+    def _review_party_suggestions(self) -> None:
+        """Open (or raise) the guest-suggestion review surface."""
+        if self._party_inbox is None:
+            self._party_inbox = SuggestionInbox()
+        if self._party_dialog is None:
+            self._party_dialog = PartyInboxDialog(self._party_inbox, parent=self.window)
+            self._party_dialog.accept_requested.connect(self._accept_party_suggestion)
+            self._party_dialog.empty.connect(self._party_box_emptied)
+        self._party_dialog.refresh()
+        self._party_dialog.show()
+        self._party_dialog.raise_()
+        self._party_dialog.activateWindow()
+
+    def _accept_party_suggestion(self, entry: dict) -> None:
+        """A guest's pick joins the queue — the host stays in charge."""
+        track = Track(
+            video_id=str(entry.get("video_id") or ""),
+            title=str(entry.get("title") or "Guest pick"),
+            artist=str(entry.get("artist") or ""),
+        )
+        if not track.video_id:
+            return
+        self._enqueue(track)
+        self.surface.set_status(f"🎉 Queued {track.title} — the party asked nicely")
+
+    def _party_box_emptied(self) -> None:
+        self._party_seen = 0
+        self.surface.set_status("Party inbox cleared — every pick had its answer")
 
     def _glow_mix(self) -> None:
         """✨ One tap in the On Repeat shelf: your rotation plus kindred fire."""
