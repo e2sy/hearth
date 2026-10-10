@@ -69,12 +69,12 @@ class PartyInboxDialog(QDialog):
         inner = QHBoxLayout(row)
         inner.setContentsMargins(0, 4, 0, 4)
         label = QLabel(
-            f"🎵 {entry.get('title') or entry.get('video_id')}"
+            str(entry.get('title') or entry.get('video_id'))
             + (f" — {entry['artist']}" if entry.get("artist") else "")
         )
         label.setProperty("rowTitle", True)
         inner.addWidget(label, 1)
-        accept = QPushButton("➕ Queue")
+        accept = QPushButton("Queue")
         accept.setToolTip("Add this guest pick to the queue now")
         accept.clicked.connect(lambda _=False: self._accept(entry, row))
         inner.addWidget(accept)

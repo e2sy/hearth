@@ -34,7 +34,7 @@ def _row_count(store, table: str):
 
 def _identity_lines() -> list[str]:
     lines = [
-        f"🔥 {config.APP_NAME} diagnostics",
+        f"{config.APP_NAME} diagnostics",
         f"version:   {config.VERSION}",
         f"platform:  {platform.platform()}",
         f"python:    {sys.version.split()[0]}",
@@ -93,7 +93,7 @@ def _resilience_lines(resilience) -> list[str]:
         lines: list[str] = ["catalogue resilience:"]
         applied = getattr(resilience, "_APPLIED", None)
         if applied is not None:
-            state = "applied ✓" if applied else "off"
+            state = "applied" if applied else "off"
             lines.append(f"  junk-card tolerance: {state}")
         counters = getattr(resilience, "counters", None)
         if isinstance(counters, dict) and counters:
@@ -175,5 +175,5 @@ def gather_report(store, resilience=None, fetch_counters=None) -> str:
         if section:
             lines.extend(section)
             lines.append("")
-    lines.append("keep the fire warm 🔥")
+    lines.append("keep the fire warm")
     return "\n".join(lines)

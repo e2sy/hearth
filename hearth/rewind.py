@@ -21,7 +21,7 @@ from typing import Any, Iterable
 MAX_SCENES = 8          # the story stays a story, not a ledger
 STREAK_MIN = 2          # a "streak" of one day is just a Tuesday
 EMPTY_STORY = [
-    "🕯️ The hearth is unlit — press play, and this page becomes your year.",
+    "The hearth is unlit — press play, and this page becomes your year.",
 ]
 
 
@@ -123,41 +123,41 @@ def build_rewind_story(
     artist_items = list(top_artists or [])
 
     scenes: list[str] = [
-        f"🔥 {plays:,} plays · {minutes:,} minutes · {days_listened} days by the fire"
+        f"{plays:,} plays · {minutes:,} minutes · {days_listened} days by the fire"
     ]
 
     first_play = stats.get("first_play")
     if first_play:
         try:
             begun = datetime.fromisoformat(str(first_play))
-            scenes.append(f"🌱 It all began on {begun.strftime('%B %d, %Y')}")
+            scenes.append(f"It all began on {begun.strftime('%B %d, %Y')}")
         except ValueError:
             pass
 
     if uniques:
-        scenes.append(f"🧭 {uniques:,} different tracks crossed the hearth")
+        scenes.append(f"{uniques:,} different tracks crossed the hearth")
 
     if artist_items:
         name, count = artist_items[0][0], artist_items[0][1]
         if name:
-            scenes.append(f"🎤 {name} owned your year — {count:,} plays")
+            scenes.append(f"{name} owned your year — {count:,} plays")
 
     if track_items:
         track = track_items[0]
         title = getattr(track, "title", "") or "an untitled flame"
         artist = getattr(track, "artist", "") or "an unknown voice"
-        scenes.append(f"🎵 “{title}” — {artist} — was the song you kept returning to")
+        scenes.append(f"“{title}” — {artist} — was the song you kept returning to")
 
     peak = peak_day(day_items)
     if peak and peak[1] > 0:
-        scenes.append(f"🎈 {_fmt_day(peak[0])} burned brightest — {peak[1]} plays in one day")
+        scenes.append(f"{_fmt_day(peak[0])} burned brightest — {peak[1]} plays in one day")
 
     streak = longest_streak(day_items)
     if streak:
-        scenes.append(f"🌌 A {streak}-day streak — the fire never went out")
+        scenes.append(f"A {streak}-day streak — the fire never went out")
 
     month = busiest_month(day_items)
     if month and month[1] > 0:
-        scenes.append(f"🗓️ {_fmt_month(month[0])} was your loudest month — {month[1]:,} plays")
+        scenes.append(f"{_fmt_month(month[0])} was your loudest month — {month[1]:,} plays")
 
     return scenes[:MAX_SCENES]
