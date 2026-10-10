@@ -78,7 +78,7 @@ from .theme import (
     lyrics_font,
     register_custom_palette,
 )
-from .utils import clock, text_match
+from .utils import clock, fire_greeting, text_match
 
 
 # ----------------------------------------------------------------- rows
@@ -264,7 +264,8 @@ class HomeView(QWidget):
             self._shelves[name] = Shelf(palette, name)
             self._body_lay.addWidget(self._shelves[name])
             self._shelves[name].setVisible(False)
-        self._hero = QLabel("Good fire to sit by. What are we playing?")
+        self._hero = QLabel(
+            f"{fire_greeting(datetime.now().hour)}. What are we playing?")
         self._hero.setProperty("hero", True)
         self._body_lay.insertWidget(0, self._hero)
         # the one-tap ritual lives where the rotation it grows from lives
