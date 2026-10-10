@@ -209,9 +209,12 @@ def test_widget_transport_buttons_reemit(qapp):
 
 
 def test_widget_expand_via_button_and_double_click(qapp):
+    from PyQt6.QtTest import QTest
+
     w, calls = _make_widget()
+    w.show()
     w._expand.click()
-    w.mouseDoubleClickEvent(None)
+    QTest.mouseDClick(w, Qt.MouseButton.LeftButton)   # a real double-click event
     assert calls["expand"] == 2
 
 
