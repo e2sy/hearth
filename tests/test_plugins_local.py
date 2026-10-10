@@ -263,7 +263,7 @@ def test_boot_seeded_plugin_registers_palette_and_shelf(tmp_path, qapp):
     job.signals.finished.connect(capture.append)
     job.run()
     hearth._on_plugin_shelf(capture[0])
-    shelf = hearth.window.home_view.shelf("🔌 Plugins")
+    shelf = hearth.window.home_view.shelf("Plugins")
     assert [t.title for t in shelf._tracks] == ["Plugin Song"]
     assert shelf.isVisibleTo(hearth.window.home_view)
     hearth.shutdown()
@@ -300,7 +300,7 @@ def test_plugin_shelf_job_merges_tracks_and_reports_failures(tmp_path, qapp):
     notes: list[str] = []
     hearth.window.set_status = notes.append
     hearth._on_plugin_shelf((results, failures))
-    shelf = hearth.window.home_view.shelf("🔌 Plugins")
+    shelf = hearth.window.home_view.shelf("Plugins")
     titles = [t.title for t in shelf._tracks]
     assert "P1" in titles                              # dict coerced
     assert "Never Gonna Give You Up" in titles         # Track passed through

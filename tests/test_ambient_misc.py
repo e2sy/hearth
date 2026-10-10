@@ -266,10 +266,10 @@ def test_app_ambient_switch_levels_and_off(tmp_path, qapp):
     hearth.ambient = ch                              # inject the fake hardware
     hearth._set_ambient("campfire", 0.35)
     assert ch.kind == "campfire" and ch.level == 0.35
-    assert notes[-1] == "Ambient: 🏕 Campfire at 35%"
+    assert notes[-1] == "Ambient: Campfire at 35%"
     hearth._set_ambient("rain", 0.5)                 # switching stops the old
     assert ch.kind == "rain" and len(made) == 2 and made[0].stopped
-    assert notes[-1] == "Ambient: 🌧 Rain at 50%"
+    assert notes[-1] == "Ambient: Rain at 50%"
     hearth._set_ambient("rain", 0.7)                 # same kind: level only
     assert ch.kind == "rain" and ch.level == 0.7 and len(made) == 2
     hearth._set_ambient(None, 0.0)

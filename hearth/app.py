@@ -89,9 +89,9 @@ _INFLIGHT: set = set()
 
 # Tray labels for the ambient soundscapes (kind -> display name).
 AMBIENT_KIND_LABELS = {
-    "campfire": "🏕 Campfire",
-    "cafe": "☕ Café",
-    "rain": "🌧 Rain",
+    "campfire": "Campfire",
+    "cafe": "Café",
+    "rain": "Rain",
 }
 
 
@@ -609,25 +609,25 @@ class Hearth:
             "next": self._make_action(_i18n_label("next", "Next"), self.core.next),
             "prev": self._make_action(_i18n_label("previous", "Previous"), self.core.previous),
             "show": self._make_action("Show Hearth", self._summon),
-            "diag": self._make_action("🩺 Diagnostics", self._show_diagnostics),
+            "diag": self._make_action("Diagnostics", self._show_diagnostics),
         }
         if config.UPDATE_CHECK_ENABLED:
             actions["update"] = self._make_action(
-                "🕯️ Newer hearth — don't whisper again", self._dismiss_update_whisper
+                "Newer hearth — don't whisper again", self._dismiss_update_whisper
             )
         if config.DISCORD_RPC_ENABLED:
             # the flag gates the action's existence; importability gates its
             # use (a grayed row beats a toggle that can never connect)
             discord_act = self._make_action(
-                "🎮 Discord Rich Presence", self._on_discord_action)
+                "Discord Rich Presence", self._on_discord_action)
             discord_act.setCheckable(True)
             discord_act.setEnabled(DISCORD_AVAILABLE)
             actions["discord"] = discord_act
-        lyrics_act = self._make_action("🪧 Desktop lyrics", self._toggle_overlay)
+        lyrics_act = self._make_action("Desktop lyrics", self._toggle_overlay)
         lyrics_act.setCheckable(True)
         lyrics_act.setChecked(self._overlay_on)
         actions["lyrics"] = lyrics_act
-        sleep_menu = QMenu("⏾ Sleep timer")
+        sleep_menu = QMenu("Sleep timer")
         for label, minutes in (("Off", 0), ("15 minutes", 15),
                                ("30 minutes", 30), ("45 minutes", 45), ("60 minutes", 60)):
             act = QAction(label, sleep_menu)
@@ -635,7 +635,7 @@ class Hearth:
                 lambda _checked, m=minutes: self.core.set_sleep_timer(m or None)
             )
             sleep_menu.addAction(act)
-        alarm_menu = QMenu("⏰ Wake-up")
+        alarm_menu = QMenu("Wake-up")
         for label, minutes in (("Off / cancel", 0), ("15 minutes", 15),
                                ("30 minutes", 30), ("45 minutes", 45), ("60 minutes", 60)):
             act = QAction(label, alarm_menu)
@@ -644,12 +644,11 @@ class Hearth:
             )
             alarm_menu.addAction(act)
         # ambient: one soundscape at a time, each with its own level dial
-        ambient_menu = QMenu("🌫️ Ambient")
+        ambient_menu = QMenu("Ambient")
         ambient_menu.addAction(
             self._make_action("Off", lambda: self._set_ambient(None, 0.0))
         )
-        for kind_label, kind in (("🏕 Campfire", "campfire"), ("☕ Café", "cafe"),
-                                 ("🌧 Rain", "rain")):
+        for kind_label, kind in AMBIENT_KIND_LABELS.items():
             sub = QMenu(kind_label, ambient_menu)
             for frac in config.AMBIENT_LEVELS:
                 act = QAction(f"{int(round(frac * 100))}%", sub)
@@ -1014,10 +1013,10 @@ class Hearth:
             view.set_collections(list(albums))
             self.surface.set_status(f"{len(albums)} new releases")
         elif mode == "trending":
-            view.set_track_list("🔥 Trending now", list(trending))
+            view.set_track_list("Trending now", list(trending))
             self.surface.set_status(f"{len(trending)} trending tracks")
         else:
-            view.set_track_list("🎬 New music videos", list(videos))
+            view.set_track_list("New music videos", list(videos))
             self.surface.set_status(f"{len(videos)} new videos")
 
     def _discover_collection(self, item) -> None:
@@ -1055,18 +1054,18 @@ class Hearth:
     def _start_world_station(self, genre) -> None:
         """A World Explorer chip (or the dice) was clicked: tune that dial."""
         if not self._enable_streaming:
-            self.surface.set_status(f"🗺️ {genre.label} station (test mode)")
+            self.surface.set_status(f"{genre.label} station (test mode)")
             return
         self._world_spin += 1
         query = world.station_query(genre, spin=self._world_spin)
         self.window.world_view.set_status(
-            f"Tuning {genre.emoji} {genre.label} — “{query}”"
+            f"Tuning {genre.label} — “{query}”"
         )
-        self.surface.set_status(f"🗺️ Tuning into {genre.label}…")
+        self.surface.set_status(f"Tuning into {genre.label}…")
         job = WorldJob(self.catalog, query, genre.label)
         job.signals.finished.connect(self._on_world_ready)
         job.signals.failed.connect(
-            lambda label: self.surface.set_status(f"🗺️ {label}: could not tune in")
+            lambda label: self.surface.set_status(f"{label}: could not tune in")
         )
         self._launch(job)
 
@@ -1075,11 +1074,11 @@ class Hearth:
         label, tracks = payload
         if not tracks:
             self.surface.set_status(
-                f"🗺️ {label}: static on this frequency — roll the dice"
+                f"{label}: static on this frequency — roll the dice"
             )
             return
         self.window.show_search_results(list(tracks))
-        self.window.search_view.set_header(f"🗺️ {label} — world station")
+        self.window.search_view.set_header(f"{label} — world station")
         self.window.show_view("search")
         self.surface.set_status(f"{label}: {len(tracks)} tracks queued")
         self.core.start_queue(list(tracks), 0)
@@ -1441,7 +1440,7 @@ class Hearth:
             tracks.extend(source_tracks)
         self.window.set_home_shelf(plugins.SHELF_NAME, tracks)
         for name, error in failures:
-            self.surface.set_status(f"🔌 {name}: shelf source failed ({error})")
+            self.surface.set_status(f"{name}: shelf source failed ({error})")
 
     # --- local library (v0.7.0): scan your own folders ---
 
@@ -1490,7 +1489,7 @@ class Hearth:
         self.window.set_local_tracks(self.store.local_tracks())
         tail = " · list capped" if stats.get("truncated") else ""
         self.surface.set_status(
-            f"📁 Local: {added} added · {updated} updated · "
+            f"Local: {added} added · {updated} updated · "
             f"{stats.get('scanned', 0)} scanned{tail}"
         )
 
@@ -1579,7 +1578,7 @@ class Hearth:
             self._remote.start()
         QMessageBox.information(
             self.window,
-            "📱 Phone remote",
+            "Phone remote",
             "Open this link in your phone's browser (same Wi-Fi):\n\n"
             f"{self._remote.url()}\n\n"
             "The link is the key — anyone who has it can control playback.",
@@ -1608,7 +1607,7 @@ class Hearth:
         if added:
             self.window.open_playlist(playlist_id)
         self.surface.set_status(
-            f"✨ Enhanced — {len(added)} new tracks sprinkled in"
+            f"Enhanced — {len(added)} new tracks sprinkled in"
             if added else "Enhance found nothing new — this playlist already covers its radio"
         )
 
@@ -1656,7 +1655,7 @@ class Hearth:
             self._party_dialog.refresh()
         if pending:
             self.surface.set_status(
-                f"🎉 {pending} guest suggestion(s) waiting — Ctrl+K → 'Party suggestions'"
+                f"{pending} guest suggestion(s) waiting — Ctrl+K → 'Party suggestions'"
             )
 
     def _review_party_suggestions(self) -> None:
@@ -1682,7 +1681,7 @@ class Hearth:
         if not track.video_id:
             return
         self._enqueue(track)
-        self.surface.set_status(f"🎉 Queued {track.title} — the party asked nicely")
+        self.surface.set_status(f"Queued {track.title} — the party asked nicely")
 
     def _party_box_emptied(self) -> None:
         self._party_seen = 0
@@ -1770,7 +1769,7 @@ class Hearth:
         if self.store is not None:
             self.store.save_sound_settings(state.to_dict())
         self.core.set_preamp(state.preamp_db)
-        self.surface.set_status(f"🎚️ {sound_shape.sound_summary(state)}")
+        self.surface.set_status(f"{sound_shape.sound_summary(state)}")
 
     def _glow_mix(self) -> None:
         """✨ One tap in the On Repeat shelf: your rotation plus kindred fire."""
@@ -1830,9 +1829,9 @@ class Hearth:
         random.shuffle(mix)
         if kindred:
             self.surface.set_status(
-                f"✨ Glow Mix: {len(mix)} tracks — your rotation plus kindred fire")
+                f"Glow Mix: {len(mix)} tracks — your rotation plus kindred fire")
         else:
-            self.surface.set_status("✨ Glow Mix: your rotation, straight up")
+            self.surface.set_status("Glow Mix: your rotation, straight up")
         self._play_list(mix)
 
     # --- wake-up alarm (v0.8.0 controls) ---
@@ -1842,7 +1841,7 @@ class Hearth:
         if minutes:
             self.alarm.schedule(minutes)
             self._alarm_poll.start()
-            self.surface.set_status(f"⏰ Wake-up in {minutes} min")
+            self.surface.set_status(f"Wake-up in {minutes} min")
         else:
             self.alarm.cancel()
             self._alarm_poll.stop()
@@ -1860,7 +1859,7 @@ class Hearth:
         self.core.set_volume(0.0)
         if not self.core.is_playing:
             self.core.toggle()   # resume / first-queued behavior, as ever
-        self.surface.set_status("⏰ Rise and shine — the fire is lit")
+        self.surface.set_status("Rise and shine — the fire is lit")
         if self._alarm_fade is None:
             self._alarm_fade = QTimer(self.qapp)
             self._alarm_fade.setInterval(
@@ -2113,16 +2112,16 @@ class Hearth:
             return
         if not on:
             self._disconnect_presence()
-            self.surface.set_status("🎮 Discord presence off")
+            self.surface.set_status("Discord presence off")
             return
         client_id = str(getattr(config, "DISCORD_CLIENT_ID", "") or "").strip()
         if not client_id:
             self.surface.set_status(
-                "🎮 Discord presence: set DISCORD_CLIENT_ID in hearth/config.py first")
+                "Discord presence: set DISCORD_CLIENT_ID in hearth/config.py first")
             return
         if not self.presence.start(client_id):
             self.surface.set_status(
-                "🎮 Discord presence unavailable — is Discord running?")
+                "Discord presence unavailable — is Discord running?")
             return
         self._presence_duration_ms = 0
         self.core.track_changed.connect(self._on_presence_track)
@@ -2131,7 +2130,7 @@ class Hearth:
         track = self.core.engine.current
         if track is not None:
             self._on_presence_track(track)
-        self.surface.set_status("🎮 Discord presence on")
+        self.surface.set_status("Discord presence on")
 
     def _disconnect_presence(self) -> None:
         """Unhook every presence signal and drop the IPC (idempotent)."""
@@ -2329,7 +2328,7 @@ class Hearth:
         theme.set_wallpaper_alpha(self._wallpaper_alpha)
         self.settings.setValue("ui/background", stored)
         self._restyle()
-        self.window.set_status("Background set ✨")
+        self.window.set_status("Background set")
 
     def _clear_background(self) -> None:
         self.window.set_background_image(None)

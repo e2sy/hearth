@@ -46,7 +46,7 @@ _LOCKED_PAGE = """<!doctype html>
 <title>Hearth — locked</title>
 <style>body{font-family:system-ui;background:#14100e;color:#f4e9dd;display:grid;place-items:center;height:100vh;margin:0}
 div{text-align:center}h1{font-size:22px}p{opacity:.7;font-size:14px}</style></head>
-<body><div><h1>🔥 This hearth is locked</h1>
+<body><div><h1>This hearth is locked</h1>
 <p>Open the phone-remote link shown in the Hearth app — the link is the key.</p></div></body></html>
 """
 
@@ -57,29 +57,32 @@ _REMOTE_PAGE = """<!doctype html>
 body{font-family:system-ui;background:#14100e;color:#f4e9dd;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}
 h1{font-size:18px;opacity:.85}.card{background:#1e1713;border-radius:14px;padding:18px;margin:8px;width:min(88vw,420px);box-shadow:0 6px 24px rgba(0,0,0,.5)}
 #title{font-weight:700;font-size:17px}#artist{opacity:.65;font-size:14px;margin-top:2px}
-.row{display:flex;gap:10px;margin-top:14px}button{flex:1;padding:14px 0;font-size:17px;border:0;border-radius:10px;background:#ff7a18;color:#14100e;font-weight:800;cursor:pointer}
+.row{display:flex;gap:10px;margin-top:14px}button{flex:1;padding:14px 0;border:0;border-radius:10px;background:#ff7a18;color:#14100e;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center}
 button.sec{background:#33261d;color:#f4e9dd}input[type=range]{width:100%;accent-color:#ff7a18}
 #pos{opacity:.55;font-size:12px;margin-top:8px}
 </style></head>
-<body><h1>🔥 Hearth remote</h1>
+<body><h1>Hearth remote</h1>
 <div class="card"><div id="title">—</div><div id="artist"></div><div id="pos"></div>
-<div class="row"><button class="sec" onclick="cmd('prev')">⏮</button>
-<button onclick="cmd('toggle')">⏯</button>
-<button class="sec" onclick="cmd('next')">⏭</button></div></div>
+<div class="row"><button class="sec" onclick="cmd('prev')" aria-label="Previous"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M18.5 5.8v12.4a.6.6 0 0 1-.92.5l-8.3-6.2a.6.6 0 0 1 0-1l8.3-6.2a.6.6 0 0 1 .92.5Z" fill="#f4e9dd"/><path d="M5.8 5h2.4v14H5.8Z" fill="#f4e9dd"/></svg></button>
+<button onclick="cmd('toggle')" id="pp" aria-label="Play or pause"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M8.2 5.4v13.2a.7.7 0 0 0 1.06.6l10.2-6.6a.7.7 0 0 0 0-1.2L9.26 4.8a.7.7 0 0 0-1.06.6Z" fill="#14100e"/></svg></button>
+<button class="sec" onclick="cmd('next')" aria-label="Next"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M5.5 5.8v12.4a.6.6 0 0 0 .92.5l8.3-6.2a.6.6 0 0 0 0-1l-8.3-6.2a.6.6 0 0 0-.92.5Z" fill="#f4e9dd"/><path d="M15.8 5h2.4v14h-2.4Z" fill="#f4e9dd"/></svg></button></div></div>
 <div class="card"><input id="vol" type="range" min="0" max="100" value="80" oninput="vol(this.value)"></div>
-<div class="card"><button class="sec" style="width:100%" onclick="suggestSong()">➕ Suggest a song for the host</button></div>
+<div class="card"><button class="sec" style="width:100%" onclick="suggestSong()">Suggest a song for the host</button></div>
 <script>
 const k = new URLSearchParams(location.search).get('k') || '';
+const PP_PLAY = '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M8.2 5.4v13.2a.7.7 0 0 0 1.06.6l10.2-6.6a.7.7 0 0 0 0-1.2L9.26 4.8a.7.7 0 0 0-1.06.6Z" fill="#14100e"/></svg>';
+const PP_PAUSE = '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M7.5 4.8h3v14.4h-3Z" fill="#14100e"/><path d="M13.5 4.8h3v14.4h-3Z" fill="#14100e"/></svg>';
 async function paint(s){document.getElementById('title').textContent=s.title||'Nothing playing';
 document.getElementById('artist').textContent=s.artist||'';
-document.getElementById('pos').textContent=(s.playing?'▶ playing · ':'⏸ paused · ')+(s.upcoming||0)+' queued · volume '+Math.round((s.volume||0)*100)+'%';
+document.getElementById('pp').innerHTML=s.playing?PP_PAUSE:PP_PLAY;
+document.getElementById('pos').textContent=(s.playing?'playing':'paused')+' · '+(s.upcoming||0)+' queued · volume '+Math.round((s.volume||0)*100)+'%';
 const v=document.getElementById('vol');if(document.activeElement!==v)v.value=Math.round((s.volume||0)*100);}
 async function refresh(){try{const r=await fetch('/api/status?k='+encodeURIComponent(k));paint(await r.json());}catch(e){}}
 async function cmd(name){try{const r=await fetch('/api/cmd?k='+encodeURIComponent(k)+'&name='+name);paint((await r.json()).status||{});}catch(e){}}
 async function vol(v){try{await fetch('/api/cmd?k='+encodeURIComponent(k)+'&name=vol&volume='+(v/100));}catch(e){}}
 async function suggestSong(){const t=prompt('Paste a YouTube link (or just the video id):');if(!t)return;
 try{const r=await fetch('/api/suggest?k='+encodeURIComponent(k)+'&video='+encodeURIComponent(t));const j=await r.json();
-alert(j.ok?(j.accepted?'🔥 Suggested — the host will see it.':'Already suggested — the host has it.'):'Nope: '+(j.error||'not possible'));}catch(e){}}
+alert(j.ok?(j.accepted?'Suggested — the host will see it.':'Already suggested — the host has it.'):'Nope: '+(j.error||'not possible'));}catch(e){}}
 refresh();setInterval(refresh,4000);
 </script></body></html>
 """

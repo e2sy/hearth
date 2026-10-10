@@ -293,7 +293,7 @@ def test_discover_view_track_list_page(qapp):
     activated = []
     view.track_activated.connect(lambda t, ctx: activated.append((t, ctx)))
     tracks = [make_track(video_id="aaa"), make_track(video_id="bbb")]
-    view.set_track_list("🔥 Trending now", tracks)
+    view.set_track_list("Trending now", tracks)
     view._track_page.track_activated.emit(tracks[0], tracks)
     assert activated[0][0].video_id == "aaa"
     assert view._body.currentIndex() == 1

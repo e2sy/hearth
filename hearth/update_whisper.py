@@ -38,7 +38,7 @@ FIRST_CHECK_DELAY_S = 60.0     # never block startup: first look ≥60s after bo
 DISMISS_KEY = "update/dismissed_tag"   # QSettings: never nag this tag again
 LAST_CHECK_KEY = "update/last_check"   # QSettings: float epoch of last attempt
 
-WHISPER_MESSAGE = "🕯️ A newer hearth is lit — {tag}"
+WHISPER_MESSAGE = "A newer hearth is lit — {tag}"
 
 _VERSION_PIECE = re.compile(r"\d+")
 

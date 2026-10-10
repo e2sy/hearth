@@ -18,7 +18,7 @@ whose ``register(services)`` function receives a tiny services dict::
 ``register_palette`` wraps ``theme.register_custom_palette`` (fed a palette
 dict; invalid dicts are rejected), and ``register_shelf_source(name, fn)``
 hands hearth a callable that returns a list of Track-shaped dicts — resolved
-on a worker pool and rendered on the home "🔌 Plugins" shelf.
+on a worker pool and rendered on the home "Plugins" shelf.
 
 Versioning: manifests carry a ``"hearth-plugin"`` format number. hearth
 refuses anything it does not speak (currently 1) with a collected warning
@@ -52,7 +52,7 @@ FORMAT_KEY = "hearth-plugin"
 SUPPORTED_VERSION = 1
 
 # The home shelf fed by registered shelf sources.
-SHELF_NAME = "🔌 Plugins"
+SHELF_NAME = "Plugins"
 
 
 @dataclass(frozen=True)

@@ -69,14 +69,15 @@ def render_card(scenes, path, palette_key: str | None = None,
             painter.setFont(body_font)
             y = CARD_MARGIN + 140
             bottom = height - CARD_MARGIN - 40
-            for line in lines:
+            for index, line in enumerate(lines):
                 metrics = painter.fontMetrics()
                 rect = metrics.boundingRect(
                     QRect(0, 0, width - 2 * CARD_MARGIN, 1000),
                     Qt.TextFlag.TextWordWrap, line)
                 if y + rect.height() > bottom:
                     break   # the card ends before the story is embarrassed
-                if line.startswith(("🔥", "🌱", "🧭", "🕯", "📅", "🎯")):
+                # the opening headline glows; the scenes read in plain ink
+                if index == 0:
                     painter.setPen(QColor(pal.accent_soft))
                 else:
                     painter.setPen(QColor(pal.text))

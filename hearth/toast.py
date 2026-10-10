@@ -38,7 +38,7 @@ class NowPlayingToast(QWidget):
         # room for the painted card inset from the translucent window
         layout = QVBoxLayout(self)
         layout.setContentsMargins(14, 10, 14, 10)
-        self._title = QLabel("🔥 Hearth")
+        self._title = QLabel("Hearth")
         self._title.setProperty("header", True)
         self._sub = QLabel("")
         self._sub.setProperty("dim", True)

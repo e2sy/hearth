@@ -399,7 +399,7 @@ def test_whisper_absorb_and_dismiss_suppression(monkeypatch, tmp_path):
     whisper.absorb({"tag_name": "v99.0.0", "html_url": url})
     assert len(heard) == 1
     message, got_url, tag = heard[0]
-    assert "v99.0.0" in message and "🕯️" in message
+    assert "v99.0.0" in message and "newer hearth" in message.lower()
     assert got_url == url and tag == "v99.0.0"
 
     whisper.dismiss("v99.0.0")                       # "don't nag again"
@@ -437,7 +437,7 @@ def test_diagnostics_never_raises_on_empty_or_missing_store(tmp_path):
     assert isinstance(report, str)
     assert "database:" in report
     assert "favorites" in report
-    assert report.strip().endswith("keep the fire warm 🔥")
+    assert report.strip().endswith("keep the fire warm")
     store.close()
     # no store at all — the page still prints, politely
     assert isinstance(gather_report(None, resilience=None), str)
