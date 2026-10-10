@@ -1787,6 +1787,7 @@ class Hearth:
     def _toggle_mini_player(self) -> None:
         """🪟 Pocket hearth: a tiny, draggable, always-on-top transport."""
         if self._mini_window is not None and self._mini_window.isVisible():
+            self._remember_mini_position()
             self._mini_window.hide()
             self.surface.set_status("Pocket hearth closed")
             return
@@ -1812,11 +1813,26 @@ class Hearth:
                 self._mini_window.apply_track(current.title, current.artist)
         self._mini_window.show()
         self._mini_window.raise_()
+        self._restore_mini_position()
         self.surface.set_status("Pocket hearth glowing — drag it anywhere")
+
+    def _restore_mini_position(self) -> None:
+        """Put the pocket back where its owner dragged it last time."""
+        pos = self.settings.value("mini/pos")
+        if pos is not None and hasattr(pos, "x"):
+            screen = self.qapp.primaryScreen().availableGeometry()
+            if screen.intersects(pos):
+                self._mini_window.move(pos)
+
+    def _remember_mini_position(self) -> None:
+        """Save the pocket's spot (called on hide/shutdown)."""
+        if self._mini_window is not None:
+            self.settings.setValue("mini/pos", self._mini_window.pos())
 
     def _expand_mini(self) -> None:
         """⤢ or double-click on the pocket: the main window takes the stage."""
         if self._mini_window is not None:
+            self._remember_mini_position()
             self._mini_window.hide()
         self.window.showNormal()
         self.window.raise_()
@@ -2508,6 +2524,7 @@ class Hearth:
     def shutdown(self) -> None:
         # Let in-flight jobs land while their recipients are still alive.
         QThreadPool.globalInstance().waitForDone(5000)
+        self._remember_mini_position()   # the pocket's spot survives too
         if self._remote is not None:
             self._remote.stop()   # the phone remote burns out with the app
         self.ambient.stop()   # release the ambience sink fully on the way out

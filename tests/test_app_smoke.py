@@ -163,3 +163,32 @@ def test_last_view_unknown_value_falls_back_home(tmp_path, qapp):
     reopened = make_hearth(tmp_path)
     assert reopened.window._last_view in ("home", reopened.window.VIEWS[0])
     reopened.shutdown()
+
+
+# --- wave 3: the pocket's spot survives ---
+
+def test_mini_position_survives_reopen(tmp_path, qapp):
+    from PyQt6.QtCore import QPoint
+
+    hearth = make_hearth(tmp_path)
+    hearth._open_mini_player()
+    hearth._mini_window.move(QPoint(64, 48))
+    hearth._remember_mini_position()
+    hearth.shutdown()
+
+    reopened = make_hearth(tmp_path)
+    reopened._open_mini_player()
+    assert reopened._mini_window.pos().x() == 64
+    assert reopened._mini_window.pos().y() == 48
+    reopened.shutdown()
+
+
+def test_mini_position_offscreen_is_ignored(tmp_path, qapp):
+    from PyQt6.QtCore import QPoint
+
+    hearth = make_hearth(tmp_path)
+    hearth.settings.setValue("mini/pos", QPoint(-99999, -99999))
+    hearth._open_mini_player()
+    # the window must not be dragged off-screen by a stale spot
+    assert hearth._mini_window.pos().x() > -99999
+    hearth.shutdown()
