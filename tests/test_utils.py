@@ -41,3 +41,28 @@ def test_clamp():
     assert clamp(5, 0, 10) == 5
     assert clamp(-1, 0, 10) == 0
     assert clamp(99, 0, 10) == 10
+
+
+# --- wave 3: the filter kernel ---
+
+from hearth.utils import text_match  # noqa: E402
+
+
+def test_empty_query_matches_everything():
+    assert text_match(["Rick Astley", "Never Gonna Give You Up"], "")
+    assert text_match([], "   ")
+
+
+def test_single_word_substring_case_insensitive():
+    assert text_match(["Rick Astley"], "rick")
+    assert text_match(["Never Gonna Give You Up"], "gonna")
+
+
+def test_multi_word_requires_all_words():
+    assert text_match(["Rick Astley", "Never Gonna"], "rick gonna")
+    assert not text_match(["Rick Astley", "Together Forever"], "rick gonna")
+
+
+def test_none_and_junk_fields_are_skipped():
+    assert text_match([None, "Rick Astley", 42], "rick")
+    assert not text_match([None, ""], "rick")

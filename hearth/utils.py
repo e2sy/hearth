@@ -47,3 +47,19 @@ def mix(a: str, b: str, t: float) -> str:
     g = round(ag + (bg - ag) * t)
     bl = round(ab + (bb - ab) * t)
     return f"#{r:02x}{g:02x}{bl:02x}"
+
+
+def text_match(fields: list[str], query: str) -> bool:
+    """Does a record match a filter query?
+
+    Every whitespace-separated word in the query must appear (case-
+    insensitive) in at least one of the fields — so 'rick never' needs
+    both words somewhere. An empty or blank query matches everything,
+    and None fields are simply skipped. This is the pure kernel behind
+    the history page's filter box.
+    """
+    words = (query or "").lower().split()
+    if not words:
+        return True
+    hay = " ".join(str(f) for f in fields if f).lower()
+    return all(w in hay for w in words)
