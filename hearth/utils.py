@@ -63,3 +63,19 @@ def text_match(fields: list[str], query: str) -> bool:
         return True
     hay = " ".join(str(f) for f in fields if f).lower()
     return all(w in hay for w in words)
+
+
+def fire_greeting(hour: int) -> str:
+    """The hero line's hello, honest to the clock.
+
+    Morning, afternoon, evening — and small hours get their own warmth
+    ('Night fire'). Junk hours clamp into a day; nothing raises.
+    """
+    hour = max(0, min(23, int(hour) if hour is not None else 9))
+    if 5 <= hour < 12:
+        return "Morning fire"
+    if 12 <= hour < 17:
+        return "Afternoon fire"
+    if 17 <= hour < 23:
+        return "Evening fire"
+    return "Night fire"

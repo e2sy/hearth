@@ -66,3 +66,20 @@ def test_multi_word_requires_all_words():
 def test_none_and_junk_fields_are_skipped():
     assert text_match([None, "Rick Astley", 42], "rick")
     assert not text_match([None, ""], "rick")
+
+
+def test_fire_greeting_by_hour():
+    from hearth.utils import fire_greeting
+
+    assert fire_greeting(7) == "Morning fire"
+    assert fire_greeting(13) == "Afternoon fire"
+    assert fire_greeting(20) == "Evening fire"
+    assert fire_greeting(2) == "Night fire"
+
+
+def test_fire_greeting_clamps_junk():
+    from hearth.utils import fire_greeting
+
+    assert fire_greeting(99) == "Night fire"   # 23h is small hours
+    assert fire_greeting(-4) == "Night fire"
+    assert fire_greeting(None) == "Morning fire"
