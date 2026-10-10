@@ -497,3 +497,9 @@ def test_wave3_strings_in_en_catalog():
 
 def test_tr_falls_back_gracefully_for_unknown_keys():
     assert i18n.tr("definitely_not_a_key") != ""
+
+
+def test_greeting_strings_in_catalog():
+    assert i18n.tr("greeting_morning") == "Morning fire"
+    assert i18n.tr("greeting_night") == "Night fire"
+    assert i18n.tr("hero_invite").startswith(". ")

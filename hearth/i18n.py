@@ -76,6 +76,11 @@ STRINGS: dict[str, dict[str, str]] = {
         "filter_plays": "Filter these plays…",
         "last_view": "Reopen last view",
         "mini_pos": "Remember mini player position",
+        "greeting_morning": "Morning fire",
+        "greeting_afternoon": "Afternoon fire",
+        "greeting_evening": "Evening fire",
+        "greeting_night": "Night fire",
+        "hero_invite": ". What are we playing?",
     },
     # Hindi partial — transport + tray essentials.
     "hi": {
