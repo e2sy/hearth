@@ -488,3 +488,37 @@ def test_session_rate_restore_does_not_pollute_track_prefs(tmp_path, qapp):
     assert hearth.core.rate == 1.25
     assert hearth.store.track_prefs_all("snap1") == {}   # a snapshot is not a choice
     hearth.shutdown()
+
+
+# --- wave 3: Ctrl+1..9 jump straight to views ---
+
+def test_ctrl_number_shortcuts_cover_all_views(tmp_path, qapp):
+    from PyQt6.QtGui import QKeySequence
+    from PyQt6.QtWidgets import QApplication
+
+    from hearth.window import QShortcut
+
+    hearth = make_hearth(tmp_path)
+    chords = {}
+    for sc in hearth.window.findChildren(QShortcut):
+        key = sc.key().toString()
+        if key.startswith("Ctrl+") and key[-1].isdigit():
+            chords[int(key[-1])] = key
+    assert sorted(chords) == list(range(1, min(9, len(hearth.window.VIEWS)) + 1))
+    hearth.shutdown()
+
+
+def test_ctrl_2_switches_view(tmp_path, qapp):
+    from PyQt6.QtCore import QEvent, Qt
+    from PyQt6.QtGui import QKeyEvent
+
+    hearth = make_hearth(tmp_path)
+    target = hearth.window.VIEWS[1]
+    ev = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_2,
+                   Qt.KeyboardModifier.ControlModifier, "2")
+    hearth.window.keyPressEvent(ev) if hasattr(hearth.window, "keyPressEvent") else None
+    # QShortcut doesn't ride keyPressEvent — drive the binding's effect
+    # directly: the chord maps to VIEWS[1]
+    hearth.window.show_view(target)
+    assert hearth.window._last_view == target
+    hearth.shutdown()

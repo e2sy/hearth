@@ -3367,6 +3367,9 @@ class MainWindow(QMainWindow):
         bind("Left", lambda: seek_by(-config.SEEK_STEP_MS))
         bind("Up", lambda: volume_by(int(config.VOLUME_STEP * 100)))
         bind("Down", lambda: volume_by(-int(config.VOLUME_STEP * 100)))
+        # Ctrl+1..9: straight to a view, in sidebar order
+        for number, view_key in enumerate(self.VIEWS[:9], start=1):
+            bind(f"Ctrl+{number}", lambda k=view_key: self.show_view(k))
 
     def set_favorites(self, tracks: list[Track]) -> None:
         self.library_view.set_favorites(tracks)
