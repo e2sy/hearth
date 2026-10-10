@@ -277,6 +277,10 @@ def build_mini_widget(
             self._breathe = QPropertyAnimation(
                 self._shadow, b"blurRadius", self._shadow)
             self._breathe.setEasingCurve(QEasingCurve.Type.OutCubic)
+            # reduced motion: the marquee window grows wide enough that
+            # a long title never walks — the text simply sits and reads
+            if not config.MOTION_ENABLED:
+                self._model.marquee.set_width(80)
 
             lay = QVBoxLayout(self)
             lay.setContentsMargins(14, 10, 14, 10)
@@ -456,6 +460,9 @@ def build_mini_widget(
             self.hide()
 
         def _pulse(self) -> None:
+            from . import config as _config
+            if not _config.MOTION_ENABLED:
+                return      # reduced motion: the title holds still
             self._model.marquee.tick()
             shown = self._model.title_window()
             if shown != self._title.text():
