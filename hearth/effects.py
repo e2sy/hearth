@@ -21,6 +21,7 @@ from PyQt6.QtCore import (
     QParallelAnimationGroup,
     QPoint,
     QPropertyAnimation,
+    QTimer,
 )
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -227,6 +228,55 @@ def hover_lift(widget: QWidget, base_level: int = motion.LEVEL_REST,
     return lift
 
 
+def start_pulse(widget: QWidget, color: str,
+                period_ms: int = motion.PULSE_MS,
+                ticks: int = 20) -> None:
+    """Give a widget a breathing accent glow (the now-playing heart).
+
+    A tick timer walks motion.pulse_blur's triangle wave into the glow
+    effect's blur radius. The pulse is parked at `widget._hearth_pulse`;
+    a widget already pulsing is left alone (start is idempotent).
+    """
+    if getattr(widget, "_hearth_pulse", None) is not None:
+        return
+    effect = add_glow(widget, color, blur=motion.PULSE_BLUR_LOW, alpha=100)
+    widget._hearth_pulse = _Pulse(widget, effect, period_ms, ticks)
+
+
+def stop_pulse(widget: QWidget) -> None:
+    """End a widget's breathing glow and take the effect slot back."""
+    pulse = getattr(widget, "_hearth_pulse", None)
+    if pulse is None:
+        return
+    pulse.stop()
+    widget._hearth_pulse = None
+
+
+class _Pulse(QObject):
+    """Timer-driven breath behind start_pulse (parented to its effect)."""
+
+    def __init__(self, widget: QWidget,
+                 effect: QGraphicsDropShadowEffect,
+                 period_ms: int, ticks: int):
+        super().__init__(effect)
+        self._effect = effect
+        self._tick_n = 0
+        self._timer = QTimer(self)
+        self._timer.setInterval(max(1, int(period_ms) // max(1, int(ticks))))
+        self._timer.timeout.connect(self._on_tick)
+        self._timer.start()
+
+    def _on_tick(self) -> None:
+        self._tick_n += 1
+        self._effect.setBlurRadius(
+            motion.pulse_blur(self._tick_n,
+                              low=motion.PULSE_BLUR_LOW,
+                              high=motion.PULSE_BLUR_HIGH))
+
+    def stop(self) -> None:
+        self._timer.stop()
+
+
 def slide_toast(widget: QWidget, ms: int = 320) -> None:
     """Toast entrance: rise from below the final resting point while fading in."""
     effect = _ensure_opacity_effect(widget)
@@ -259,5 +309,5 @@ def slide_toast(widget: QWidget, ms: int = 320) -> None:
 
 __all__ = [
     "add_shadow", "add_glow", "set_glow_color", "fade_in", "slide_toast",
-    "Lift", "hover_lift",
+    "Lift", "hover_lift", "start_pulse", "stop_pulse",
 ]

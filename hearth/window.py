@@ -64,6 +64,8 @@ from .effects import (
     fade_in,
     hover_lift,
     set_glow_color,
+    start_pulse,
+    stop_pulse,
 )
 from .lyrics import LrcLine, SyncedLyrics
 from .models import Album, Artist, Track
@@ -123,6 +125,19 @@ class TrackRow(QWidget):
 
     def set_index(self, index: int) -> None:
         self._pos.setText(str(index))
+
+    def set_burning(self, burning: bool) -> None:
+        """Mark this row as the track that's playing: a breathing glow.
+
+        The glow walks the pure pulse triangle (hearth/motion.py), so a
+        burning row visibly breathes instead of sitting under a static
+        highlight. Off takes the effect slot back so the row returns to
+        being an ordinary surface.
+        """
+        if burning:
+            start_pulse(self, self._palette.accent)
+        else:
+            stop_pulse(self)
 
 
 class Shelf(QWidget):
@@ -3709,6 +3724,7 @@ class MainWindow(QMainWindow):
         if current is not None:
             row = TrackRow(self._palette, current, 0)
             row._title.setText(f"▶ {current.title}")
+            row.set_burning(True)          # the playing row breathes
             item = QListWidgetItem()
             item.setSizeHint(row.sizeHint())
             item.setData(Qt.ItemDataRole.UserRole, current)
