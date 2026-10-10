@@ -192,3 +192,17 @@ def test_mini_position_offscreen_is_ignored(tmp_path, qapp):
     # the window must not be dragged off-screen by a stale spot
     assert hearth._mini_window.pos().x() > -99999
     hearth.shutdown()
+
+
+# --- wave 3b: maximized is a state, not a size ---
+
+def test_bool_setting_reads_strings_and_bools(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    hearth.settings.setValue("flag/yes", "true")
+    hearth.settings.setValue("flag/no", "false")
+    hearth.settings.setValue("flag/one", "1")
+    assert hearth._bool_setting("flag/yes") is True
+    assert hearth._bool_setting("flag/no") is False
+    assert hearth._bool_setting("flag/one") is True
+    assert hearth._bool_setting("flag/missing", True) is True
+    hearth.shutdown()

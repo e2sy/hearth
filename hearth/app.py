@@ -2341,6 +2341,15 @@ class Hearth:
         except (TypeError, ValueError):
             return default
 
+    def _bool_setting(self, key: str, default: bool = False) -> bool:
+        """Read a boolean setting; strings like 'true'/'1' count as True."""
+        value = self.settings.value(key, default)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in ("true", "1", "yes", "on")
+        return bool(value)
+
     def _restore_session(self) -> None:
         pos = self.settings.value("geometry/pos")
         if pos is not None:
@@ -2351,6 +2360,9 @@ class Hearth:
         win_pos = self.settings.value("window/pos")
         if win_pos is not None:
             self.window.move(win_pos)
+        # maximized is a state, not a size — it rides back separately
+        if self._bool_setting("window/maximized"):
+            self.window.setWindowState(Qt.WindowState.WindowMaximized)
         favorites = self.store.favorites()
         if favorites:
             self.surface.set_status(f"{len(favorites)} favorites pinned")
@@ -2372,6 +2384,9 @@ class Hearth:
         self.settings.setValue("geometry/pos", self.panel.pos())
         self.settings.setValue("window/size", self.window.size())
         self.settings.setValue("window/pos", self.window.pos())
+        self.settings.setValue(
+            "window/maximized",
+            bool(self.window.windowState() & Qt.WindowState.WindowMaximized))
         self.settings.setValue(
             "last_view", getattr(self.window, "_last_view", "home"))
         self._save_session_snapshot()
