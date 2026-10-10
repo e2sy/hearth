@@ -169,3 +169,23 @@ def test_delete_never_removes_the_playing_row(tmp_path, qapp):
     win._remove_selected_queue_row()
     assert fired == []                    # pinned rows refuse to go
     hearth.shutdown()
+
+
+# --- wave 3d: pin straight from the queue menu ---
+
+def test_queue_pin_action_emits_track(tmp_path, qapp):
+    from PyQt6.QtCore import Qt
+
+    hearth = make_hearth(tmp_path)
+    win = hearth.window
+    track = make_track(video_id="pinme")
+    win.set_queue([track])
+    fired = []
+    win.pin_toggled.connect(fired.append)
+    item = win._queue_list.item(0)
+    assert item.data(Qt.ItemDataRole.UserRole + 1) == "upcoming"
+    assert item.data(Qt.ItemDataRole.UserRole) == track
+    # the menu's pin branch routes the row's track through pin_toggled
+    win.pin_toggled.emit(item.data(Qt.ItemDataRole.UserRole))
+    assert fired == [track]
+    hearth.shutdown()

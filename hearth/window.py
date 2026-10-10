@@ -3757,6 +3757,7 @@ class MainWindow(QMainWindow):
             for r in range(self._queue_list.count())
         ))
         menu.addSeparator()
+        pin = menu.addAction("Pin to favorites")
         if kind == "upcoming":
             play_now = menu.addAction("Play now")
             move_up = menu.addAction("↑ Move up")
@@ -3771,6 +3772,10 @@ class MainWindow(QMainWindow):
             return
         if chosen is shuffle:
             self.queue_shuffle_requested.emit()
+        elif chosen is pin:
+            track = item.data(Qt.ItemDataRole.UserRole)
+            if track is not None:
+                self.pin_toggled.emit(track)
         elif chosen is play_now:
             self.queue_jump_requested.emit(row - 1)   # upcoming index
         elif chosen is move_up:
