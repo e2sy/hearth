@@ -250,6 +250,10 @@ DEFAULT_HOTKEYS = {
     "prev_track": "Ctrl+Alt+Left",
     "toggle_panel": "Ctrl+Alt+E",
     "focus_search": "Ctrl+Alt+F",
+    "mute": "Ctrl+Alt+M",
+    "volume_up": "Ctrl+Alt+Up",
+    "volume_down": "Ctrl+Alt+Down",
+    "cycle_repeat": "Ctrl+Alt+R",
 }
 
 # System chords that should never be bound in the app.

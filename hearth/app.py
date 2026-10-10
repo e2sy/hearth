@@ -679,7 +679,21 @@ class Hearth:
                 "prev_track": self.core.previous,
                 "toggle_panel": self._toggle_surface,
                 "focus_search": self._focus_search,
+                "mute": self._toggle_mute,
+                "volume_up": lambda: self._nudge_volume(1),
+                "volume_down": lambda: self._nudge_volume(-1),
+                "cycle_repeat": self._cycle_repeat_hotkey,
             }[action])
+
+    def _nudge_volume(self, direction: int) -> None:
+        """Global-hotkey volume step: 5% of the dial per press."""
+        self.core.set_volume(
+            max(0.0, min(1.0, self.core.volume + direction * 0.05)))
+
+    def _cycle_repeat_hotkey(self) -> None:
+        """Global-hotkey repeat cycle with a spoken status."""
+        mode = self.core.cycle_repeat()
+        self.surface.set_status(f"Repeat: {mode}")
 
     def _install_palette_hotkey(self) -> None:
         """Ctrl+K pops the command palette (never a reserved system chord)."""

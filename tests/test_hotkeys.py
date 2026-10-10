@@ -1,6 +1,6 @@
 """Hotkey conflict detection and override merging."""
 
-from hearth.config import DEFAULT_HOTKEYS
+from hearth.config import DEFAULT_HOTKEYS, RESERVED_CHORDS
 from hearth.hotkeys import effective_chords, find_hotkey_conflicts
 
 
@@ -44,3 +44,25 @@ def test_effective_chords_ignores_unknown_actions_and_blanks():
     merged = effective_chords({"banana": "Ctrl+1", "next_track": "  "})
     assert "banana" not in merged
     assert merged["next_track"] == DEFAULT_HOTKEYS["next_track"]
+
+
+# --- wave 3: the new global chords ---
+
+from hearth.config import DEFAULT_HOTKEYS, RESERVED_CHORDS  # noqa: E402
+
+
+def test_new_defaults_have_no_conflicts():
+    assert find_hotkey_conflicts(DEFAULT_HOTKEYS) == []
+
+
+def test_nine_default_actions():
+    assert set(DEFAULT_HOTKEYS) == {
+        "play_pause", "next_track", "prev_track", "toggle_panel",
+        "focus_search", "mute", "volume_up", "volume_down", "cycle_repeat",
+    }
+
+
+def test_new_chords_avoid_reserved_system_shortcuts():
+    lowered = {c.lower() for c in RESERVED_CHORDS}
+    for chord in DEFAULT_HOTKEYS.values():
+        assert chord.lower() not in lowered
