@@ -536,6 +536,7 @@ class Hearth:
         w.queue_clear_requested.connect(self._clear_queue)
         w.queue_reverse_requested.connect(self._reverse_queue)
         w.queue_dedupe_requested.connect(self._dedupe_queue)
+        w.queue_shuffle_requested.connect(self.core.shuffle)
         w.mute_toggled.connect(self._toggle_mute)
         w.radio_requested.connect(self._start_radio)
         w.artist_opened.connect(self._open_artist)

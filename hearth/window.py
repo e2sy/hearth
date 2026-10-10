@@ -2885,6 +2885,7 @@ class MainWindow(QMainWindow):
     queue_clear_requested = pyqtSignal()
     queue_reverse_requested = pyqtSignal()        # flip the upcoming order
     queue_dedupe_requested = pyqtSignal()         # drop repeated tracks
+    queue_shuffle_requested = pyqtSignal()        # shuffle what's upcoming
     radio_requested = pyqtSignal(object)          # Track | None (None = current)
     rate_cycled = pyqtSignal()
     sleep_requested = pyqtSignal(int)             # minutes; 0 = off
@@ -3108,6 +3109,11 @@ class MainWindow(QMainWindow):
         self._queue_time.setProperty("dim", True)
         tools.addWidget(self._queue_time)
         tools.addStretch(1)
+        now_btn = QPushButton("Now")
+        now_btn.setProperty("flat", True)
+        now_btn.setToolTip("Scroll to the playing track")
+        now_btn.clicked.connect(self.scroll_queue_to_current)
+        tools.addWidget(now_btn)
         dedupe_btn = QPushButton("Dedup")
         dedupe_btn.setProperty("flat", True)
         dedupe_btn.setToolTip("Drop repeated tracks (first copy stays)")
@@ -3711,6 +3717,12 @@ class MainWindow(QMainWindow):
         play_now = None
         move_up = None
         move_down = None
+        shuffle = menu.addAction("Shuffle upcoming")
+        shuffle.setEnabled(any(
+            self._queue_list.item(r).data(Qt.ItemDataRole.UserRole + 1) == "upcoming"
+            for r in range(self._queue_list.count())
+        ))
+        menu.addSeparator()
         if kind == "upcoming":
             play_now = menu.addAction("Play now")
             move_up = menu.addAction("↑ Move up")
@@ -3723,7 +3735,9 @@ class MainWindow(QMainWindow):
         chosen = menu.exec(self._queue_list.viewport().mapToGlobal(pos))
         if chosen is None:
             return
-        if chosen is play_now:
+        if chosen is shuffle:
+            self.queue_shuffle_requested.emit()
+        elif chosen is play_now:
             self.queue_jump_requested.emit(row - 1)   # upcoming index
         elif chosen is move_up:
             self._queue_swap(row - 1, row - 2)
@@ -3757,6 +3771,18 @@ class MainWindow(QMainWindow):
 
     def toggle_queue(self) -> None:
         self.queue_dock.setVisible(not self.queue_dock.isVisible())
+
+    def scroll_queue_to_current(self) -> None:
+        """Reveal the playing row: select and scroll it into view."""
+        for row in range(self._queue_list.count()):
+            item = self._queue_list.item(row)
+            if item.data(Qt.ItemDataRole.UserRole + 1) == "current":
+                self._queue_list.setCurrentRow(row)
+                self._queue_list.scrollToItem(
+                    item,
+                    QAbstractItemView.ScrollHint.PositionAtCenter,
+                )
+                return
 
     def set_queue(self, upcoming: list[Track], current: Track | None = None) -> None:
         self._queue_list.clear()

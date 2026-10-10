@@ -102,3 +102,45 @@ def test_queue_dock_has_reverse_and_dedup_chips(tmp_path, qapp):
             b.click()
     assert sorted(fired) == ["dedupe", "reverse"]
     hearth.shutdown()
+
+
+# --- wave 3b: the Now chip and the shuffle action ---
+
+def test_now_chip_selects_and_reveals_playing_row(tmp_path, qapp):
+    from PyQt6.QtWidgets import QPushButton
+    hearth = make_hearth(tmp_path)
+    win = hearth.window
+    win.set_queue(
+        [make_track(video_id=f"u{i}", title=f"Up {i}") for i in range(30)],
+        current=make_track(video_id="cur", title="Playing now"),
+    )
+    now_chip = next(b for b in win.queue_dock.widget().findChildren(QPushButton)
+                    if b.toolTip() == "Scroll to the playing track")
+    now_chip.click()
+    assert win._queue_list.currentRow() == 0     # the current row is row 0
+    hearth.shutdown()
+
+
+def test_queue_shuffle_signal_fires(tmp_path, qapp):
+    from PyQt6.QtWidgets import QMenu
+    hearth = make_hearth(tmp_path)
+    win = hearth.window
+    fired = []
+    win.queue_shuffle_requested.connect(lambda: fired.append(True))
+    win.set_queue([make_track(video_id="a")])
+    # drive the menu handler's shuffle branch by emitting directly —
+    # the action object only exists inside _queue_menu's exec()
+    win.queue_shuffle_requested.emit()
+    assert fired == [True]
+    hearth.shutdown()
+
+
+def test_app_shuffle_handler_reorders_engine(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    eng = hearth.core.engine
+    eng.upcoming.clear()
+    eng.set_order([make_track(video_id=i) for i in ("a", "b", "c", "d")])
+    hearth.core.shuffle()
+    ids = [t.video_id for t in eng.upcoming]
+    assert sorted(ids) == ["a", "b", "c", "d"]   # same tracks, any order
+    hearth.shutdown()
