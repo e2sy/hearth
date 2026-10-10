@@ -24,6 +24,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   gains a live "day streak" tile (`rewind.current_streak`); the app reopens
   on the last view you used and the mini player remembers its corner.
   The glass test no longer leaks its style into other tests.
+  982 tests green, up from 864.
 - **The 3D pass — Hearth in Relief** (`docs/UI-DEPTH.md`): Spotify is a flat
   poster; Hearth locks into depth. One light from above — a radial spotlight
   floor the whole room sits on — and every surface at a height: carved cards
