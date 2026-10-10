@@ -22,7 +22,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from . import config
 from .config import Palette, get_palette
+from .effects import add_shadow
+from .utils import mix
 
 log = logging.getLogger(__name__)
 
@@ -116,6 +119,7 @@ class CommandPalette(QDialog):
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog
         )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setModal(True)
         self.setFixedWidth(430)
 
@@ -231,19 +235,33 @@ class CommandPalette(QDialog):
 
     def _apply_style(self) -> None:
         p = self._palette
+        # the relief shell: lit rounded glass, light top lip, ground shadow
+        face_hi = mix(p.surface, p.text, 0.05)
+        face_deep = mix(p.surface, "#000000", 0.16)
+        lip_hi = mix(p.hairline, p.text, 0.16)
+        lip_lo = mix(p.surface, "#000000", 0.30)
+        channel_top = mix(p.bg, "#000000", 0.30)
         self.setStyleSheet(
-            f"QDialog{{background: {p.bg}; border: 1px solid {p.hairline};"
-            f"border-radius: 12px;}}"
-            f"QLineEdit{{background: {p.surface}; color: {p.text};"
-            f"border: 1px solid {p.hairline}; border-radius: 8px;"
+            f"QDialog{{background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+            f" stop:0 {face_hi}, stop:0.1 {p.surface}, stop:1 {face_deep});"
+            f"border: 1px solid {lip_lo}; border-top-color: {lip_hi};"
+            f"border-radius: {config.DEPTH_RADIUS}px;}}"
+            f"QLineEdit{{background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+            f" stop:0 {channel_top}, stop:0.3 {p.surface_alt},"
+            f" stop:1 {p.surface_alt}); color: {p.text};"
+            f"border: 1px solid {lip_lo}; border-bottom-color: {lip_hi};"
+            f"border-radius: 8px;"
             f"padding: 8px; font-size: 15px;"
             f"selection-background-color: {p.selection};}}"
-            f"QListWidget{{background: {p.bg}; color: {p.text};"
+            f"QLineEdit:focus{{border: 1px solid {p.accent};}}"
+            f"QListWidget{{background: transparent; color: {p.text};"
             f"border: none; font-size: 14px; outline: none;}}"
             f"QListWidget::item{{padding: 7px 8px; border-radius: 6px;}}"
             f"QListWidget::item:selected{{background: {p.selection};"
             f"color: {p.text};}}"
         )
+        blur, dy, alpha = config.DEPTH_SHADOWS["float"]
+        add_shadow(self, blur=blur, dy=dy, alpha=alpha)
 
 
 def palette_over(parent: QWidget, palette: Palette | str | None = None,

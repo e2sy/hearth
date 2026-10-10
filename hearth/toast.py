@@ -54,11 +54,23 @@ class NowPlayingToast(QWidget):
         self._opacity = 1.0
 
     def paintEvent(self, event) -> None:  # noqa: N802 - Qt naming
-        """The glass card: rounded shell, lit-from-above gradient, bright rim."""
+        """The glass card: rounded shell, lit-from-above gradient, bright rim.
+
+        The ground shadow is painted (not a graphics effect) because the
+        widget's effect slot belongs to the rise-and-fade entrance.
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         card = QRectF(self.rect().adjusted(4, 4, -4, -4))
         radius = 14.0
+
+        # soft ground shadow: two nested shells read as one blurred edge
+        ground = QPainterPath()
+        ground.addRoundedRect(card.adjusted(1.0, 5.0, -1.0, 3.0), radius, radius)
+        painter.fillPath(ground, QColor(0, 0, 0, 70))
+        ground2 = QPainterPath()
+        ground2.addRoundedRect(card.adjusted(2.0, 8.0, -2.0, 5.0), radius, radius)
+        painter.fillPath(ground2, QColor(0, 0, 0, 45))
 
         shell = QLinearGradient(0.0, float(card.top()), 0.0,
                                 float(card.bottom()))

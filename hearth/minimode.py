@@ -231,7 +231,9 @@ def build_mini_widget(
         QWidget,
     )
 
-    from . import icons
+    from . import config, icons
+    from .effects import add_shadow
+    from .utils import mix
 
     class MiniPlayerWindow(QWidget):
         """A draggable, always-on-top ember for the screen's corner."""
@@ -249,10 +251,27 @@ def build_mini_widget(
                 | Qt.WindowType.WindowStaysOnTopHint
             )
             self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+            self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+            # the relief shell: lit face, light top lip, dark under-lip,
+            # a real ground shadow (docs/UI-DEPTH.md)
+            face_hi = mix(palette.surface, palette.text, 0.05)
+            face_deep = mix(palette.surface, "#000000", 0.18)
+            lip_hi = mix(palette.hairline, palette.text, 0.14)
+            lip_lo = mix(palette.surface, "#000000", 0.30)
+            channel_top = mix(palette.bg, "#000000", 0.30)
+            channel_floor = mix(palette.surface, "#000000", 0.10)
+            acc_hi = mix(palette.accent, "#ffffff", 0.22)
+            acc_deep = mix(palette.accent, "#000000", 0.28)
             self.setStyleSheet(
-                f"background:{palette.surface};border-radius:12px;"
+                f"background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+                f" stop:0 {face_hi}, stop:0.12 {palette.surface},"
+                f" stop:1 {face_deep});"
+                f"border:1px solid {lip_lo};border-top-color:{lip_hi};"
+                f"border-radius:{config.DEPTH_RADIUS}px;"
                 f"color:{palette.text};"
             )
+            blur, dy, alpha = config.DEPTH_SHADOWS["float"]
+            add_shadow(self, blur=blur, dy=dy, alpha=alpha)
 
             lay = QVBoxLayout(self)
             lay.setContentsMargins(14, 10, 14, 10)
@@ -320,21 +339,34 @@ def build_mini_widget(
             for b in (self._prev, self._play, self._next):
                 b.setCursor(Qt.CursorShape.PointingHandCursor)
                 b.setStyleSheet(
-                    f"border:none;border-radius:15px;background:{palette.surface_alt};"
+                    f"border:none;border-radius:15px;"
+                    f"background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+                    f" stop:0 {mix(palette.surface_alt, palette.text, 0.05)},"
+                    f" stop:1 {palette.surface_alt});"
                     "color:transparent;font-size:1px;"
                 )
             self._play.setStyleSheet(
-                f"border:none;border-radius:19px;background:{palette.accent};"
+                f"border:none;border-radius:19px;"
+                f"background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+                f" stop:0 {acc_hi}, stop:0.45 {palette.accent},"
+                f" stop:1 {acc_deep});"
                 "color:transparent;font-size:1px;"
             )
             self._seek = QSlider(Qt.Orientation.Horizontal)
             self._seek.setRange(0, 1000)
             self._seek.setValue(0)
             self._seek.setStyleSheet(
-                f"QSlider::groove:horizontal{{height:4px;background:{palette.hairline};border-radius:2px;}}"
-                f"QSlider::sub-page:horizontal{{background:{palette.accent};border-radius:2px;}}"
-                f"QSlider::handle:horizontal{{width:11px;height:11px;margin:-4px 0;"
-                f"border-radius:5px;background:{palette.accent_soft};}}"
+                f"QSlider::groove:horizontal{{height:5px;border-radius:2px;"
+                f"background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+                f" stop:0 {channel_top}, stop:1 {channel_floor});}}"
+                f"QSlider::sub-page:horizontal{{border-radius:2px;"
+                f"background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+                f" stop:0 {palette.accent_soft}, stop:1 {palette.accent});}}"
+                f"QSlider::handle:horizontal{{width:11px;height:11px;margin:-3px 0;"
+                f"border:1px solid {lip_lo};border-radius:5px;"
+                f"background: qradialgradient(cx:0.35, cy:0.3, radius:0.85,"
+                f" stop:0 #ffffff, stop:0.5 {palette.accent_soft},"
+                f" stop:1 {palette.accent});}}"
             )
             self._seek.sliderReleased.connect(self._seek_out)
             bottom.addWidget(self._prev)

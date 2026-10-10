@@ -9,7 +9,11 @@
 > and then went visible — the 📝 lyric chip on Search, the ✨ Enhance
 > button on every playlist, the 🟢 From Spotify paste dialog, the 🎉
 > party inbox review surface, and the 🎚️ Sound Forge bench with a real
-> preamp riding the master volume; 827 tests green). Earlier, by crew decision, every wave was folded into
+> preamp riding the master volume; 827 tests green). The chrome then got
+> its own waves: the icon set + flat honest stylesheet (act I), the last
+> emoji purge (act II), and the **3D depth system** (`docs/UI-DEPTH.md` —
+> spotlight floor, carved surfaces, floating chrome; 864 tests green).
+> Earlier, by crew decision, every wave was folded into
 > **one main version** — all four themes, one fire, built in order. Every
 > add-on discussed with the crew has a row here; nothing lives only in a
 > chat log anymore.

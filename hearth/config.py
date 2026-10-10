@@ -126,6 +126,15 @@ WALLPAPER_ALPHA_MAX = 100
 WALLPAPER_MAX_DIM = 2560          # imported wallpapers are downscaled to this edge
 IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif")
 
+# --- v0.9.1: the depth system — one light from above, layers in relief ---
+# (docs/UI-DEPTH.md is the frame; these are the dials)
+DEPTH_RADIUS = 14               # corner radius of floating chrome (bar, mini)
+DEPTH_SHADOWS = {               # elevation table: (blur, dy, alpha) ground shadows
+    "card": (12, 4, 90),        # home shelf cards hovering over the floor
+    "bar": (30, 10, 170),       # the floating player bar
+    "float": (34, 12, 190),     # frameless floaters (mini, panel, launcher, toast)
+}
+
 # --- v1.0.0 groundwork ---
 CROSSFADE_ENABLED = False       # opt-in dual-player crossfade
 CROSSFADE_MAX_MS = 3000         # upper bound of the crossfade slider

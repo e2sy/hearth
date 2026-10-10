@@ -7,6 +7,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **The 3D pass — Hearth in Relief** (`docs/UI-DEPTH.md`): Spotify is a flat
+  poster; Hearth locks into depth. One light from above — a radial spotlight
+  floor the whole room sits on — and every surface at a height: carved cards
+  and buttons with bright top lips and dark under-lips, pressed-in search
+  fields and slider grooves, a glossy accent ramp that sinks when pressed,
+  3D sphere slider handles, and a player bar that now floats as a rounded
+  card with a real drop shadow. The mini player, command palette (now a
+  translucent rounded shell), floating panel, and toasts all hover with real
+  or painted ground shadows; home shelf cards lift off the floor. Every tone
+  is derived from the active palette at compile time (no new color fields);
+  strength dials live in `config.py` (`DEPTH_RADIUS`, `DEPTH_SHADOWS`) and
+  every pack (glass, veil, neon) inherits the depth for free. 864 tests green.
 - This changelog.
 - **UI redesign, act II — the last emoji leave the building**: menus,
   status-bar messages, the World Explorer's 74 genre chips, the Rewind
