@@ -29,7 +29,9 @@ def test_hover_lift_returns_none_but_keeps_the_rest_shadow(qapp, frozen_motion):
 def test_start_pulse_is_a_noop_when_frozen(qapp, frozen_motion):
     row = QPushButton("row")
     effects.start_pulse(row, "#ff0000")
-    assert row._hearth_pulse is None or getattr(row, "_hearth_pulse", None) is None
+    # nothing parked, no glow effect installed — the row stays plain
+    assert getattr(row, "_hearth_pulse", None) is None
+    assert row.graphicsEffect() is None
 
 
 def test_slide_toast_is_a_noop_when_frozen(qapp, frozen_motion):
