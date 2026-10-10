@@ -67,6 +67,24 @@ Geometry and shadow strength live in `config.py`:
 - **Slider** — inset groove (dark channel with a dark top lip), sub-page in an
   accent ramp, handle a glossy sphere (`qradialgradient` off-center highlight).
 
+## The motion language (wave 3)
+
+Motion is depth confirmed by time. All choreography comes from one pure
+module — `hearth/motion.py` — so the numbers are testable without Qt:
+
+- **The lift ladder** — five elevations, 0 (planted) to 4 (floater).
+  `effects.hover_lift` walks a surface up on enter, plants it on press,
+  and settles it slowest on leave. Press beats hover beats rest.
+- **Entrances are groundings** — cards don't pop; their ground shadow
+  grows in (`Lift.ground`), staggered 26 ms per card, capped at 420 ms.
+- **Breath** — the playing row and the mini player glow on a slow
+  triangle wave (`pulse_blur`), one breath per 1.6 s. Subtle, always.
+- **Motion is quiet** — every ramp is OutCubic, 120–320 ms. If it
+  shouts, it's decoration, not depth (principle 3 again).
+- **The kill-switch** — `config.MOTION_ENABLED = False` stills every
+  helper; surfaces keep their resting shadows. Reduced motion is part
+  of the design, not an afterthought.
+
 ## What must not change
 
 Icons, the type scale, layout geometry, palette packs, wallpaper engine, and
