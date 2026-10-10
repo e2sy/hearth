@@ -90,6 +90,7 @@ class TrackRow(QWidget):
                  removable: bool = False):
         super().__init__()
         self.track = track
+        self._palette = palette
         self.setMinimumHeight(config.ROW_HEIGHT)
         lay = QHBoxLayout(self)
         lay.setContentsMargins(10, 4, 10, 4)
