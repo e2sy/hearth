@@ -146,8 +146,9 @@ def test_app_registers_expected_palette_actions(tmp_path, qapp):
     assert "Speed 0.75x" in labels          # one action per PLAYBACK_RATES entry
     assert "Party suggestions" in labels    # the party hat, reachable from Ctrl+K
     assert "Sound Forge (equalizer)" in labels
+    assert "Mini player" in labels          # the pocket hearth, Ctrl+K too
     assert len(labels) == 9 + len(hearth.window.VIEWS) \
-        + len(config.PALETTES) + len(config.PLAYBACK_RATES) + 1
+        + len(config.PALETTES) + len(config.PLAYBACK_RATES) + 2
     hearth.shutdown()
 
 
