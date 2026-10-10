@@ -32,7 +32,7 @@ class PartyInboxDialog(QDialog):
     def __init__(self, inbox, parent=None):
         super().__init__(parent)
         self._inbox = inbox
-        self.setWindowTitle("🎉 Party suggestions")
+        self.setWindowTitle("Party suggestions")
         self.setModal(False)
         self.resize(460, 300)
 

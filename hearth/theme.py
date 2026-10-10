@@ -36,110 +36,100 @@ _FONT_STACK = (
 _STYLESHEET = Template(
     """
 QWidget {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $bg_hi, stop:1 $bg);
+    background: $bg;
     color: $text; font-size: 13px; font-family: $font_stack;
 }
 QLabel { background: transparent; }
 QLabel[dim="true"] { color: $text_dim; }
-QLabel[header="true"] { font-size: 15px; font-weight: 600; }
-QLabel[hero="true"] { font-size: 24px; font-weight: 800; color: $text_hi; }
+QLabel[header="true"] { font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
+QLabel[hero="true"] { font-size: 22px; font-weight: 700; color: $text_hi; letter-spacing: -0.2px; }
 QLabel[shelf="true"] {
-    font-size: 17px; font-weight: 700; color: $text_hi; background: transparent;
+    font-size: 15px; font-weight: 650; color: $text_hi; background: transparent;
+    letter-spacing: 0.2px;
 }
 QLabel[kicker="true"] {
-    font-size: 11px; font-weight: 700; color: $accent;
-    background: transparent;
+    font-size: 10px; font-weight: 700; color: $accent;
+    background: transparent; letter-spacing: 1.4px;
 }
+QLabel[wordmark="true"] { font-size: 19px; font-weight: 750; color: $text_hi; letter-spacing: -0.3px; }
 
 QLineEdit {
     background: $surface_alt; color: $text;
-    border: 1px solid $hairline; border-radius: 11px;
-    padding: 8px 13px; selection-background-color: $selection;
+    border: 1px solid transparent; border-radius: 8px;
+    padding: 8px 12px; selection-background-color: $selection;
 }
+QLineEdit:hover { background: $surface_focus; }
 QLineEdit:focus { border: 1px solid $accent; background: $surface_focus; }
 
 QPushButton {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $surface_hi, stop:1 $surface_alt);
+    background: $surface_alt;
     color: $text;
-    border: 1px solid $hairline; border-radius: 10px;
+    border: 1px solid transparent; border-radius: 8px;
     padding: 7px 13px; font-weight: 600;
 }
-QPushButton:hover { border: 1px solid $accent; color: $accent_soft; }
-QPushButton:pressed { background: $surface; }
+QPushButton:hover { background: $surface_focus; }
+QPushButton:pressed { background: $hover_tint2; }
 QPushButton[accent="true"] {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $accent_soft, stop:1 $accent);
-    color: $bg_solid; border: none; border-radius: 11px; font-weight: 700;
+    background: $accent;
+    color: $bg_solid; border: none; border-radius: 8px; font-weight: 700;
 }
-QPushButton[accent="true"]:hover {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $accent, stop:1 $accent_deep);
-}
+QPushButton[accent="true"]:hover { background: $accent_soft; }
 QPushButton[accent="true"]:pressed { background: $accent_deep; }
 QPushButton[flat="true"] {
     background: transparent; border: none; color: $text_dim; font-weight: 600;
 }
-QPushButton[flat="true"]:hover { color: $accent; background: $hover_tint; border-radius: 10px; }
+QPushButton[flat="true"]:hover { color: $text; background: $hover_tint; border-radius: 8px; }
 QPushButton[nav="true"] {
-    background: transparent; border: none; border-radius: 10px;
-    padding: 9px 14px; text-align: left; font-size: 14px; font-weight: 600;
+    background: transparent; border: none; border-radius: 8px;
+    padding: 8px 12px; text-align: left; font-size: 13px; font-weight: 600;
     color: $text_dim;
 }
 QPushButton[nav="true"]:hover { color: $text; background: $hover_tint; }
 QPushButton[nav="true"]:checked {
     color: $text_hi;
-    background: qlineargradient(x1:0 y1:0 x2:1 y2:0,
-        stop:0 $selection, stop:1 $selection_fade);
-    border-left: 3px solid $accent;
+    background: $selection;
 }
 QPushButton[card="true"] {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $surface_hi, stop:1 $surface);
-    border: 1px solid $hairline; border-radius: 14px;
+    background: $surface;
+    border: 1px solid $hairline; border-radius: 12px;
     padding: 0; text-align: left;
 }
 QPushButton[card="true"]:hover {
     border: 1px solid $accent;
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $surface_focus, stop:1 $surface_alt);
+    background: $surface_alt;
 }
 
 QPushButton[chip="true"] {
     background: transparent; color: $text_dim;
-    border: 1px solid $hairline; border-radius: 14px;
-    padding: 4px 15px; font-weight: 700;
+    border: 1px solid $hairline; border-radius: 999px;
+    padding: 4px 14px; font-weight: 600;
 }
-QPushButton[chip="true"]:hover { color: $text; border: 1px solid $accent; }
+QPushButton[chip="true"]:hover { color: $text; border: 1px solid $accent; background: $hover_tint; }
 QPushButton[chip="true"]:checked {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $accent_soft, stop:1 $accent);
+    background: $accent;
     color: $bg_solid; border: 1px solid $accent;
 }
 
 QLabel[tile="true"] {
-    background: $surface_alt; border-radius: 12px;
+    background: $surface_alt; border-radius: 10px;
 }
 
 QListWidget {
     background: $surface; border: 1px solid $hairline;
-    border-radius: 12px; outline: none; padding: 4px;
+    border-radius: 10px; outline: none; padding: 4px;
 }
-QListWidget::item { border-radius: 9px; padding: 8px; margin: 2px; color: $text; }
+QListWidget::item { border-radius: 7px; padding: 8px; margin: 1px; color: $text; }
 QListWidget::item:selected {
-    background: qlineargradient(x1:0 y1:0 x2:1 y2:0,
-        stop:0 $selection, stop:1 $selection_fade);
+    background: $selection;
     color: $accent_soft;
 }
 QListWidget::item:hover { background: $hover_tint; }
 QListWidget[rows="true"] {
     background: transparent; border: none; border-radius: 0; padding: 0;
 }
-QListWidget[rows="true"]::item { padding: 4px; margin: 0; border-radius: 10px; }
+QListWidget[rows="true"]::item { padding: 4px; margin: 0; border-radius: 8px; }
 QListWidget[rows="true"]::item:selected {
-    background: qlineargradient(x1:0 y1:0 x2:1 y2:0,
-        stop:0 $selection, stop:1 $selection_fade);
+    background: $selection;
     color: $text;
 }
 QListWidget[sidebar="true"] {
@@ -147,27 +137,23 @@ QListWidget[sidebar="true"] {
 }
 
 QWidget[playerbar="true"] {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $surface_hi, stop:1 $surface);
-    border-top: 1px solid $edge_hi;
+    background: $surface;
+    border-top: 1px solid $hairline;
 }
 QWidget[ribbon="true"] {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $surface_hi, stop:1 $surface);
-    border-bottom: 1px solid $edge_hi;
+    background: $surface;
+    border-bottom: 1px solid $hairline;
 }
 QWidget[glass="true"] {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $surface_focus, stop:1 $surface);
+    background: $surface;
 }
 QWidget[sidebar="true"] {
     background: transparent;
     border-right: 1px solid $hairline;
 }
 QFrame[card="true"] {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $surface_hi, stop:1 $surface);
-    border: 1px solid $hairline; border-radius: 14px;
+    background: $surface;
+    border: 1px solid $hairline; border-radius: 12px;
 }
 QFrame[sidebar="true"] {
     background: transparent; border-right: 1px solid $hairline;
@@ -175,34 +161,33 @@ QFrame[sidebar="true"] {
 
 QMenu {
     background: $surface_alt; border: 1px solid $edge_hi;
-    border-radius: 12px; padding: 7px;
+    border-radius: 10px; padding: 6px;
 }
-QMenu::item { padding: 8px 24px; border-radius: 8px; }
+QMenu::item { padding: 7px 22px; border-radius: 6px; }
 QMenu::item:selected { background: $selection; color: $accent_soft; }
-QMenu::separator { height: 1px; background: $hairline; margin: 6px 9px; }
+QMenu::separator { height: 1px; background: $hairline; margin: 5px 8px; }
 
 QSlider::groove:horizontal {
-    height: 5px; background: $surface_alt; border-radius: 3px;
+    height: 4px; background: $surface_alt; border-radius: 2px;
 }
 QSlider::sub-page:horizontal {
-    background: qlineargradient(x1:0 y1:0 x2:1 y2:0,
-        stop:0 $accent_deep, stop:1 $accent);
-    border-radius: 3px;
+    background: $accent;
+    border-radius: 2px;
 }
 QSlider::handle:horizontal {
-    width: 14px; height: 14px; margin: -5px 0;
-    background: $text_hi; border: 2px solid $accent; border-radius: 7px;
+    width: 11px; height: 11px; margin: -4px 0;
+    background: $text_hi; border: none; border-radius: 6px;
 }
 QSlider::handle:horizontal:hover { background: $accent_soft; }
-QSlider::add-page:horizontal { background: $surface_alt; border-radius: 3px; }
+QSlider::add-page:horizontal { background: $surface_alt; border-radius: 2px; }
 
-QScrollBar:vertical { background: transparent; width: 9px; margin: 2px; }
+QScrollBar:vertical { background: transparent; width: 8px; margin: 2px; }
 QScrollBar::handle:vertical {
     background: $scroll; border-radius: 4px; min-height: 28px;
 }
-QScrollBar::handle:vertical:hover { background: $accent; }
+QScrollBar::handle:vertical:hover { background: $text_dim; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-QScrollBar:horizontal { background: transparent; height: 9px; margin: 2px; }
+QScrollBar:horizontal { background: transparent; height: 8px; margin: 2px; }
 QScrollBar::handle:horizontal {
     background: $scroll; border-radius: 4px; min-width: 28px;
 }
@@ -211,10 +196,9 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
 QScrollArea { background: transparent; border: none; }
 
 QPlainTextEdit[lyrics="true"] {
-    background: qlineargradient(x1:0 y1:0 x2:0 y2:1,
-        stop:0 $surface_hi, stop:1 $surface);
+    background: $surface;
     color: $text;
-    border: 1px solid $hairline; border-radius: 14px;
+    border: 1px solid $hairline; border-radius: 12px;
     padding: 14px; font-size: 14px; line-height: 150%;
     selection-background-color: $selection;
 }
@@ -224,7 +208,7 @@ QDockWidget::title { background: $surface; padding: 8px; border: 1px solid $hair
 
 QToolTip {
     background: $surface_alt; color: $text;
-    border: 1px solid $accent; border-radius: 9px; padding: 6px 10px;
+    border: 1px solid $accent; border-radius: 7px; padding: 5px 9px;
 }
 """
 )
@@ -369,6 +353,7 @@ def build_stylesheet(p: Palette, style_key: str | None = None,
         "accent_deep": _mix(p.accent, "#000000", 0.28),
         # translucent interaction tints (hover wash, fading selection)
         "hover_tint": _rgba(p.text, 7),
+        "hover_tint2": _rgba(p.text, 12),
         "selection_fade": _rgba(p.selection, 0),
         # a lighter inner edge that reads as light catching the glass
         "edge_hi": _mix(p.hairline, p.text, 0.14),

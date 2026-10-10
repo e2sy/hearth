@@ -63,7 +63,7 @@ def test_unknown_style_falls_back_to_default():
 
 def test_classic_style_stays_backward_compatible():
     css = theme.build_stylesheet(GROVE)
-    assert f"stop:1 {GROVE.bg}" in css                # opaque canvas gradient
+    assert f"background: {GROVE.bg};" in css            # flat opaque canvas
     assert f"background: {GROVE.surface_alt};" in css  # opaque surfaces
     assert "1px solid rgba(29, 185, 84" not in css    # no neon rims
     assert theme.STYLES["hearth"].radius_delta == 0
@@ -120,14 +120,14 @@ def test_wallpaper_policy_uses_module_state():
     theme.set_wallpaper_alpha(70)
     assert "rgba(14, 18, 16, 70%)" in theme.build_stylesheet(GROVE)
     theme.set_wallpaper_alpha(None)
-    assert f"stop:1 {GROVE.bg}" in theme.build_stylesheet(GROVE)
+    assert f"background: {GROVE.bg};" in theme.build_stylesheet(GROVE)
 
 
 def test_explicit_style_arg_overrides_module_state():
     theme.set_style("glass")
     assert theme.build_stylesheet(GROVE, "hearth") \
         == theme.build_stylesheet(GROVE, "hearth", wallpaper_alpha=None)
-    assert f"stop:1 {GROVE.bg}" in theme.build_stylesheet(GROVE, "hearth")
+    assert f"background: {GROVE.bg};" in theme.build_stylesheet(GROVE, "hearth")
 
 
 # ----------------------------------------------------------------- wallpapers

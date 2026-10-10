@@ -499,7 +499,7 @@ def test_scan_job_failure_emits_failed(tmp_path, qapp, monkeypatch):
 
 def test_local_view_empty_state_and_count(qapp):
     view = LocalView(get_palette("grove"))
-    assert view._head.text() == "📁 Local songs"
+    assert view._head.text() == "Local songs"
     view.set_tracks([])
     assert not view._empty.isHidden()      # honest empty state
     assert view._empty.text() == "no local songs yet — point hearth at a folder"
@@ -623,4 +623,4 @@ def test_local_view_registered_in_navigation(qapp):
     window.show_view("local")
     assert window.stack.currentIndex() == MainWindow.VIEWS.index("local")
     assert window._nav["local"].isChecked()
-    assert window._nav["local"].text().startswith("📁")
+    assert window._nav["local"].text() == "Local"

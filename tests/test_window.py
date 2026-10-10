@@ -45,11 +45,11 @@ def test_player_bar_reflects_track_state(tmp_path, qapp):
     bar.set_track(track)
     assert bar._title.text() == "Pinned Song"
     assert bar._artist.text() == "Artist"
-    assert bar._pin.text() == "♡"
+    assert not bar._pin.icon().isNull()          # heart glyph, dim when unpinned
     bar.set_pinned(True)
-    assert bar._pin.text() == "♥"
+    assert not bar._pin.icon().isNull()          # danger-tinted when pinned
     bar.set_playing(True)
-    assert bar._btn_play.text() == "⏸"
+    assert not bar._btn_play.icon().isNull()     # pause glyph painted in
     bar.set_position(65_000)
     assert bar._elapsed.text() == "1:05"
     bar.set_duration(200_000)
@@ -63,7 +63,7 @@ def test_pin_flow_roundtrip(tmp_path, qapp):
     hearth.core.play_track(track)
     hearth.window._on_pin_clicked()  # emits pin_toggled -> hearth._toggle_pin
     assert hearth.store.is_pinned("pin9") is True
-    assert hearth.window.player_bar._pin.text() == "♥"
+    assert not hearth.window.player_bar._pin.icon().isNull()
     hearth.window._on_pin_clicked()
     assert hearth.store.is_pinned("pin9") is False
     hearth.shutdown()

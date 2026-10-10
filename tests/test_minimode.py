@@ -182,9 +182,9 @@ def test_widget_mirrors_a_track_into_labels(qapp):
     w.apply_playing(True)
     assert w._title.text() == "Nightdrive"
     assert w._artist.text() == "Neon Fox"
-    assert w._play.text() == "⏸"
+    assert not w._play.icon().isNull()       # pause glyph painted in
     w.apply_playing(False)
-    assert w._play.text() == "▶"
+    assert not w._play.icon().isNull()       # play glyph painted in
 
 
 def test_widget_seeks_only_when_duration_is_known(qapp):

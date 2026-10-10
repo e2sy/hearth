@@ -55,7 +55,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from . import config, share, world
+from . import config, icons, share, world
 from .config import Palette, get_palette
 from .cover import CoverTile, reflected_pixmap
 from .effects import (
@@ -338,8 +338,8 @@ class SearchView(TrackListView):
     search_scoped = pyqtSignal(str, str)      # query, scope ("songs"/"videos"/"albums")
     album_opened = pyqtSignal(object)         # Album (double-click an album result)
 
-    SCOPES = (("songs", "♪ Songs"), ("videos", "▶ Videos"), ("albums", "💿 Albums"),
-              ("lyrics", "📝 Lyrics"))
+    SCOPES = (("songs", "Songs"), ("videos", "Videos"), ("albums", "Albums"),
+              ("lyrics", "Lyrics"))
 
     def __init__(self, palette: Palette):
         super().__init__(palette)
@@ -395,7 +395,7 @@ class SearchView(TrackListView):
         self._list.clear()
         for album in albums:
             label = album.title if not album.year else f"{album.title}  ·  {album.year}"
-            item = QListWidgetItem(f"💿  {label}\n      {album.artist or 'Unknown artist'}")
+            item = QListWidgetItem(f"{label}\n{album.artist or 'Unknown artist'}")
             item.setSizeHint(QSize(0, config.ROW_HEIGHT + 24))
             item.setData(Qt.ItemDataRole.UserRole, album)
             self._list.addItem(item)
@@ -447,13 +447,13 @@ class LibraryView(QWidget):
         new_btn = QPushButton("＋ New playlist")
         new_btn.setProperty("accent", True)
         new_btn.clicked.connect(self.create_playlist_requested.emit)
-        import_btn = QPushButton("📥 Import…")
+        import_btn = QPushButton("Import…")
         import_btn.setProperty("chip", True)
         import_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         import_btn.setToolTip("Import playlists from JSON or M3U files")
         import_btn.clicked.connect(lambda _=False: self.import_requested.emit())
         self._import_btn = import_btn
-        spotify_btn = QPushButton("🟢 From Spotify")
+        spotify_btn = QPushButton("From Spotify")
         spotify_btn.setProperty("chip", True)
         spotify_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         spotify_btn.setToolTip("Paste a Spotify playlist (JSON, Exportify CSV, or embed page) and Hearth rebuilds it on YouTube Music")
@@ -494,14 +494,14 @@ class LocalView(TrackListView):
 
     def __init__(self, palette: Palette):
         super().__init__(palette)
-        self._head.setText("📁 Local songs")
+        self._head.setText("Local songs")
         tools = QHBoxLayout()
         tools.setSpacing(6)
-        add_btn = QPushButton("📂 Add folder…")
+        add_btn = QPushButton("Add folder…")
         add_btn.setProperty("chip", True)
         add_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         add_btn.clicked.connect(self.add_folder_requested.emit)
-        rescan_btn = QPushButton("🔄 Rescan")
+        rescan_btn = QPushButton("Rescan")
         rescan_btn.setProperty("chip", True)
         rescan_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         rescan_btn.clicked.connect(self.rescan_requested.emit)
@@ -551,7 +551,7 @@ class DiscoverView(QWidget):
         outer.setSpacing(10)
 
         head = QHBoxLayout()
-        hero = QLabel("🌍 Discover")
+        hero = QLabel("Discover")
         hero.setProperty("hero", True)
         self._status = QLabel("every mood, genre and corner of the world's music")
         self._status.setProperty("dim", True)
@@ -564,10 +564,10 @@ class DiscoverView(QWidget):
         chips.setSpacing(6)
         self._chips: dict[str, QPushButton] = {}
         for key, label in (
-            ("charts", "🔥 Charts"),
-            ("new_releases", "✨ New releases"),
-            ("trending", "🎶 Trending"),
-            ("new_videos", "🎬 New videos"),
+            ("charts", "Charts"),
+            ("new_releases", "New releases"),
+            ("trending", "Trending"),
+            ("new_videos", "New videos"),
         ):
             chip = QPushButton(label)
             chip.setProperty("chip", True)
@@ -749,9 +749,9 @@ class RemotePlaylistView(TrackListView):
         play = QPushButton("▶ Play all")
         play.setProperty("accent", True)
         play.clicked.connect(lambda: self.play_all_requested.emit(list(self._tracks), 0))
-        shuffle = QPushButton("🔀 Shuffle")
+        shuffle = QPushButton("Shuffle")
         shuffle.clicked.connect(lambda: self.shuffle_requested_sig.emit(list(self._tracks)))
-        enqueue = QPushButton("➕ Queue all")
+        enqueue = QPushButton("Queue all")
         enqueue.setToolTip("Append every track to the up-next queue")
         enqueue.clicked.connect(lambda: self.enqueue_all_requested.emit(list(self._tracks)))
         for b in (play, shuffle, enqueue):
@@ -781,7 +781,7 @@ class WorldView(QWidget):
         outer.setSpacing(10)
 
         head = QHBoxLayout()
-        hero = QLabel("🗺️ World Explorer")
+        hero = QLabel("World Explorer")
         hero.setProperty("hero", True)
         self._status = QLabel(
             f"{len(world.genres())} stations — every continent, every era"
@@ -790,7 +790,7 @@ class WorldView(QWidget):
         head.addWidget(hero)
         head.addStretch(1)
         head.addWidget(self._status)
-        surprise = QPushButton("🎲 Surprise me")
+        surprise = QPushButton("Surprise me")
         surprise.setToolTip("Tune a random genre from anywhere on Earth")
         surprise.clicked.connect(self._surprise)
         head.addWidget(surprise)
@@ -882,19 +882,19 @@ class PlaylistView(TrackListView):
         super().__init__(palette)
         self.playlist_id = playlist_id
         self._playlist_name = name
-        self.set_header(f"📁 {name}")
+        self.set_header(name)
 
         actions = QHBoxLayout()
         play = QPushButton("▶ Play all")
         play.setProperty("accent", True)
         play.clicked.connect(lambda: self.play_all_requested.emit(list(self._tracks), 0))
-        shuffle = QPushButton("🔀 Shuffle")
+        shuffle = QPushButton("Shuffle")
         shuffle.clicked.connect(lambda: self.shuffle_requested_sig.emit(list(self._tracks)))
         rename = QPushButton("Rename")
         rename.clicked.connect(lambda: self.rename_requested.emit(self.playlist_id))
         delete = QPushButton("Delete")
         delete.clicked.connect(lambda: self.delete_requested.emit(self.playlist_id))
-        enhance = QPushButton("✨ Enhance")
+        enhance = QPushButton("Enhance")
         enhance.setToolTip("Sprinkle a few radio-shaped tracks like the ones already here")
         enhance.clicked.connect(lambda: self.enhance_requested.emit(self.playlist_id))
         for b in (play, shuffle, enhance, rename, delete):
@@ -915,7 +915,7 @@ class AlbumView(TrackListView):
         play = QPushButton("▶ Play all")
         play.setProperty("accent", True)
         play.clicked.connect(lambda: self.play_all_requested.emit(list(self._tracks), 0))
-        shuffle = QPushButton("🔀 Shuffle")
+        shuffle = QPushButton("Shuffle")
         shuffle.clicked.connect(lambda: self.shuffle_requested_sig.emit(list(self._tracks)))
         for b in (play, shuffle):
             actions.addWidget(b)
@@ -971,7 +971,7 @@ class ArtistView(QWidget):
         play.clicked.connect(
             lambda: self.play_all_requested.emit(list(self._top_tracks()), 0)
         )
-        shuffle = QPushButton("🔀 Shuffle")
+        shuffle = QPushButton("Shuffle")
         shuffle.clicked.connect(
             lambda: self.shuffle_requested_sig.emit(list(self._top_tracks()))
         )
@@ -1085,7 +1085,7 @@ class ArtistView(QWidget):
             if item.widget() is not None:
                 item.widget().deleteLater()
         for act in related:
-            chip = QPushButton(f"🎤 {act.name}")
+            chip = QPushButton(act.name)
             chip.setProperty("chip", True)
             chip.setCursor(Qt.CursorShape.PointingHandCursor)
             chip.clicked.connect(
@@ -1261,7 +1261,7 @@ class NowView(QWidget):
         hero.setProperty("hero", True)
         head.addWidget(hero)
         head.addStretch(1)
-        self._btn_radio = QPushButton("📻 Start radio")
+        self._btn_radio = QPushButton("Start radio")
         self._btn_radio.clicked.connect(self.radio_requested.emit)
         head.addWidget(self._btn_radio)
         outer.addLayout(head)
@@ -1517,11 +1517,11 @@ class TheaterView(QWidget):
         outer.setSpacing(18)
 
         top = QHBoxLayout()
-        mark = QLabel(f"🔥 {config.APP_NAME} theater")
+        mark = QLabel(f"{config.APP_NAME} theater")
         mark.setProperty("kicker", True)
         top.addWidget(mark)
         top.addStretch(1)
-        self._close = QPushButton("✕  Exit (Esc)")
+        self._close = QPushButton("Exit  (Esc)")
         self._close.setProperty("flat", True)
         self._close.setCursor(Qt.CursorShape.PointingHandCursor)
         self._close.clicked.connect(self.exit_requested.emit)
@@ -1765,7 +1765,7 @@ def _month_label(key: str) -> str:
 
 
 class StatsView(QWidget):
-    """📊 Your year at the hearth: plays, minutes, artists, months.
+    """Your year at the hearth: plays, minutes, artists, months.
 
     A pure view over HearthStore's stats — every visit calls refresh(),
     which reads stats_summary() + history_days() and repaints. Nothing
@@ -1786,14 +1786,14 @@ class StatsView(QWidget):
         outer.setSpacing(12)
 
         head = QHBoxLayout()
-        hero = QLabel("📊 Your year at the hearth")
+        hero = QLabel("Your year at the hearth")
         hero.setProperty("hero", True)
         self._status = QLabel("every play remembered, nothing forgotten")
         self._status.setProperty("dim", True)
         head.addWidget(hero)
         head.addStretch(1)
         head.addWidget(self._status)
-        rewind_btn = QPushButton("🎁 Rewind story")
+        rewind_btn = QPushButton("Rewind story")
         rewind_btn.setProperty("flat", True)
         rewind_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         rewind_btn.setToolTip("Your year at the hearth, told in a few scenes")
@@ -1822,7 +1822,7 @@ class StatsView(QWidget):
             stats.get("top_artists") or [],
         )
         dlg = QDialog(self)
-        dlg.setWindowTitle("🎁 Rewind — your year at the hearth")
+        dlg.setWindowTitle("Rewind — your year at the hearth")
         lay = QVBoxLayout(dlg)
         lay.setContentsMargins(24, 20, 24, 14)
         lay.setSpacing(10)
@@ -1833,13 +1833,13 @@ class StatsView(QWidget):
             lay.addWidget(label)
         # share row (v0.7.1): the story leaves the machine only when you say so
         share_row = QHBoxLayout()
-        copy_btn = QPushButton("📋 Copy")
+        copy_btn = QPushButton("Copy")
         copy_btn.setProperty("flat", True)
         copy_btn.setToolTip("Copy the story as text — paste it anywhere")
         copy_btn.clicked.connect(
             lambda: QApplication.clipboard().setText("\n".join(scenes))
         )
-        png_btn = QPushButton("🖼 Save PNG")
+        png_btn = QPushButton("Save PNG")
         png_btn.setProperty("flat", True)
         png_btn.setToolTip("Save the story as a shareable card")
 
@@ -1851,7 +1851,7 @@ class StatsView(QWidget):
             from .card import render_card
 
             ok = render_card(scenes, path, self._palette.key)
-            lbl = QLabel("Card saved ❤" if ok else "Could not save the card")
+            lbl = QLabel("Card saved" if ok else "Could not save the card")
             lbl.setProperty("dim", True)
             lay.addWidget(lbl)
 
@@ -1965,7 +1965,7 @@ class StatsView(QWidget):
         self._tiles["days"].setText(str(int(summary.get("days_listened") or 0)))
         first = str(summary.get("first_play") or "")
         self._first_lit.setText(
-            f"🕯️ First lit {first[:10]}" if first else "")
+            f"First lit {first[:10]}" if first else "")
         self._set_artists(list(summary.get("top_artists") or []))
         self._top.set_tracks(list(summary.get("top_tracks") or []))
         self._months_chart.set_months(group_months(days))
@@ -2011,7 +2011,7 @@ def day_label(day: str) -> str:
 
 
 class HistoryView(TrackListView):
-    """🕘 Every play, day by day: jump chips, a paged "All", double-click-to-play.
+    """Every play, day by day: jump chips, a paged "All", double-click-to-play.
 
     A pure view over HearthStore's history — refresh() re-reads
     history_days() and repaints the chip row; picking a day lists
@@ -2028,7 +2028,7 @@ class HistoryView(TrackListView):
         self._all: list[Track] = []      # accumulated rows of the current listing
         self._has_more = False
         self._day: str | None = None     # None = All
-        self._head.setText("🕘 History")
+        self._head.setText("History")
 
         self._chips_area = QScrollArea()
         self._chips_area.setWidgetResizable(True)
@@ -2368,21 +2368,23 @@ class PlayerBar(QWidget):
         ident.setSpacing(2)
         ident.addWidget(self._title)
         ident.addWidget(self._artist)
-        self._pin = QPushButton("♡")
+        self._pin = QPushButton()
         self._pin.setProperty("flat", True)
-        self._pin.setFixedWidth(34)
+        self._pin.setIcon(icons.icon("heart", palette.text_dim, 15))
+        self._pin.setIconSize(QSize(15, 15))
+        self._pin.setFixedSize(34, 26)
         self._pin.setToolTip("Pin to favorites")
         self._pin.clicked.connect(self.pin_toggled.emit)
 
         # center: transport + seek
-        self._btn_shuffle = QPushButton("🔀")
-        self._btn_prev = QPushButton("⏮")
-        self._btn_play = QPushButton("▶")
+        self._btn_shuffle = QPushButton()
+        self._btn_prev = QPushButton()
+        self._btn_play = QPushButton()
         self._btn_play.setProperty("accent", True)
-        self._play_glow = add_glow(self._btn_play, palette.accent, blur=28,
-                                   alpha=95)
-        self._btn_next = QPushButton("⏭")
-        self._btn_repeat = QPushButton("🔁")
+        self._play_glow = add_glow(self._btn_play, palette.accent, blur=18,
+                                   alpha=60)
+        self._btn_next = QPushButton()
+        self._btn_repeat = QPushButton()
         self._btn_shuffle.setProperty("flat", True)
         self._btn_repeat.setProperty("flat", True)
         self._btn_prev.setProperty("flat", True)
@@ -2391,6 +2393,10 @@ class PlayerBar(QWidget):
                   self._btn_next, self._btn_repeat):
             b.setCursor(Qt.CursorShape.PointingHandCursor)
         self._btn_play.setFixedSize(44, 36)
+        self._btn_shuffle.setIconSize(QSize(16, 16))
+        self._btn_prev.setIconSize(QSize(16, 16))
+        self._btn_next.setIconSize(QSize(16, 16))
+        self._btn_repeat.setIconSize(QSize(16, 16))
         self._btn_shuffle.clicked.connect(self.shuffle_requested.emit)
         self._btn_prev.clicked.connect(self.prev_requested.emit)
         self._btn_play.clicked.connect(self.play_pause_requested.emit)
@@ -2423,11 +2429,11 @@ class PlayerBar(QWidget):
         center.addLayout(seek_row)
 
         # right: lyrics · radio · speed · sleep · queue · volume
-        self._btn_lyrics = QPushButton("♪")
+        self._btn_lyrics = QPushButton()
         self._btn_lyrics.setProperty("flat", True)
         self._btn_lyrics.setToolTip("Now playing & lyrics")
         self._btn_lyrics.clicked.connect(self.lyrics_toggled.emit)
-        self._btn_radio = QPushButton("📻")
+        self._btn_radio = QPushButton()
         self._btn_radio.setProperty("flat", True)
         self._btn_radio.setToolTip("Start radio from this track")
         self._btn_radio.clicked.connect(self.radio_requested.emit)
@@ -2436,7 +2442,7 @@ class PlayerBar(QWidget):
         self._btn_speed.setFixedWidth(44)
         self._btn_speed.setToolTip("Playback speed")
         self._btn_speed.clicked.connect(self.rate_cycled.emit)
-        self._btn_sleep = QPushButton("⏾")
+        self._btn_sleep = QPushButton()
         self._btn_sleep.setProperty("flat", True)
         self._btn_sleep.setToolTip("Sleep timer")
         self._sleep_menu = QMenu(self)
@@ -2448,7 +2454,7 @@ class PlayerBar(QWidget):
                 lambda _checked=False, m=minutes: self.sleep_requested.emit(m)
             )
         self._btn_sleep.setMenu(self._sleep_menu)
-        self._btn_queue = QPushButton("☰ Queue")
+        self._btn_queue = QPushButton("Queue")
         self._btn_queue.setProperty("flat", True)
         self._btn_queue.clicked.connect(self.queue_toggled.emit)
         self._volume = QSlider(Qt.Orientation.Horizontal)
@@ -2469,6 +2475,26 @@ class PlayerBar(QWidget):
         lay.addWidget(self._btn_sleep)
         lay.addWidget(self._btn_queue)
         lay.addWidget(self._volume)
+        self._retint_transport(palette)
+
+    def _retint_transport(self, p: Palette) -> None:
+        """(Re)paint every transport icon in the palette's own tones."""
+        dim, text = p.text_dim, p.text
+        self._btn_shuffle.setIcon(icons.icon("shuffle", dim, 16))
+        self._btn_repeat.setIcon(icons.icon("repeat", dim, 16))
+        self._btn_prev.setIcon(icons.icon("prev", text, 16))
+        self._btn_next.setIcon(icons.icon("next", text, 16))
+        self._btn_play.setIcon(icons.icon("play", p.bg, 18))
+        self._btn_lyrics.setIcon(icons.icon("music", dim, 16))
+        self._btn_lyrics.setIconSize(QSize(16, 16))
+        self._btn_radio.setIcon(icons.icon("radio", dim, 16))
+        self._btn_radio.setIconSize(QSize(16, 16))
+        self._btn_queue.setIcon(icons.icon("queue", dim, 15))
+        self._btn_queue.setIconSize(QSize(15, 15))
+        self._btn_sleep.setIconSize(QSize(15, 15))
+        self._pin.setIcon(icons.icon(
+            "heart", p.danger if self._pinned else dim, 15))
+        self._pin.setIconSize(QSize(15, 15))
 
     # --- state in ---
 
@@ -2477,12 +2503,14 @@ class PlayerBar(QWidget):
         if track is None:
             self._title.setText("Nothing playing")
             self._artist.setText("pick something from the shelves")
-            self._pin.setText("♡")
+            self._pin.setIcon(icons.icon("heart", self._palette.text_dim, 15))
             self._cover.set_mark()
             return
         self._title.setText(track.title)
         self._artist.setText(track.artist)
-        self._pin.setText("♥" if self._pinned else "♡")
+        self._pin.setIcon(icons.icon(
+            "heart", self._palette.danger if self._pinned
+            else self._palette.text_dim, 15))
         if track.thumbnail:
             self._cover.set_track_cover(track.thumbnail)
         else:
@@ -2490,10 +2518,13 @@ class PlayerBar(QWidget):
 
     def set_pinned(self, pinned: bool) -> None:
         self._pinned = pinned
-        self._pin.setText("♥" if pinned else "♡")
+        self._pin.setIcon(icons.icon(
+            "heart", self._palette.danger if pinned
+            else self._palette.text_dim, 15))
 
     def set_playing(self, playing: bool) -> None:
-        self._btn_play.setText("⏸" if playing else "▶")
+        self._btn_play.setIcon(icons.icon(
+            "pause" if playing else "play", self._palette.bg, 18))
 
     def set_visualizer_state(self, state: str) -> None:
         """Feed the mini-visualizer: 'playing' | 'paused' | 'stopped'."""
@@ -2522,12 +2553,14 @@ class PlayerBar(QWidget):
         self._btn_speed.setToolTip(f"Playback speed ({label})")
 
     def set_sleep_label(self, minutes: int | None) -> None:
-        self._btn_sleep.setText(f"⏾ {minutes}" if minutes else "⏾")
+        self._btn_sleep.setIcon(icons.icon("moon", self._palette.text_dim, 15))
+        self._btn_sleep.setText(f"{minutes}" if minutes else "")
 
     def apply_palette(self, palette: Palette) -> None:
         self._palette = palette
-        set_glow_color(self._play_glow, palette.accent, alpha=95)
+        set_glow_color(self._play_glow, palette.accent, alpha=60)
         self.visualizer.apply_palette(palette)
+        self._retint_transport(palette)
 
     @property
     def current_track(self) -> Track | None:
@@ -2551,7 +2584,7 @@ class AccentPickerDialog(QDialog):
 
     def __init__(self, palette: Palette, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("🎨 Accent colors")
+        self.setWindowTitle("Accent colors")
         self.setMinimumWidth(340)
         self._base = palette
         self._palette = palette
@@ -2569,7 +2602,7 @@ class AccentPickerDialog(QDialog):
         picks.setSpacing(8)
         self._swatches: dict[str, QLabel] = {}
         for field in self.FIELDS:
-            btn = QPushButton(f"🎨 Pick {field}…")
+            btn = QPushButton(f"Pick {field}…")
             btn.clicked.connect(lambda _=False, f=field: self._pick(f))
             picks.addWidget(btn)
         lay.addLayout(picks)
@@ -2584,7 +2617,7 @@ class AccentPickerDialog(QDialog):
 
         row = QHBoxLayout()
         row.setSpacing(8)
-        save = QPushButton("💾 Save as pack…")
+        save = QPushButton("Save as pack…")
         save.setProperty("accent", True)
         save.clicked.connect(self._save_pack)
         reset = QPushButton("Reset")
@@ -2665,7 +2698,7 @@ class StylePickerDialog(QDialog):
     def __init__(self, style_key: str, alpha: int, has_wallpaper: bool,
                  parent=None):
         super().__init__(parent)
-        self.setWindowTitle("🪞 Style closet")
+        self.setWindowTitle("Style closet")
         self.setMinimumWidth(380)
         self.saved = False
         self._current = style_key
@@ -2692,11 +2725,11 @@ class StylePickerDialog(QDialog):
         bg_head.setProperty("kicker", True)
         lay.addWidget(bg_head)
 
-        self._upload_btn = QPushButton("🖼 Upload background…")
+        self._upload_btn = QPushButton("Upload background…")
         self._upload_btn.clicked.connect(self._pick_image)
         lay.addWidget(self._upload_btn)
 
-        self._remove_btn = QPushButton("🚫 Remove background")
+        self._remove_btn = QPushButton("Remove background")
         self._remove_btn.clicked.connect(self.background_cleared.emit)
         self._remove_btn.setEnabled(has_wallpaper)
         lay.addWidget(self._remove_btn)
@@ -2745,7 +2778,7 @@ class StylePickerDialog(QDialog):
 
 
 class DiagnosticsDialog(QDialog):
-    """🩺 The health page: the diagnostics report, read-only, copyable.
+    """The health page: the diagnostics report, read-only, copyable.
 
     A modest modeless dialog — the report arrives as a ready-made
     string from hearth.diagnostics, this shell just paints it in a
@@ -2754,7 +2787,7 @@ class DiagnosticsDialog(QDialog):
 
     def __init__(self, report: str, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("🩺 Hearth diagnostics")
+        self.setWindowTitle("Hearth diagnostics")
         self.setMinimumSize(560, 460)
         lay = QVBoxLayout(self)
         self._text = QPlainTextEdit()
@@ -2767,7 +2800,7 @@ class DiagnosticsDialog(QDialog):
         lay.addWidget(self._text, 1)
         row = QHBoxLayout()
         row.addStretch(1)
-        copy_btn = QPushButton("📋 Copy")
+        copy_btn = QPushButton("Copy")
         copy_btn.setProperty("accent", True)
         copy_btn.setToolTip("Copy the whole report to the clipboard")
         copy_btn.clicked.connect(self._copy)
@@ -2833,7 +2866,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._palette = get_palette(palette_key)
         self.store = store
-        self.setWindowTitle(f"🔥 {config.APP_NAME} — {config.APP_TAGLINE}")
+        self.setWindowTitle(f"{config.APP_NAME} — {config.APP_TAGLINE}")
         self.resize(config.WINDOW_WIDTH, config.WINDOW_HEIGHT)
 
         self.home_view = HomeView(self._palette)
@@ -2899,24 +2932,37 @@ class MainWindow(QMainWindow):
         lay = QVBoxLayout(side)
         lay.setContentsMargins(14, 18, 14, 14)
         lay.setSpacing(6)
-        wordmark = QLabel("🔥 Hearth")
-        wordmark.setProperty("hero", True)
-        lay.addWidget(wordmark)
+        brand = QWidget()
+        brandL = QHBoxLayout(brand)
+        brandL.setContentsMargins(0, 0, 0, 0)
+        brandL.setSpacing(9)
+        flame = QLabel()
+        flame.setPixmap(icons.pixmap("flame", self._palette.accent, 24))
+        flame.setFixedSize(26, 26)
+        flame.setScaledContents(True)
+        wordmark = QLabel("Hearth")
+        wordmark.setProperty("wordmark", True)
+        brandL.addWidget(flame)
+        brandL.addWidget(wordmark)
+        brandL.addStretch(1)
+        lay.addWidget(brand)
         tagline = QLabel(config.APP_TAGLINE)
         tagline.setProperty("kicker", True)
         lay.addWidget(tagline)
         lay.addSpacing(10)
 
         self._nav: dict[str, QPushButton] = {}
-        for key, label in (("home", "🏠 Home"), ("discover", "🧭 Discover"),
-                           ("world", "🗺️ World"), ("search", "🔍 Search"),
-                           ("library", "📚 Your Library"),
-                           ("local", "📁 Local"),
-                           ("now", "🎧 Now Playing"),
-                           ("stats", "📊 Stats"),
-                           ("history", "🕘 History")):
+        for key, label, glyph in (("home", "Home", "home"), ("discover", "Discover", "compass"),
+                                  ("world", "World", "globe"), ("search", "Search", "search"),
+                                  ("library", "Your Library", "library"),
+                                  ("local", "Local", "folder"),
+                                  ("now", "Now Playing", "disc"),
+                                  ("stats", "Stats", "chart"),
+                                  ("history", "History", "clock")):
             btn = QPushButton(label)
             btn.setProperty("nav", True)
+            btn.setIcon(icons.icon(glyph, self._palette.text_dim, 17))
+            btn.setIconSize(QSize(17, 17))
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.clicked.connect(lambda _=False, k=key: self.show_view(k))
@@ -2925,8 +2971,10 @@ class MainWindow(QMainWindow):
 
         # Theater is an action, not a stack page: full-screen over everything.
         if config.THEATER_ENABLED:
-            theater_btn = QPushButton("🎭 Theater")
+            theater_btn = QPushButton("Theater")
             theater_btn.setProperty("nav", True)
+            theater_btn.setIcon(icons.icon("film", self._palette.text_dim, 17))
+            theater_btn.setIconSize(QSize(17, 17))
             theater_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             theater_btn.clicked.connect(lambda _=False: self.toggle_theater())
             lay.addWidget(theater_btn)
@@ -2934,33 +2982,38 @@ class MainWindow(QMainWindow):
         head = QHBoxLayout()
         cap = QLabel("PLAYLISTS")
         cap.setProperty("dim", True)
-        add = QPushButton("＋")
+        add = QPushButton()
         add.setProperty("flat", True)
-        add.setFixedWidth(30)
+        add.setIcon(icons.icon("plus", self._palette.text_dim, 16))
+        add.setFixedSize(30, 26)
         add.setCursor(Qt.CursorShape.PointingHandCursor)
         add.clicked.connect(self._new_playlist_dialog)
-        imp = QPushButton("⬆")
+        imp = QPushButton()
         imp.setProperty("flat", True)
-        imp.setFixedWidth(30)
+        imp.setIcon(icons.icon("upload", self._palette.text_dim, 16))
+        imp.setFixedSize(30, 26)
         imp.setToolTip("Import playlists (JSON)")
         imp.clicked.connect(self._import_playlists)
         head.addWidget(cap)
         head.addStretch(1)
-        closet_btn = QPushButton("🪞")
+        closet_btn = QPushButton()
         closet_btn.setProperty("flat", True)
-        closet_btn.setFixedWidth(30)
+        closet_btn.setIcon(icons.icon("layers", self._palette.text_dim, 16))
+        closet_btn.setFixedSize(30, 26)
         closet_btn.setToolTip("Style closet — glass looks, wallpapers")
         closet_btn.clicked.connect(self.style_closet_requested.emit)
         head.addWidget(closet_btn)
-        accent_btn = QPushButton("🎨")
+        accent_btn = QPushButton()
         accent_btn.setProperty("flat", True)
-        accent_btn.setFixedWidth(30)
+        accent_btn.setIcon(icons.icon("palette", self._palette.text_dim, 16))
+        accent_btn.setFixedSize(30, 26)
         accent_btn.setToolTip("Accent colors (live preview)")
         accent_btn.clicked.connect(self._open_accent_picker)
         head.addWidget(accent_btn)
-        remote_btn = QPushButton("📱")
+        remote_btn = QPushButton()
         remote_btn.setProperty("flat", True)
-        remote_btn.setFixedWidth(30)
+        remote_btn.setIcon(icons.icon("phone", self._palette.text_dim, 16))
+        remote_btn.setFixedSize(30, 26)
         remote_btn.setToolTip("Phone remote — control Hearth from any browser")
         remote_btn.clicked.connect(lambda _=False: self.remote_requested.emit())
         head.addWidget(remote_btn)
@@ -3120,6 +3173,22 @@ class MainWindow(QMainWindow):
 
     # --- navigation ---
 
+    def _nav_glyphs(self) -> dict[str, str]:
+        """The nav key → icon-name map (theater rides along when enabled)."""
+        glyphs = {"home": "home", "discover": "compass", "world": "globe",
+                  "search": "search", "library": "library", "local": "folder",
+                  "now": "disc", "stats": "chart", "history": "clock"}
+        return glyphs
+
+    def _refresh_nav_icons(self) -> None:
+        """Re-tint every nav icon: accent for the active room, dim for the rest."""
+        p = self._palette
+        for key, btn in self._nav.items():
+            glyph = self._nav_glyphs().get(key, "home")
+            active = btn.isChecked()
+            color = p.text if active else p.text_dim
+            btn.setIcon(icons.icon(glyph, color, 17))
+
     def show_view(self, name: str) -> None:
         if name not in self.VIEWS:
             return
@@ -3129,7 +3198,10 @@ class MainWindow(QMainWindow):
         if current is not None:
             fade_in(current, ms=200)   # the stage crossfades in
         for key, btn in self._nav.items():
+            was = btn.isChecked()
             btn.setChecked(key == name)
+            if was != (key == name):
+                self._refresh_nav_icons()
         if name == "home":
             self.home_refresh_requested.emit()
         elif name == "library":
@@ -3158,7 +3230,7 @@ class MainWindow(QMainWindow):
         self.search_view.set_albums(list(albums))
 
     def open_album(self, album: Album, tracks: list[Track]) -> None:
-        self.album_view.set_header(f"💿 {album.title}")
+        self.album_view.set_header(album.title)
         self.album_view.set_tracks(list(tracks))
         self.stack.setCurrentWidget(self.album_view)
         for key, btn in self._nav.items():
@@ -3171,7 +3243,7 @@ class MainWindow(QMainWindow):
 
     def open_remote_playlist(self, title: str, tracks: list[Track]) -> None:
         """A curated Discover playlist, opened as a full page."""
-        self.remote_playlist_view.set_header(f"🎧 {title}")
+        self.remote_playlist_view.set_header(title)
         self.remote_playlist_view.set_tracks(list(tracks))
         self.stack.setCurrentWidget(self.remote_playlist_view)
         for key, btn in self._nav.items():
@@ -3287,7 +3359,7 @@ class MainWindow(QMainWindow):
             self.stack.addWidget(view)
         existing = self.findChild(PlaylistView, f"playlist-{playlist_id}")
         assert existing is not None
-        existing.set_header(f"📁 {self.store.playlist_name(playlist_id) or name}")
+        existing.set_header(self.store.playlist_name(playlist_id) or name)
         existing.set_tracks(self.store.playlist_tracks(playlist_id))
         self.stack.setCurrentWidget(existing)
 
@@ -3659,9 +3731,9 @@ class MainWindow(QMainWindow):
         self.now_view.set_track(track)
         self.theater_view.set_track(track)
         if track is None:
-            self.setWindowTitle(f"🔥 {config.APP_NAME} — {config.APP_TAGLINE}")
+            self.setWindowTitle(f"{config.APP_NAME} — {config.APP_TAGLINE}")
         else:
-            self.setWindowTitle(f"▶ {track.display_name} — 🔥 {config.APP_NAME}")
+            self.setWindowTitle(f"{track.display_name} — {config.APP_NAME}")
 
     def set_pinned(self, pinned: bool) -> None:
         self.player_bar.set_pinned(pinned)
@@ -3710,6 +3782,7 @@ class MainWindow(QMainWindow):
         self.theater_view.apply_palette(palette)
         self.stats_view.apply_palette(palette)
         self.setStyleSheet(build_stylesheet(palette))
+        self._refresh_nav_icons()
 
     # --- wallpaper engine (v0.8.0 style closet) ---
 

@@ -590,7 +590,7 @@ def test_history_view_registered_in_navigation(qapp):
     window.show_view("history")
     assert window.stack.currentIndex() == MainWindow.VIEWS.index("history")
     assert window._nav["history"].isChecked()
-    assert window._nav["history"].text().startswith("🕘")
+    assert window._nav["history"].text() == "History"
 
 
 def test_history_double_click_plays_via_core(tmp_path, qapp):

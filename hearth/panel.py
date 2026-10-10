@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QLinearGradient, QMouseEvent, QPainter, QPainterPath
 from PyQt6.QtWidgets import (
     QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
     QPushButton, QSlider, QVBoxLayout, QWidget,
 )
 
-from . import config
+from . import config, icons
 from .config import Palette, get_palette
 from .models import Track
 from .theme import build_stylesheet
@@ -124,6 +124,7 @@ class FloatingPanel(QWidget):
         )
         self._palette = get_palette(palette_key)
         self._expanded = False
+        self._playing = False
         self._tracks: list[Track] = []
         self._drag_offset = None
         self._build_ui()
@@ -142,14 +143,20 @@ class FloatingPanel(QWidget):
         rib = QHBoxLayout(self._ribbon)
         rib.setContentsMargins(14, 10, 14, 10)
         rib.setSpacing(8)
-        self._flame = QLabel("🔥")
-        self._flame.setStyleSheet("font-size: 18px; background: transparent;")
+        self._flame = QLabel()
+        self._flame.setPixmap(icons.pixmap("flame", self._palette.accent, 18))
+        self._flame.setFixedSize(18, 18)
+        self._flame.setScaledContents(True)
+        self._flame.setStyleSheet("background: transparent;")
         self._title = QLabel("Hearth — nothing playing yet")
         self._title.setProperty("dim", True)
-        self._btn_prev = QPushButton("⏮")
-        self._btn_play = QPushButton("▶")
+        self._btn_prev = QPushButton()
+        self._btn_play = QPushButton()
         self._btn_play.setProperty("accent", True)
-        self._btn_next = QPushButton("⏭")
+        self._btn_next = QPushButton()
+        self._btn_prev.setIconSize(QSize(15, 15))
+        self._btn_next.setIconSize(QSize(15, 15))
+        self._btn_play.setIconSize(QSize(16, 16))
         for b in (self._btn_prev, self._btn_next):
             b.setProperty("flat", True)
             b.setFixedWidth(34)
@@ -202,9 +209,11 @@ class FloatingPanel(QWidget):
         )
 
         ctrl = QHBoxLayout()
-        self._btn_shuffle = QPushButton("🔀")
-        self._btn_repeat = QPushButton("🔁")
-        self._btn_expand = QPushButton("▾")
+        self._btn_shuffle = QPushButton()
+        self._btn_repeat = QPushButton()
+        self._btn_expand = QPushButton()
+        self._btn_shuffle.setIconSize(QSize(14, 14))
+        self._btn_repeat.setIconSize(QSize(14, 14))
         for b, sig in (
             (self._btn_shuffle, self.shuffle_requested),
             (self._btn_repeat, self.repeat_requested),
@@ -281,6 +290,14 @@ class FloatingPanel(QWidget):
         self._palette = palette
         self.setStyleSheet(build_stylesheet(palette))
         self._eq.set_palette(palette)
+        self._flame.setPixmap(icons.pixmap("flame", palette.accent, 18))
+        self._btn_prev.setIcon(icons.icon("prev", palette.text, 15))
+        self._btn_next.setIcon(icons.icon("next", palette.text, 15))
+        self._btn_play.setIcon(icons.icon(
+            "pause" if self._playing else "play", palette.bg, 16))
+        self._btn_shuffle.setIcon(icons.icon("shuffle", palette.text_dim, 14))
+        self._btn_repeat.setIcon(icons.icon("repeat", palette.text_dim, 14))
+        self._btn_expand.setIcon(icons.icon("expand", palette.text_dim, 14))
 
     def set_track(self, track: Track | None) -> None:
         if track is None:
@@ -293,7 +310,10 @@ class FloatingPanel(QWidget):
         self._title.style().polish(self._title)
 
     def set_playing(self, playing: bool) -> None:
-        self._btn_play.setText("⏸" if playing else "▶")
+        self._playing = bool(playing)
+        self._btn_play.setText("")
+        self._btn_play.setIcon(icons.icon(
+            "pause" if playing else "play", self._palette.bg, 16))
         self._eq.set_active(playing)
 
     def set_status(self, text: str) -> None:

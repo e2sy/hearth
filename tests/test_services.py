@@ -525,7 +525,7 @@ def test_stats_view_empty_state(tmp_path, qapp):
     assert window.stack.currentWidget() is window.stats_view
     assert window.stats_view.empty_state is True
     assert window._nav["stats"].isChecked()
-    assert any(btn.text() == "📊 Stats" for btn in window._nav.values())
+    assert any(btn.text() == "Stats" for btn in window._nav.values())
 
 
 def test_stats_view_refreshes_on_open(tmp_path, qapp):

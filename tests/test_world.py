@@ -259,7 +259,7 @@ def test_world_view_chip_click_requests_station(qapp):
 def test_main_window_world_nav(qapp):
     win = MainWindow("grove")
     assert "world" in MainWindow.VIEWS
-    assert win._nav["world"].text().startswith("🗺️")
+    assert win._nav["world"].text() == "World"
     win.show_view("world")
     assert win.stack.currentWidget() is win.world_view
 
@@ -293,6 +293,6 @@ def test_hearth_on_world_ready_queues_and_plays(tmp_path, qapp):
     assert [t.video_id for t in hearth.core.engine.upcoming] == [
         "bbb22222222", "ccc33333333"
     ]
-    assert hearth.window.search_view._head.text().startswith("🗺️ Amapiano")
+    assert "Amapiano" in hearth.window.search_view._head.text()
     assert hearth.window.stack.currentWidget() is hearth.window.search_view
     hearth.shutdown()

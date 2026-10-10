@@ -289,9 +289,10 @@ def test_sleep_button_label_updates(tmp_path, qapp):
     hearth = make_hearth(tmp_path)
     bar = hearth.window.player_bar
     bar.sleep_requested.emit(15)
-    assert bar._btn_sleep.text() == "⏾ 15"
+    assert bar._btn_sleep.text() == "15"
+    assert not bar._btn_sleep.icon().isNull()    # moon glyph painted in
     bar.sleep_requested.emit(0)
-    assert bar._btn_sleep.text() == "⏾"
+    assert bar._btn_sleep.text() == ""
     hearth.shutdown()
 
 

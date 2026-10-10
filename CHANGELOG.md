@@ -8,6 +8,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - This changelog.
+- **UI redesign — the slop purge**: every emoji icon in the visible chrome
+  (sidebar, player bar, headers, chips, dialogs, ribbon, mini player,
+  cover placeholder) is replaced by a 44-icon in-memory vector set
+  (`hearth/icons.py`, QSvgRenderer, no assets, retina-crisp, palette-tinted).
+  The stylesheet is rebuilt flat and modern: honest surfaces instead of
+  2020s gradients, softer hairlines, tighter radii, a real wordmark with a
+  painted vector flame, accent-tinted active nav pills, slimmer sliders,
+  and a calmer play-button glow. Icons re-tint themselves when the theme
+  or accent changes.
 - **Wave-2 wiring — the engines became buttons** (858 tests green):
   - **🪟 Pocket hearth (floating mini player)**: Ctrl+K → "Mini player"
     opens a frameless, always-on-top pocket transport you can drag
