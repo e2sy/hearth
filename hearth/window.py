@@ -3166,6 +3166,9 @@ class MainWindow(QMainWindow):
         self._queue_list.itemDoubleClicked.connect(
             lambda item: self._queue_jump_from_row(self._queue_list.row(item))
         )
+        # Delete on the keyboard: remove the selected upcoming row
+        del_shortcut = QShortcut(QKeySequence.StandardKey.Delete, self._queue_list)
+        del_shortcut.activated.connect(self._remove_selected_queue_row)
         body_lay.addWidget(self._queue_list, 1)
         self.queue_dock.setWidget(body)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.queue_dock)
@@ -3813,6 +3816,16 @@ class MainWindow(QMainWindow):
                     QAbstractItemView.ScrollHint.PositionAtCenter,
                 )
                 return
+
+    def _remove_selected_queue_row(self) -> None:
+        """Keyboard Delete: drop the selected row if it's upcoming."""
+        item = self._queue_list.currentItem()
+        if item is None:
+            return
+        if item.data(Qt.ItemDataRole.UserRole + 1) != "upcoming":
+            return     # the playing row stays pinned
+        row = self._queue_list.row(item)
+        self.queue_remove_requested.emit(row - 1)   # upcoming index
 
     def set_queue(self, upcoming: list[Track], current: Track | None = None) -> None:
         self._queue_list.clear()

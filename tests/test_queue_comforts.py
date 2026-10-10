@@ -144,3 +144,28 @@ def test_app_shuffle_handler_reorders_engine(tmp_path, qapp):
     ids = [t.video_id for t in eng.upcoming]
     assert sorted(ids) == ["a", "b", "c", "d"]   # same tracks, any order
     hearth.shutdown()
+
+
+# --- wave 3c: keyboard Delete in the queue ---
+
+def test_delete_removes_selected_upcoming_row(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    win = hearth.window
+    win.set_queue([make_track(video_id="a"), make_track(video_id="b")])
+    win._queue_list.setCurrentRow(2)      # second upcoming row
+    win._remove_selected_queue_row()
+    # window emits the removal for the app to apply
+    assert win._queue_list.count() == 2   # view untouched until app applies
+    hearth.shutdown()
+
+
+def test_delete_never_removes_the_playing_row(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    win = hearth.window
+    fired = []
+    win.queue_remove_requested.connect(fired.append)
+    win.set_queue([make_track(video_id="a")], current=make_track(video_id="c"))
+    win._queue_list.setCurrentRow(0)      # the playing row
+    win._remove_selected_queue_row()
+    assert fired == []                    # pinned rows refuse to go
+    hearth.shutdown()
