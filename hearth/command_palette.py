@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass
 from typing import Callable
 
-from PyQt6.QtCore import QEvent, Qt, pyqtSignal
+from PyQt6.QtCore import QEasingCurve, QEvent, QPropertyAnimation, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QDialog,
     QLineEdit,
@@ -169,10 +169,21 @@ class CommandPalette(QDialog):
                 geo.center().x() - self.width() // 2,
                 geo.top() + geo.height() // 5,
             )
+        end = self.pos()
+        self.move(end.x(), end.y() + 14)
         self.show()
         self.raise_()
         self.activateWindow()
         self._search.setFocus()
+        # L4 popovers rise the last 14 px into place — the launcher
+        # drops down from nothing like a weightless panel
+        _rise = QPropertyAnimation(self, b"pos", self)
+        _rise.setDuration(170)
+        _rise.setStartValue(self.pos())
+        _rise.setEndValue(end)
+        _rise.setEasingCurve(QEasingCurve.Type.OutCubic)
+        _rise.start()
+        self._hearth_rise = _rise
 
     # --- running ---
 
