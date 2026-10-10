@@ -478,3 +478,22 @@ def test_packaging_manifests_exist_and_carry_required_keys():
         assert len(text) > 150                          # non-trivial, not stubs
     for name in ("PKGBUILD", "com.qtjg.hearth.yml", "hearth.rb"):
         assert name in readme                           # README explains each
+
+
+# --- wave 3: the new strings ship in the en catalog ---
+
+def test_wave3_strings_in_en_catalog():
+    for key, expected in (
+        ("reverse", "Reverse"),
+        ("dedupe", "Dedup"),
+        ("jump_to_now", "Now"),
+        ("shuffle_upcoming", "Shuffle upcoming"),
+        ("bigger_text", "Bigger text"),
+        ("smaller_text", "Smaller text"),
+        ("day_streak", "day streak"),
+    ):
+        assert i18n.tr(key) == expected
+
+
+def test_tr_falls_back_gracefully_for_unknown_keys():
+    assert i18n.tr("definitely_not_a_key") != ""
