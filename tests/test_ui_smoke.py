@@ -23,11 +23,12 @@ def test_stylesheet_has_every_token():
 
 
 def test_stylesheet_compiles_for_every_palette():
-    # the flat layer derives extra tones per palette; none may leak a token
+    # the relief layer derives extra tones per palette; none may leak a token
     for key in PALETTES:
         sheet = build_stylesheet(get_palette(key))
         assert "$" not in sheet
-        assert "qlineargradient" not in sheet   # flat surfaces, honest color
+        assert "qradialgradient" in sheet       # the spotlight floor
+        assert "qlineargradient" in sheet       # carved faces, inset channels
         assert "background:" in sheet
 
 
