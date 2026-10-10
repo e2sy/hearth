@@ -125,3 +125,18 @@ def test_frameless_floaters_carry_shadows(qapp):
     assert mini.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
     mini.close()
     mini.deleteLater()
+
+
+# --- wave 3: focus rims and the pressed handle ---
+
+def test_focus_rims_exist_for_lists_and_buttons():
+    css = theme.build_stylesheet(GROVE)
+    assert "QListWidget:focus" in css
+    assert "QPushButton:focus" in css
+    assert "$accent_soft" not in css        # tokens must all be resolved
+
+
+def test_slider_handle_has_a_pressed_face():
+    css = theme.build_stylesheet(GROVE)
+    assert "QSlider::handle:horizontal:pressed" in css
+    assert "QSlider::sub-page:horizontal:active" in css

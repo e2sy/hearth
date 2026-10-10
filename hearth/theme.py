@@ -232,7 +232,18 @@ QSlider::handle:horizontal:hover {
         stop: 0 #ffffff, stop: 0.5 $accent_soft, stop: 1 $accent);
     border: 1px solid $accent_deep;
 }
+QSlider::handle:horizontal:pressed {
+    background: qradialgradient(cx: 0.35, cy: 0.3, radius: 0.85,
+        stop: 0 #ffffff, stop: 0.5 $accent, stop: 1 $accent_deep);
+    border: 1px solid $accent_deep;
+}
+QSlider::sub-page:horizontal:active { background: $accent; }
 QSlider::add-page:horizontal { background: $inset_bottom; border-radius: 2px; }
+
+/* keyboard focus must be findable in the relief room: a soft accent
+   rim, not a default neon rectangle */
+QListWidget:focus { border: 1px solid $accent_soft; border-top-color: $accent; }
+QPushButton:focus { border: 1px solid $accent_soft; border-top-color: $accent; }
 
 QScrollBar:vertical { background: transparent; width: 8px; margin: 2px; }
 QScrollBar::handle:vertical {
