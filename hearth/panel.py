@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 
 from . import config, icons
 from .config import Palette, get_palette
+from .effects import add_shadow
 from .models import Track
 from .theme import build_stylesheet
 from .utils import mix
@@ -129,6 +130,9 @@ class FloatingPanel(QWidget):
         self._drag_offset = None
         self._build_ui()
         self.apply_palette(self._palette)
+        # the floater hovers: a real ground shadow under the frameless shell
+        blur, dy, alpha = config.DEPTH_SHADOWS["float"]
+        add_shadow(self, blur=blur, dy=dy, alpha=alpha)
         self.setCompact()
 
     # --- UI construction ---

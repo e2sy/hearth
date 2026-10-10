@@ -208,6 +208,8 @@ class Shelf(QWidget):
         inner.addWidget(title, 1)
         inner.addWidget(artist)
         card.clicked.connect(lambda _=False, t=track, i=index: self.card_picked.emit(t, list(self._tracks)))
+        blur, dy, alpha = config.DEPTH_SHADOWS["card"]
+        add_shadow(card, blur=blur, dy=dy, alpha=alpha)
         return card
 
 
@@ -2904,7 +2906,12 @@ class MainWindow(QMainWindow):
         body.addWidget(self._build_sidebar())
         body.addWidget(self.stack, 1)
         outer.addLayout(body, 1)
-        outer.addWidget(self.player_bar)
+        # the bar floats: a ring of open floor under it, a shadow beneath it
+        bar_dock = QWidget()
+        bar_dock_lay = QVBoxLayout(bar_dock)
+        bar_dock_lay.setContentsMargins(10, 2, 10, 10)
+        bar_dock_lay.addWidget(self.player_bar)
+        outer.addWidget(bar_dock)
         self.setCentralWidget(central)
 
         # wallpaper engine: a translucent skin poured over a user image.
@@ -2917,6 +2924,8 @@ class MainWindow(QMainWindow):
         self._bg_label.hide()
 
         self.setStyleSheet(build_stylesheet(self._palette))
+        bar_blur, bar_dy, bar_alpha = config.DEPTH_SHADOWS["bar"]
+        add_shadow(self.player_bar, blur=bar_blur, dy=bar_dy, alpha=bar_alpha)
         self._wire_internal()
         self._install_shortcuts()
         self.theater_view.exit_requested.connect(self.toggle_theater)
