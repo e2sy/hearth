@@ -760,3 +760,20 @@ def test_pyproject_declares_discord_extra():
     assert any("pypresence" in dep for dep in extra)
     assert config.DISCORD_RPC_ENABLED is False     # asleep in tests/CI
     assert config.DISCORD_CLIENT_ID == ""          # user-set, empty by default
+
+
+# --- wave 3: the history filter box ---
+
+def test_history_filter_narrows_client_side(qapp, tmp_path):
+    store = HearthStore(tmp_path / "hist.db")
+    store.log_play(make_track(video_id="aa", title="WinterSun", artist="Nordic"))
+    store.log_play(make_track(video_id="bb", title="Deep Fire", artist="Ember Trio"))
+    view = HistoryView(get_palette("grove"), store=store)
+    view.refresh()
+    assert view._list.count() == 2
+    view._filter.setText("wintersun")
+    assert view._list.count() == 1
+    view._filter.setText("wintersun ember")     # both words must fit one record
+    assert view._list.count() == 0
+    view._filter.setText("")
+    assert view._list.count() == 2

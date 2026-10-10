@@ -78,7 +78,7 @@ from .theme import (
     lyrics_font,
     register_custom_palette,
 )
-from .utils import clock
+from .utils import clock, text_match
 
 
 # ----------------------------------------------------------------- rows
@@ -2075,6 +2075,12 @@ class HistoryView(TrackListView):
         self._more_btn.clicked.connect(self._show_more)
         self._more_btn.hide()
 
+        # the filter box: client-side narrowing of whatever is listed
+        self._filter = QLineEdit()
+        self._filter.setPlaceholderText("Filter these plays…")
+        self._filter.setClearButtonEnabled(True)
+        self._filter.textChanged.connect(lambda _t: self._repaint_filtered())
+
         self._empty = QLabel("nothing played yet — light the fire")
         self._empty.setProperty("dim", True)
         self._empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -2084,6 +2090,7 @@ class HistoryView(TrackListView):
         row.addWidget(self._more_btn)
         lay = self.layout()
         lay.insertLayout(1, row)                       # below the header
+        lay.insertWidget(lay.indexOf(self._list), self._filter)
         lay.insertWidget(lay.indexOf(self._list), self._empty)
         self._chips: dict[str | None, QPushButton] = {}
         self._empty.hide()
@@ -2165,7 +2172,17 @@ class HistoryView(TrackListView):
             self._all = []
             self._has_more = False
         self._more_btn.setVisible(self._has_more)
-        self.set_tracks(self._all)
+        self._repaint_filtered()
+
+    def _repaint_filtered(self) -> None:
+        """List the current pages narrowed by the filter box (client-side)."""
+        query = self._filter.text() if hasattr(self, "_filter") else ""
+        if query.strip():
+            shown = [t for t in self._all
+                     if text_match([t.title, t.artist], query)]
+        else:
+            shown = self._all
+        self.set_tracks(shown)
 
     def _show_more(self) -> None:
         """Append the next 'All' page (day views stay single-page)."""
