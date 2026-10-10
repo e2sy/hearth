@@ -530,6 +530,16 @@ replaces; none of them adds a dependency on the audio thread.
    ***(wired, wave 2)*** — the 🟢 From Spotify button in Your Library
    opens the paste dialog (name + format override) and the import runs
    on the worker pool, then the rebuilt playlist opens itself.
+6. **Floating mini player — the pocket hearth** *(built + wired, wave 2)* —
+   the whole room condensed to a draggable, always-on-top ember: cover
+   dot, a marquee title that walks and rests at the seams, artist +
+   clock, transport, slim seek, and ⤢ / double-click to hand the stage
+   back. Engines in `hearth/minimode.py` — a pure model (`Marquee`,
+   `fmt_clock`, `MiniPlayerModel`) with no Qt inside, and a lazily
+   built widget that only mirrors. *(accepts: model headless-tested,
+   playback mirrors from boot so the pocket never opens stale, Ctrl+K →
+   "Mini player" toggles it)* ***(wired, wave 2)*** — the command
+   palette entry lights it in the current palette with the current song.
 
 **Room bar:** small rows still land with headless tests; the sync
 bridge never sees a key until the user types it.

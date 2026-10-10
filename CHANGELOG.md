@@ -8,7 +8,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - This changelog.
-- **Wave-2 wiring — the engines became buttons** (827 tests green):
+- **Wave-2 wiring — the engines became buttons** (858 tests green):
+  - **🪟 Pocket hearth (floating mini player)**: Ctrl+K → "Mini player"
+    opens a frameless, always-on-top pocket transport you can drag
+    anywhere — cover dot, marquee title (ping-pong walk, rests at the
+    seams), artist + clock, transport, slim seek, and ⤢ / double-click
+    to hand the stage back to the main room. The pure model
+    (`hearth/minimode.py`: `Marquee`, `fmt_clock`, `MiniPlayerModel`)
+    is headless-tested with no Qt; the widget is built lazily and only
+    mirrors what the model says. Playback mirrors into the model from
+    boot, so the pocket never opens stale.
   - **📝 Lyrics chip** on the search page: a remembered line becomes the
     song. Cache hits play directly; LRCLIB hits earn one catalog search
     each via `resolve_lyric_hits` (pure, injected, never raises).
