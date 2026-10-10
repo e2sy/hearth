@@ -235,7 +235,7 @@ class HomeView(QWidget):
         for name in (
             "Quick picks", "Top tracks", "On Repeat", "Pinned favorites",
             "Recently played", "Most played", "Recently loved", "Rare gems",
-            "🔌 Plugins",
+            "Plugins",
         ):
             self._shelves[name] = Shelf(palette, name)
             self._body_lay.addWidget(self._shelves[name])
@@ -245,7 +245,7 @@ class HomeView(QWidget):
         self._body_lay.insertWidget(0, self._hero)
         # the one-tap ritual lives where the rotation it grows from lives
         self._glow_button = self._shelves["On Repeat"].header_button(
-            "✨ Glow Mix", "Your rotation blended with kindred artists' fire")
+            "Glow Mix", "Your rotation blended with kindred artists' fire")
         self._glow_button.clicked.connect(
             lambda _=False: self.glow_mix_requested.emit())
 
@@ -828,7 +828,7 @@ class WorldView(QWidget):
             host_lay.addWidget(grid_host)
             chips: list[QPushButton] = []
             for index, g in enumerate(items):
-                chip = QPushButton(f"{g.emoji} {g.label}")
+                chip = QPushButton(g.label)
                 chip.setProperty("chip", True)
                 chip.setCursor(Qt.CursorShape.PointingHandCursor)
                 chip.setToolTip(f"{g.blurb}\n(region: {g.region})")
@@ -3071,7 +3071,7 @@ class MainWindow(QMainWindow):
     def _wire_internal(self) -> None:
         for shelf_name in ("Quick picks", "Top tracks", "Pinned favorites",
                            "Recently played", "Most played", "Recently loved",
-                           "Rare gems", "🔌 Plugins"):
+                           "Rare gems", "Plugins"):
             self.home_view.shelf(shelf_name).card_picked.connect(
                 lambda t, ctx: self.playlist_picked.emit(list(ctx), list(ctx).index(t))
             )
@@ -3393,16 +3393,16 @@ class MainWindow(QMainWindow):
     # --- context menus ---
 
     def _track_menu(self, track: Track, menu: QMenu) -> None:
-        play_next = menu.addAction("▶ Play next")
-        enqueue = menu.addAction("➕ Add to queue")
-        radio = menu.addAction("📻 Start radio")
-        artist_page = menu.addAction("🎤 Artist page")
-        copy_link = menu.addAction("🔗 Copy YouTube link")
+        play_next = menu.addAction("Play next")
+        enqueue = menu.addAction("Add to queue")
+        radio = menu.addAction("Start radio")
+        artist_page = menu.addAction("Artist page")
+        copy_link = menu.addAction("Copy YouTube link")
         menu.addSeparator()
         pinned = self.store.is_pinned(track.video_id) if self.store else False
-        pin = menu.addAction("♥ Unpin" if pinned else "♡ Pin to favorites")
+        pin = menu.addAction("Unpin" if pinned else "Pin to favorites")
         menu.addSeparator()
-        playlists_menu = menu.addMenu("📌 Add to playlist")
+        playlists_menu = menu.addMenu("Add to playlist")
         if self.store is not None:
             for pid, name, _count in self.store.playlists():
                 playlists_menu.addAction(name).setData(pid)
@@ -3437,7 +3437,7 @@ class MainWindow(QMainWindow):
     def _playlist_track_menu(self, track: Track, menu: QMenu) -> None:
         view = self.sender()
         if isinstance(view, PlaylistView):
-            remove = menu.addAction("✕ Remove from this playlist")
+            remove = menu.addAction("Remove from this playlist")
             remove.triggered.connect(
                 lambda: (self.store.remove_from_playlist(view.playlist_id, track.video_id),
                          self.open_playlist(view.playlist_id),
@@ -3457,9 +3457,9 @@ class MainWindow(QMainWindow):
         and their wiring stay testable without a blocking exec)."""
         menu = QMenu(self)
         open_act = menu.addAction("Open")
-        export_share = menu.addAction("⬆ Export…")              # hearth share format
-        export_all = menu.addAction("📤 Export all (JSON)…")    # every playlist
-        export_m3u = menu.addAction("📤 Export M3U…")           # this playlist
+        export_share = menu.addAction("Export…")                # hearth share format
+        export_all = menu.addAction("Export all (JSON)…")       # every playlist
+        export_m3u = menu.addAction("Export M3U…")              # this playlist
         rename_act = menu.addAction("Rename")
         delete_act = menu.addAction("Delete")
         open_act.triggered.connect(lambda: self.open_playlist(playlist_id))
@@ -3547,7 +3547,7 @@ class MainWindow(QMainWindow):
             ok = False
         if ok:
             self.set_status(
-                f"📤 Exported {len(self.store.playlists())} playlist(s) → {path}")
+                f"Exported {len(self.store.playlists())} playlist(s) → {path}")
         else:
             self.set_status(f"Could not write {path}")
         return ok
@@ -3575,7 +3575,7 @@ class MainWindow(QMainWindow):
         except Exception:   # noqa: BLE001 - never raise out of a menu handler
             ok = False
         if ok:
-            self.set_status(f"📤 Exported M3U → {path}")
+            self.set_status(f"Exported M3U → {path}")
         else:
             self.set_status("Could not export that playlist as M3U")
         return ok
@@ -3606,14 +3606,14 @@ class MainWindow(QMainWindow):
             if suffix == ".json":
                 imported = self.store.import_playlists(path)
                 note = (
-                    f"📥 Imported {imported} playlist(s) from {Path(path).name}"
+                    f"Imported {imported} playlist(s) from {Path(path).name}"
                     if imported
                     else "No playlists in that file — is it a hearth export?"
                 )
             elif suffix in (".m3u", ".m3u8"):
                 added = self.store.import_m3u(path, Path(path).stem)
                 note = (
-                    f"📥 Imported {added} tracks into “{Path(path).stem}”"
+                    f"Imported {added} tracks into “{Path(path).stem}”"
                     if added
                     else "No playable entries in that M3U"
                 )
@@ -3636,13 +3636,13 @@ class MainWindow(QMainWindow):
         move_up = None
         move_down = None
         if kind == "upcoming":
-            play_now = menu.addAction("▶ Play now")
+            play_now = menu.addAction("Play now")
             move_up = menu.addAction("↑ Move up")
             move_down = menu.addAction("↓ Move down")
             menu.addSeparator()
-            remove = menu.addAction("✕ Remove from queue")
+            remove = menu.addAction("Remove from queue")
         else:
-            remove = menu.addAction("✕ Remove from queue")
+            remove = menu.addAction("Remove from queue")
             remove.setEnabled(False)   # the playing row isn't in `upcoming`
         chosen = menu.exec(self._queue_list.viewport().mapToGlobal(pos))
         if chosen is None:
