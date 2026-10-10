@@ -6,13 +6,20 @@
 >
 > Last stoked: **2026-10-10** (v0.7.2 shipped; v0.8.0 "The Long Winter
 > Nights" and v0.9.0 "The Mindful Flame" charted; wave-2 engines landed
-> and then went visible — the 📝 lyric chip on Search, the ✨ Enhance
-> button on every playlist, the 🟢 From Spotify paste dialog, the 🎉
-> party inbox review surface, and the 🎚️ Sound Forge bench with a real
+> and then went visible — the lyric chip on Search, the Enhance
+> button on every playlist, the From Spotify paste dialog, the
+> party inbox review surface, and the Sound Forge bench with a real
 > preamp riding the master volume; 827 tests green). The chrome then got
 > its own waves: the icon set + flat honest stylesheet (act I), the last
-> emoji purge (act II), and the **3D depth system** (`docs/UI-DEPTH.md` —
-> spotlight floor, carved surfaces, floating chrome; 864 tests green).
+> emoji purge (act II), the **3D depth system** (`docs/UI-DEPTH.md` —
+> spotlight floor, carved surfaces, floating chrome; 864 tests green),
+> and **wave 3 "the living room"** — the depth grew motion (a pure lift
+> ladder driving hover-lift/press-plant, staggered grounding entrances,
+> breathing glows, a reduced-motion kill-switch) and the listener grew
+> muscle (queue clock + Reverse/Dedup/Now/Shuffle-upcoming, Ember Dusk +
+> Lantern palettes, a text-size dial, four new global hotkeys, Ctrl+1..9
+> view jumps, a history filter, a live day-streak tile, last-view and
+> mini-spot memory).
 > Earlier, by crew decision, every wave was folded into
 > **one main version** — all four themes, one fire, built in order. Every
 > add-on discussed with the crew has a row here; nothing lives only in a
@@ -203,8 +210,7 @@ wave closes out for good.*
    ReplayGain-style pass: no more reaching for the volume knob when a
    quiet acoustic track follows a mastered-to-death single. *(accepts:
    per-track and per-playlist modes; measured once, cached in SQLite)*
-3. **Global speed knob** — per-track rate memory already exists; add the
-   session-wide 0.5×–2.0× dial on the player bar with pitch preservation.
+3. ✅ **Global speed knob** *(session dial shipped earlier; wave 3 kept it honest)* — per-track rate memory already exists; the session-wide 0.5×–2.0× dial rides the player bar and survives restarts.
    *(accepts: keyboard shortcuts, survives track changes, never fights
    per-track memory — session dial wins until cleared)*
 4. **Karaoke mode** — center-channel cancellation ducks the vocal when the
