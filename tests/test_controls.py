@@ -149,7 +149,7 @@ def test_app_registers_expected_palette_actions(tmp_path, qapp):
     assert "Mini player" in labels          # the pocket hearth, Ctrl+K too
     assert "Bigger text" in labels          # the accessibility dial, too
     assert len(labels) == 9 + len(hearth.window.VIEWS) \
-        + len(config.PALETTES) + len(config.PLAYBACK_RATES) + 4
+        + len(config.PALETTES) + len(config.PLAYBACK_RATES) + 5
     hearth.shutdown()
 
 
@@ -521,4 +521,31 @@ def test_ctrl_2_switches_view(tmp_path, qapp):
     # directly: the chord maps to VIEWS[1]
     hearth.window.show_view(target)
     assert hearth.window._last_view == target
+    hearth.shutdown()
+
+
+# --- wave 3b: copy track info from the palette ---
+
+def test_copy_track_info_action(tmp_path, qapp):
+    from PyQt6.QtWidgets import QApplication
+
+    hearth = make_hearth(tmp_path)
+    from .test_models import make_track
+    hearth._pick_track(make_track(title="Ember Waltz", artist="Fire Trio"))
+    action = next(a for a in hearth.command_palette.actions
+                  if a.label == "Copy track info")
+    action.callback()
+    clip = QApplication.clipboard().text()
+    assert clip == "Ember Waltz — Fire Trio"
+    hearth.shutdown()
+
+
+def test_copy_track_info_with_nothing_playing(tmp_path, qapp):
+    from PyQt6.QtWidgets import QApplication
+
+    hearth = make_hearth(tmp_path)
+    seen = []
+    hearth.window.set_status = seen.append
+    hearth._copy_track_info()
+    assert seen == ["Nothing playing to copy"]
     hearth.shutdown()

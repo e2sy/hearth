@@ -1353,6 +1353,8 @@ class Hearth:
             CommandAction("Mini player", self._toggle_mini_player,
                           "mini pocket floating small tiny compact window "
                           "always on top drag"),
+            CommandAction("Copy track info", self._copy_track_info,
+                          "copy clipboard now playing title artist share"),
         ]
         view_labels = {
             "home": "Go to Home",
@@ -1443,6 +1445,16 @@ class Hearth:
         track = self.core.engine.current
         if track is not None:
             self._toggle_pin(track)
+
+    def _copy_track_info(self) -> None:
+        """Copy 'Title — Artist' for the playing track to the clipboard."""
+        track = self.core.engine.current
+        if track is None:
+            self.surface.set_status("Nothing playing to copy")
+            return
+        text = f"{track.title} — {track.artist}"
+        QApplication.clipboard().setText(text)
+        self.surface.set_status(f"Copied: {text}")
 
     # --- plugins (v0.7.0): palette packs + shelf sources, trusted installs ---
 
