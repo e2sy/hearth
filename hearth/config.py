@@ -136,6 +136,8 @@ DEPTH_SHADOWS = {               # elevation table: (blur, dy, alpha) ground shad
 }
 
 # --- v0.9.2: accessibility dials ---
+MOTION_ENABLED = True            # False = reduced motion: no lifts, pulses,
+                                 # slides — surfaces keep their rest shadows
 FONT_SCALE_MIN = 0.85           # smallest allowed text scale
 FONT_SCALE_MAX = 1.30           # largest — past this, fixed layouts crack
 

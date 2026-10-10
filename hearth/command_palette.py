@@ -175,8 +175,11 @@ class CommandPalette(QDialog):
         self.raise_()
         self.activateWindow()
         self._search.setFocus()
-        # L4 popovers rise the last 14 px into place — the launcher
-        # drops down from nothing like a weightless panel
+        # L4 popovers rise the last 14 px into place — unless reduced
+        # motion is on, in which case the launcher simply appears
+        from . import config as _config
+        if not _config.MOTION_ENABLED:
+            return
         _rise = QPropertyAnimation(self, b"pos", self)
         _rise.setDuration(170)
         _rise.setStartValue(self.pos())

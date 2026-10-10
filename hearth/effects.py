@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from . import motion
+from . import config, motion
 
 
 def add_shadow(widget: QWidget, color: str = "#000000", blur: int = 26,
@@ -222,6 +222,11 @@ def hover_lift(widget: QWidget, base_level: int = motion.LEVEL_REST,
     blur, dy, alpha = motion.shadow_for(base_level)
     effect = add_shadow(widget, color=color, blur=blur, dy=dy,
                         alpha=alpha)
+    if not config.MOTION_ENABLED:
+        # reduced motion: the surface keeps its resting shadow and its
+        # dignity — no filter, no choreography
+        widget._hearth_lift = None
+        return None
     lift = Lift(effect, base_level=base_level, color=color)
     widget.installEventFilter(_LiftFilter(lift))
     widget._hearth_lift = lift
@@ -239,6 +244,8 @@ def start_pulse(widget: QWidget, color: str,
     """
     if getattr(widget, "_hearth_pulse", None) is not None:
         return
+    if not config.MOTION_ENABLED:
+        return                     # no breathing under reduced motion
     effect = add_glow(widget, color, blur=motion.PULSE_BLUR_LOW, alpha=100)
     widget._hearth_pulse = _Pulse(widget, effect, period_ms, ticks)
 
@@ -279,6 +286,8 @@ class _Pulse(QObject):
 
 def slide_toast(widget: QWidget, ms: int = 320) -> None:
     """Toast entrance: rise from below the final resting point while fading in."""
+    if not config.MOTION_ENABLED:
+        return                     # a reduced-motion toast just appears
     effect = _ensure_opacity_effect(widget)
     if effect is None:
         return

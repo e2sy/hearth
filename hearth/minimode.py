@@ -505,6 +505,9 @@ def build_mini_widget(
             super().leaveEvent(event)
 
         def _start_breathe(self, end_blur: int, ms: int) -> None:
+            from . import config as _config
+            if not _config.MOTION_ENABLED:
+                return                     # reduced motion: the ember rests
             self._breathe.stop()
             self._breathe.setDuration(max(1, ms))
             self._breathe.setStartValue(float(self._shadow.blurRadius()))
