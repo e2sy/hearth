@@ -245,3 +245,12 @@ def test_rewind_dialog_offers_copy_and_png(tmp_path, qapp, monkeypatch):
     # no native dialog in tests: the Save button is only wired in real UI
     assert hasattr(view, "_show_rewind")
     hearth.shutdown()
+
+
+# --- wave 3: diagnostics speaks the a11y dials ---
+
+def test_report_mentions_motion_state():
+    from hearth import config, diagnostics
+
+    report = diagnostics.gather_report(store=None)
+    assert "motion=on" in report if config.MOTION_ENABLED else "motion=off" in report
