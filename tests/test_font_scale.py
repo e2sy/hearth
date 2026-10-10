@@ -50,3 +50,49 @@ def test_full_walk_never_leaves_range():
     for _ in range(20):
         value = font_scale_step(value, -1)
         assert FONT_SCALE_MIN <= value <= FONT_SCALE_MAX
+
+
+# --- app wiring: the dial moves the app and survives a restart ---
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+from test_app_smoke import make_hearth      # noqa: E402
+
+
+def test_font_scale_persists_across_restart(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    base = hearth.qapp.font().pointSizeF()
+    hearth._apply_font_scale(1.2)
+    assert abs(hearth.qapp.font().pointSizeF() - base * 1.2) < 0.01
+    hearth.shutdown()
+
+    reopened = make_hearth(tmp_path)
+    assert abs(reopened.qapp.font().pointSizeF() - base * 1.2) < 0.01
+    reopened.shutdown()
+
+
+def test_palette_actions_step_the_dial(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    bigger = next(a for a in hearth.command_palette.actions
+                  if a.label == "Bigger text")
+    smaller = next(a for a in hearth.command_palette.actions
+                   if a.label == "Smaller text")
+    bigger.callback()
+    up = hearth._font_scale
+    assert up > 1.0
+    smaller.callback()
+    assert abs(hearth._font_scale - 1.0) < 1e-9
+    hearth.shutdown()
+
+
+def test_font_scale_never_compounds(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    base = getattr(hearth.qapp, "_hearth_base_point",
+                   hearth.qapp.font().pointSizeF())
+    for _ in range(5):
+        hearth._apply_font_scale(1.2)
+    assert abs(hearth.qapp.font().pointSizeF() - base * 1.2) < 0.01
+    hearth.shutdown()

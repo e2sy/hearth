@@ -147,8 +147,9 @@ def test_app_registers_expected_palette_actions(tmp_path, qapp):
     assert "Party suggestions" in labels    # the party hat, reachable from Ctrl+K
     assert "Sound Forge (equalizer)" in labels
     assert "Mini player" in labels          # the pocket hearth, Ctrl+K too
+    assert "Bigger text" in labels          # the accessibility dial, too
     assert len(labels) == 9 + len(hearth.window.VIEWS) \
-        + len(config.PALETTES) + len(config.PLAYBACK_RATES) + 2
+        + len(config.PALETTES) + len(config.PLAYBACK_RATES) + 4
     hearth.shutdown()
 
 
