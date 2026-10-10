@@ -62,6 +62,7 @@ from .local_scan import LocalScanJob
 from .import_dialog import ImportDialog
 from .lyrics import SyncedLyrics
 from .lyrics_overlay import LyricsOverlay
+from .minimode import MiniPlayerModel, build_mini_widget
 from .models import Album, Artist, Collection, Track
 from .mpris import MPRIS_AVAILABLE, MprisService
 from .panel import FloatingPanel
@@ -446,6 +447,10 @@ class Hearth:
         self._party_poll.start()
         # the Sound Forge bench: one dialog per run, knobs out
         self._sound_dialog: SoundForgeDialog | None = None
+        # the pocket hearth: a tiny always-on-top transport (built on first use;
+        # the model mirrors playback from the moment the app lights)
+        self._mini_model = MiniPlayerModel()
+        self._mini_window = None
         # wake-up alarm: one-shot, tray-scheduled, fades the room back in
         self.alarm = AlarmController(parent=self.qapp)
         self.alarm.fired.connect(self._fire_alarm)
@@ -588,6 +593,12 @@ class Hearth:
         # (its handler keeps test mode off the network, like _on_stream_lost)
         self.core.preresolve_requested.connect(self._on_preresolve)
         self.window.now_view.crossfade_changed.connect(self._on_crossfade_changed)
+        # the pocket hearth mirrors playback (cheap model writes even when
+        # the window has never been opened, so it never shows stale state)
+        self.core.track_changed.connect(self._mini_on_track)
+        self.core.state_changed.connect(self._mini_on_state)
+        self.core.position_changed.connect(self._mini_on_position)
+        self.core.duration_changed.connect(self._mini_on_duration)
 
     def _build_tray(self) -> None:
         if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -1301,6 +1312,9 @@ class Hearth:
                           "party guest inbox suggest review queue"),
             CommandAction("Sound Forge (equalizer)", self._open_sound_forge,
                           "eq equalizer sound karaoke preamp audio forge"),
+            CommandAction("Mini player", self._toggle_mini_player,
+                          "mini pocket floating small tiny compact window "
+                          "always on top drag"),
         ]
         view_labels = {
             "home": "Go to Home",
@@ -1687,6 +1701,69 @@ class Hearth:
         self._sound_dialog.show()
         self._sound_dialog.raise_()
         self._sound_dialog.activateWindow()
+
+    # --- the pocket hearth (floating mini player) ---
+
+    def _toggle_mini_player(self) -> None:
+        """🪟 Pocket hearth: a tiny, draggable, always-on-top transport."""
+        if self._mini_window is not None and self._mini_window.isVisible():
+            self._mini_window.hide()
+            self.surface.set_status("Pocket hearth closed")
+            return
+        self._open_mini_player()
+
+    def _open_mini_player(self) -> None:
+        """Light the pocket hearth in the current palette, current song in."""
+        if self._mini_window is None:
+            pal_key = str(self.settings.value("theme", config.DEFAULT_PALETTE))
+            pal = config.PALETTES.get(pal_key) or config.PALETTES[config.DEFAULT_PALETTE]
+            self._mini_window = build_mini_widget(
+                pal,
+                self._mini_model,
+                on_play_pause=self.core.toggle,
+                on_next=self.core.next,
+                on_prev=self.core.previous,
+                on_seek=self.core.seek,
+                on_expand=self._expand_mini,
+            )
+            current = self.core.engine.current
+            if current is not None:
+                self._mini_model.set_track(current.title, current.artist)
+                self._mini_window.apply_track(current.title, current.artist)
+        self._mini_window.show()
+        self._mini_window.raise_()
+        self.surface.set_status("Pocket hearth glowing — drag it anywhere")
+
+    def _expand_mini(self) -> None:
+        """⤢ or double-click on the pocket: the main window takes the stage."""
+        if self._mini_window is not None:
+            self._mini_window.hide()
+        self.window.showNormal()
+        self.window.raise_()
+        self.window.activateWindow()
+
+    def _mini_on_track(self, track) -> None:
+        if track is None:
+            self._mini_model.set_track("", "")
+        else:
+            self._mini_model.set_track(track.title, track.artist)
+        if self._mini_window is not None and self._mini_window.isVisible():
+            self._mini_window.apply_track(
+                self._mini_model.title, self._mini_model.artist
+            )
+
+    def _mini_on_state(self, playing: bool) -> None:
+        self._mini_model.set_playing(playing)
+        if self._mini_window is not None and self._mini_window.isVisible():
+            self._mini_window.apply_playing(playing)
+
+    def _mini_on_position(self, position_ms: int) -> None:
+        self._mini_model.set_position(position_ms)
+        if self._mini_window is not None and self._mini_window.isVisible():
+            self._mini_window.apply_position(position_ms)
+
+    def _mini_on_duration(self, duration_ms: int) -> None:
+        self._mini_model.set_duration(duration_ms)
 
     def _on_sound_state(self, state) -> None:
         """Every knob move: persist it, apply what the backend honors today."""

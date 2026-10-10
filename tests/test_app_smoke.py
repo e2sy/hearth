@@ -87,3 +87,56 @@ def test_qt_bridge_is_installed_on_boot(tmp_path, qapp):
 
     make_hearth(tmp_path).shutdown()
     assert qInstallMessageHandler(None) is not None  # something was installed
+
+
+# --- the pocket hearth: the floating mini player (wave 2) ---
+
+
+def test_mini_player_opens_mirrors_and_closes(tmp_path, qapp):
+    from .test_models import make_track
+
+    hearth = make_hearth(tmp_path)
+    track = make_track()
+    hearth._pick_track(track)
+
+    hearth._toggle_mini_player()
+    assert hearth._mini_window is not None
+    assert hearth._mini_window.isVisible()
+    assert hearth._mini_model.title == track.title
+    assert hearth._mini_model.artist == track.artist
+
+    # second toggle → closed, not rebuilt blank
+    hearth._toggle_mini_player()
+    assert not hearth._mini_window.isVisible()
+    hearth._toggle_mini_player()
+    assert hearth._mini_window.isVisible()
+    hearth.shutdown()
+
+
+def test_mini_model_mirrors_playback_even_while_closed(tmp_path, qapp):
+    from .test_models import make_track
+
+    hearth = make_hearth(tmp_path)
+    hearth._pick_track(make_track())
+    # the window was never opened, but the model still follows the core
+    assert hearth._mini_model.title == make_track().title
+    hearth._mini_on_duration(150_000)
+    assert hearth._mini_model.duration_ms == 150_000
+    hearth._mini_on_state(True)
+    assert hearth._mini_model.playing is True
+    hearth.shutdown()
+
+
+def test_mini_expand_hides_pocket_and_raises_the_room(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    hearth._toggle_mini_player()
+    hearth._expand_mini()
+    assert not hearth._mini_window.isVisible()
+    hearth.shutdown()
+
+
+def test_mini_player_has_a_palette_entry(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    labels = [a.label for a in hearth._palette_actions()]
+    assert "Mini player" in labels
+    hearth.shutdown()
