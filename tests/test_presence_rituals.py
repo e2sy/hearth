@@ -713,10 +713,10 @@ def test_playlist_menu_offers_storage_exports(qapp, tmp_path):
     win = MainWindow("grove", store=store)
     menu = win._build_playlist_menu(pid)
     texts = [act.text() for act in menu.actions()]
-    assert "📤 Export all (JSON)…" in texts        # export_playlists = every list
-    assert "📤 Export M3U…" in texts               # export_m3u = this list
+    assert "Export all (JSON)…" in texts           # export_playlists = every list
+    assert "Export M3U…" in texts                  # export_m3u = this list
     assert "Rename" in texts and "Delete" in texts
-    assert "⬆ Export…" in texts                    # the original share export stays
+    assert "Export…" in texts                      # the original share export stays
     menu.deleteLater()
     store.close()
 

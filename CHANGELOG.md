@@ -8,6 +8,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - This changelog.
+- **UI redesign, act II — the last emoji leave the building**: menus,
+  status-bar messages, the World Explorer's 74 genre chips, the Rewind
+  story, the tray icon, toasts, the party inbox, diagnostics, the update
+  whisper, and even the phone-remote web page now speak the same clean
+  design language — plain text, vector flame marks, and inline SVG
+  transport buttons (play/pause swaps itself live). The tray and taskbar
+  icon is painted from the same in-memory vector flame as the app
+  (palette-tinted), the Rewind share card colors its headline by position
+  instead of emoji sniffing, and world genre chips read as honest text.
 - **UI redesign — the slop purge**: every emoji icon in the visible chrome
   (sidebar, player bar, headers, chips, dialogs, ribbon, mini player,
   cover placeholder) is replaced by a 44-icon in-memory vector set
@@ -17,7 +26,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   painted vector flame, accent-tinted active nav pills, slimmer sliders,
   and a calmer play-button glow. Icons re-tint themselves when the theme
   or accent changes.
-- **Wave-2 wiring — the engines became buttons** (858 tests green):
+- **Wave-2 wiring — the engines became buttons** (854 tests green):
   - **🪟 Pocket hearth (floating mini player)**: Ctrl+K → "Mini player"
     opens a frameless, always-on-top pocket transport you can drag
     anywhere — cover dot, marquee title (ping-pong walk, rests at the

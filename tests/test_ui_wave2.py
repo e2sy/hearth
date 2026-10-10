@@ -173,7 +173,7 @@ def test_party_dialog_lists_pending_guests(qapp):
     dialog = PartyInboxDialog(_inbox_with_two())
     assert "2 guest suggestion(s)" in dialog._head.text()
     labels = [w.text() for w in dialog.findChildren(QLabel)
-              if "🎵" in (w.text() or "")]
+              if w.text()]
     assert any("Guest song" in t for t in labels)
     assert any("DJ Ember" in t for t in labels)
 

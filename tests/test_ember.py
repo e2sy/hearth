@@ -213,7 +213,7 @@ def test_report_shows_fetch_legs(tmp_path):
 
 def test_rewind_card_renders_a_real_png(tmp_path, qapp):
     scenes = [
-        "🔥 1,024 plays · 5,120 minutes · 120 days by the fire",
+        "1,024 plays · 5,120 minutes · 120 days by the fire",
         "🌱 It all began on January 5, 2026",
         "🧭 312 different tracks crossed the hearth",
         "🏆 Daft Punk owned the year",

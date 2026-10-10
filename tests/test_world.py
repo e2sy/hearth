@@ -37,7 +37,7 @@ def test_every_genre_is_fully_described():
     keys = [g.key for g in world.genres()]
     assert len(keys) == len(set(keys)), "duplicate genre keys"
     for g in world.genres():
-        assert g.emoji and g.label and g.blurb, g.key
+        assert g.label and g.blurb, g.key
         assert g.queries and all(q.strip() for q in g.queries), g.key
         assert g.key == g.key.strip() and " " not in g.key, g.key
 
