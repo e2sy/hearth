@@ -135,6 +135,39 @@ DEPTH_SHADOWS = {               # elevation table: (blur, dy, alpha) ground shad
     "float": (34, 12, 190),     # frameless floaters (mini, panel, launcher, toast)
 }
 
+# --- v0.9.2: accessibility dials ---
+FONT_SCALE_MIN = 0.85           # smallest allowed text scale
+FONT_SCALE_MAX = 1.30           # largest — past this, fixed layouts crack
+
+
+def clamp_font_scale(value) -> float:
+    """Coerce a stored font scale to a safe float multiplier.
+
+    Junk from the settings file (None, 'abc', 99) falls back to 1.0 or
+    clamps into range — a bad stored value must never resize the whole
+    app into soup.
+    """
+    try:
+        scale = float(value)
+    except (TypeError, ValueError):
+        return 1.0
+    return max(FONT_SCALE_MIN, min(FONT_SCALE_MAX, scale))
+
+
+def font_scale_step(current: float, direction: int) -> float:
+    """The next font scale one step up (direction=1) or down (-1).
+
+    Nine steps from min to max; the result clamps at both ends and the
+    current value is coerced first, so stepping from a junk setting is
+    still safe.
+    """
+    steps = 8
+    current = clamp_font_scale(current)
+    span = FONT_SCALE_MAX - FONT_SCALE_MIN
+    step = span / steps
+    target = current + direction * step
+    return max(FONT_SCALE_MIN, min(FONT_SCALE_MAX, round(target, 2)))
+
 # --- v1.0.0 groundwork ---
 CROSSFADE_ENABLED = False       # opt-in dual-player crossfade
 CROSSFADE_MAX_MS = 3000         # upper bound of the crossfade slider
