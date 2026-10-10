@@ -80,6 +80,45 @@ def longest_streak(days: Iterable[tuple[str, int]], minimum: int = STREAK_MIN) -
     return best if best >= max(int(minimum), 1) else 0
 
 
+def current_streak(days: Iterable[tuple[str, int]],
+                   today: str | None = None) -> int:
+    """The live run of consecutive lit days ending today or yesterday.
+
+    A streak survives the morning — if yesterday was lit but today hasn't
+    happened yet, the streak is still alive (playing today extends it).
+    A last play any older than that is a cold trail: 0. Pure math over
+    'YYYY-MM-DD' strings; junk dates are ignored, and `today` is
+    injectable so tests never sleep.
+    """
+    parsed: set[datetime] = set()
+    for day, _count in days or []:
+        try:
+            parsed.add(datetime.strptime(str(day), "%Y-%m-%d"))
+        except ValueError:
+            continue
+    if not parsed:
+        return 0
+    if today is not None:
+        try:
+            anchor_day = datetime.strptime(str(today), "%Y-%m-%d")
+        except ValueError:
+            return 0
+    else:
+        anchor_day = datetime.now()
+    # walk back from today; if today is dark, the streak may still be
+    # alive through yesterday — but only one grace day
+    cursor = anchor_day.replace(hour=0, minute=0, second=0, microsecond=0)
+    if cursor not in parsed:
+        cursor -= timedelta(days=1)
+    if cursor not in parsed:
+        return 0
+    streak = 0
+    while cursor in parsed:
+        streak += 1
+        cursor -= timedelta(days=1)
+    return streak
+
+
 def busiest_month(days: Iterable[tuple[str, int]]) -> tuple[str, int] | None:
     """The month with the most plays: ('2026-03', 412). None when thin."""
     months: dict[str, int] = {}

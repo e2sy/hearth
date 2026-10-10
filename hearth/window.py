@@ -55,18 +55,21 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from . import config, icons, share, world
+from . import config, icons, motion, queue_tools, share, world
 from .config import Palette, get_palette
 from .cover import CoverTile, reflected_pixmap
 from .effects import (
     add_glow,
     add_shadow,
     fade_in,
+    hover_lift,
     set_glow_color,
+    start_pulse,
+    stop_pulse,
 )
 from .lyrics import LrcLine, SyncedLyrics
 from .models import Album, Artist, Track
-from .rewind import build_rewind_story
+from .rewind import build_rewind_story, current_streak
 from .storage import HearthStore
 from .theme import (
     STYLES,
@@ -75,7 +78,7 @@ from .theme import (
     lyrics_font,
     register_custom_palette,
 )
-from .utils import clock
+from .utils import clock, fire_greeting, text_match
 
 
 # ----------------------------------------------------------------- rows
@@ -87,6 +90,7 @@ class TrackRow(QWidget):
                  removable: bool = False):
         super().__init__()
         self.track = track
+        self._palette = palette
         self.setMinimumHeight(config.ROW_HEIGHT)
         lay = QHBoxLayout(self)
         lay.setContentsMargins(10, 4, 10, 4)
@@ -122,6 +126,24 @@ class TrackRow(QWidget):
 
     def set_index(self, index: int) -> None:
         self._pos.setText(str(index))
+
+    def set_burning(self, burning: bool) -> None:
+        """Mark this row as the track that's playing: a breathing glow.
+
+        The glow walks the pure pulse triangle (hearth/motion.py), so a
+        burning row visibly breathes instead of sitting under a static
+        highlight. Off takes the effect slot back so the row returns to
+        being an ordinary surface.
+        """
+        if burning:
+            start_pulse(self, self._palette.accent)
+        else:
+            stop_pulse(self)
+
+    def apply_palette(self, palette: Palette) -> None:
+        """Retint the row's painted surfaces (the flame mark follows)."""
+        self._palette = palette
+        self._cover.apply_palette(palette)
 
 
 class Shelf(QWidget):
@@ -185,9 +207,26 @@ class Shelf(QWidget):
         for index, track in enumerate(self._tracks):
             card = self._make_card(track, index)
             self._strip_lay.addWidget(card)
+            # entrance cascade: each card's ground shadow lands a step
+            # after its neighbour's — a shelf doesn't pop, it settles
+            QTimer.singleShot(
+                motion.stagger_ms(index),
+                lambda c=card: getattr(c, "_hearth_lift", None) and c._hearth_lift.ground(),
+            )
         has = bool(self._tracks)
         self._strip_area.setVisible(has)
         self._empty.setVisible(not has)
+
+    def apply_palette(self, palette: Palette) -> None:
+        """Retint the shelf's painted marks (cards keep their covers)."""
+        self._palette = palette
+        for i in range(self._strip_lay.count()):
+            card = self._strip_lay.itemAt(i).widget()
+            if card is None:
+                continue
+            tile = card.findChild(CoverTile)
+            if tile is not None:
+                tile.apply_palette(palette)
 
     def _make_card(self, track: Track, index: int) -> QPushButton:
         card = QPushButton()
@@ -208,8 +247,7 @@ class Shelf(QWidget):
         inner.addWidget(title, 1)
         inner.addWidget(artist)
         card.clicked.connect(lambda _=False, t=track, i=index: self.card_picked.emit(t, list(self._tracks)))
-        blur, dy, alpha = config.DEPTH_SHADOWS["card"]
-        add_shadow(card, blur=blur, dy=dy, alpha=alpha)
+        hover_lift(card, base_level=1)
         return card
 
 
@@ -242,7 +280,8 @@ class HomeView(QWidget):
             self._shelves[name] = Shelf(palette, name)
             self._body_lay.addWidget(self._shelves[name])
             self._shelves[name].setVisible(False)
-        self._hero = QLabel("Good fire to sit by. What are we playing?")
+        self._hero = QLabel(
+            f"{fire_greeting(datetime.now().hour)}. What are we playing?")
         self._hero.setProperty("hero", True)
         self._body_lay.insertWidget(0, self._hero)
         # the one-tap ritual lives where the rotation it grows from lives
@@ -260,6 +299,8 @@ class HomeView(QWidget):
 
     def apply_palette(self, palette: Palette) -> None:
         self._palette = palette
+        for shelf in self._shelves.values():
+            shelf.apply_palette(palette)
 
 
 class TrackListView(QWidget):
@@ -331,6 +372,14 @@ class TrackListView(QWidget):
         menu = QMenu(self)
         self.menu_requested.emit(track, menu)
         menu.exec(self._list.viewport().mapToGlobal(pos))
+
+    def apply_palette(self, palette: Palette) -> None:
+        self._palette = palette
+        # rows on screen retint in place; hidden views rebuild on entry
+        for i in range(self._list.count()):
+            w = self._list.itemWidget(self._list.item(i))
+            if isinstance(w, TrackRow):
+                w.apply_palette(palette)
 
 
 class SearchView(TrackListView):
@@ -725,6 +774,7 @@ class DiscoverView(QWidget):
         inner.addWidget(title, 1)
         inner.addWidget(sub)
         card.clicked.connect(lambda _=False, t=thing: self.collection_opened.emit(t))
+        hover_lift(card, base_level=1)
         return card
 
     def set_track_list(self, title: str, tracks: list[Track]) -> None:
@@ -1881,7 +1931,8 @@ class StatsView(QWidget):
         for key, caption in (("plays", "plays"),
                              ("minutes", "minutes listened"),
                              ("uniques", "unique tracks"),
-                             ("days", "days listened")):
+                             ("days", "days listened"),
+                             ("streak", "day streak")):
             tile = QVBoxLayout()
             tile.setSpacing(1)
             value = QLabel("0")
@@ -1965,6 +2016,10 @@ class StatsView(QWidget):
         self._tiles["minutes"].setText(str(int(summary.get("est_minutes") or 0)))
         self._tiles["uniques"].setText(str(int(summary.get("unique_tracks") or 0)))
         self._tiles["days"].setText(str(int(summary.get("days_listened") or 0)))
+        streak = current_streak(days)
+        self._tiles["streak"].setText(str(streak))
+        self._tiles["streak"].setToolTip(
+            "Consecutive days with a play, alive through yesterday")
         first = str(summary.get("first_play") or "")
         self._first_lit.setText(
             f"First lit {first[:10]}" if first else "")
@@ -2021,6 +2076,8 @@ class HistoryView(TrackListView):
     Show-more button. Zero new storage methods, zero network.
     """
 
+    history_cleared = pyqtSignal(int)   # rows the Clear chip wiped
+
     def __init__(self, palette: Palette, store: HearthStore | None = None,
                  page_size: int | None = None):
         super().__init__(palette)
@@ -2052,6 +2109,19 @@ class HistoryView(TrackListView):
         self._more_btn.clicked.connect(self._show_more)
         self._more_btn.hide()
 
+        self._clear_btn = QPushButton("Clear")
+        self._clear_btn.setProperty("chip", True)
+        self._clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._clear_btn.setToolTip("Forget every play (top tracks reset too)")
+        self._clear_btn.clicked.connect(self._clear_history_now)
+        self._clear_btn.hide()
+
+        # the filter box: client-side narrowing of whatever is listed
+        self._filter = QLineEdit()
+        self._filter.setPlaceholderText("Filter these plays…")
+        self._filter.setClearButtonEnabled(True)
+        self._filter.textChanged.connect(lambda _t: self._repaint_filtered())
+
         self._empty = QLabel("nothing played yet — light the fire")
         self._empty.setProperty("dim", True)
         self._empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -2059,8 +2129,10 @@ class HistoryView(TrackListView):
         row = QHBoxLayout()
         row.addWidget(self._chips_area, 1)
         row.addWidget(self._more_btn)
+        row.addWidget(self._clear_btn)
         lay = self.layout()
         lay.insertLayout(1, row)                       # below the header
+        lay.insertWidget(lay.indexOf(self._list), self._filter)
         lay.insertWidget(lay.indexOf(self._list), self._empty)
         self._chips: dict[str | None, QPushButton] = {}
         self._empty.hide()
@@ -2079,6 +2151,7 @@ class HistoryView(TrackListView):
         self._empty.setVisible(not has_any)
         self._list.setVisible(has_any)
         self._chips_area.setVisible(has_any)
+        self._clear_btn.setVisible(has_any)   # nothing to clear, no chip
         self._build_chips(days[: config.HISTORY_CHIP_DAYS])
         self._load_current()
 
@@ -2142,7 +2215,29 @@ class HistoryView(TrackListView):
             self._all = []
             self._has_more = False
         self._more_btn.setVisible(self._has_more)
-        self.set_tracks(self._all)
+        self._repaint_filtered()
+
+    def _repaint_filtered(self) -> None:
+        """List the current pages narrowed by the filter box (client-side)."""
+        query = self._filter.text() if hasattr(self, "_filter") else ""
+        if query.strip():
+            shown = [t for t in self._all
+                     if text_match([t.title, t.artist], query)]
+        else:
+            shown = self._all
+        self.set_tracks(shown)
+
+    def _clear_history_now(self) -> None:
+        """The Clear chip: wipe the listening ledger, repaint, confess."""
+        if self.store is None:
+            return
+        try:
+            gone = self.store.clear_history()
+        except Exception:   # noqa: BLE001 - a grumpy store beats a crash
+            gone = 0
+        self._day = None
+        self.refresh()
+        self.history_cleared.emit(gone)
 
     def _show_more(self) -> None:
         """Append the next 'All' page (day views stay single-page)."""
@@ -2394,6 +2489,12 @@ class PlayerBar(QWidget):
         for b in (self._btn_shuffle, self._btn_prev, self._btn_play,
                   self._btn_next, self._btn_repeat):
             b.setCursor(Qt.CursorShape.PointingHandCursor)
+        # the flats live flat on the bar and rise to greet the cursor;
+        # the play button keeps its glow (one effect per widget) and its
+        # pressed-sink QSS ramp instead
+        for b in (self._btn_shuffle, self._btn_prev, self._btn_next,
+                  self._btn_repeat):
+            hover_lift(b, base_level=0)
         self._btn_play.setFixedSize(44, 36)
         self._btn_shuffle.setIconSize(QSize(16, 16))
         self._btn_prev.setIconSize(QSize(16, 16))
@@ -2832,6 +2933,9 @@ class MainWindow(QMainWindow):
     queue_reorder_requested = pyqtSignal(list)    # new upcoming order
     queue_jump_requested = pyqtSignal(int)        # upcoming index to play now
     queue_clear_requested = pyqtSignal()
+    queue_reverse_requested = pyqtSignal()        # flip the upcoming order
+    queue_dedupe_requested = pyqtSignal()         # drop repeated tracks
+    queue_shuffle_requested = pyqtSignal()        # shuffle what's upcoming
     radio_requested = pyqtSignal(object)          # Track | None (None = current)
     rate_cycled = pyqtSignal()
     sleep_requested = pyqtSignal(int)             # minutes; 0 = off
@@ -3051,7 +3155,25 @@ class MainWindow(QMainWindow):
         body_lay.setContentsMargins(0, 0, 0, 0)
         body_lay.setSpacing(2)
         tools = QHBoxLayout()
+        self._queue_time = QLabel("")
+        self._queue_time.setProperty("dim", True)
+        tools.addWidget(self._queue_time)
         tools.addStretch(1)
+        now_btn = QPushButton("Now")
+        now_btn.setProperty("flat", True)
+        now_btn.setToolTip("Scroll to the playing track")
+        now_btn.clicked.connect(self.scroll_queue_to_current)
+        tools.addWidget(now_btn)
+        dedupe_btn = QPushButton("Dedup")
+        dedupe_btn.setProperty("flat", True)
+        dedupe_btn.setToolTip("Drop repeated tracks (first copy stays)")
+        dedupe_btn.clicked.connect(self.queue_dedupe_requested.emit)
+        tools.addWidget(dedupe_btn)
+        reverse_btn = QPushButton("Reverse")
+        reverse_btn.setProperty("flat", True)
+        reverse_btn.setToolTip("Flip the upcoming order")
+        reverse_btn.clicked.connect(self.queue_reverse_requested.emit)
+        tools.addWidget(reverse_btn)
         clear_btn = QPushButton("Clear")
         clear_btn.setProperty("flat", True)
         clear_btn.setToolTip("Remove every upcoming track")
@@ -3071,6 +3193,9 @@ class MainWindow(QMainWindow):
         self._queue_list.itemDoubleClicked.connect(
             lambda item: self._queue_jump_from_row(self._queue_list.row(item))
         )
+        # Delete on the keyboard: remove the selected upcoming row
+        del_shortcut = QShortcut(QKeySequence.StandardKey.Delete, self._queue_list)
+        del_shortcut.activated.connect(self._remove_selected_queue_row)
         body_lay.addWidget(self._queue_list, 1)
         self.queue_dock.setWidget(body)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.queue_dock)
@@ -3135,6 +3260,10 @@ class MainWindow(QMainWindow):
             lambda t, ctx: self.playlist_picked.emit(list(ctx), list(ctx).index(t))
         )
         self.history_view.menu_requested.connect(self._track_menu)
+        self.history_view.history_cleared.connect(
+            lambda gone: self.set_status(
+                f"Cleared {gone} plays — the ledger is smoke"
+                if gone else "Nothing to clear"))
         # drive-by fix (31-c5b gap): the Local view's buttons speak view-local
         # signal names — relay them onto the MainWindow signals the app hears
         self.local_view.add_folder_requested.connect(
@@ -3203,6 +3332,7 @@ class MainWindow(QMainWindow):
             return
         index = self.VIEWS.index(name)
         self.stack.setCurrentIndex(index)
+        self._last_view = name      # the app persists this on shutdown
         current = self.stack.currentWidget()
         if current is not None:
             fade_in(current, ms=200)   # the stage crossfades in
@@ -3294,6 +3424,9 @@ class MainWindow(QMainWindow):
         bind("Left", lambda: seek_by(-config.SEEK_STEP_MS))
         bind("Up", lambda: volume_by(int(config.VOLUME_STEP * 100)))
         bind("Down", lambda: volume_by(-int(config.VOLUME_STEP * 100)))
+        # Ctrl+1..9: straight to a view, in sidebar order
+        for number, view_key in enumerate(self.VIEWS[:9], start=1):
+            bind(f"Ctrl+{number}", lambda k=view_key: self.show_view(k))
 
     def set_favorites(self, tracks: list[Track]) -> None:
         self.library_view.set_favorites(tracks)
@@ -3644,6 +3777,13 @@ class MainWindow(QMainWindow):
         play_now = None
         move_up = None
         move_down = None
+        shuffle = menu.addAction("Shuffle upcoming")
+        shuffle.setEnabled(any(
+            self._queue_list.item(r).data(Qt.ItemDataRole.UserRole + 1) == "upcoming"
+            for r in range(self._queue_list.count())
+        ))
+        menu.addSeparator()
+        pin = menu.addAction("Pin to favorites")
         if kind == "upcoming":
             play_now = menu.addAction("Play now")
             move_up = menu.addAction("↑ Move up")
@@ -3656,7 +3796,13 @@ class MainWindow(QMainWindow):
         chosen = menu.exec(self._queue_list.viewport().mapToGlobal(pos))
         if chosen is None:
             return
-        if chosen is play_now:
+        if chosen is shuffle:
+            self.queue_shuffle_requested.emit()
+        elif chosen is pin:
+            track = item.data(Qt.ItemDataRole.UserRole)
+            if track is not None:
+                self.pin_toggled.emit(track)
+        elif chosen is play_now:
             self.queue_jump_requested.emit(row - 1)   # upcoming index
         elif chosen is move_up:
             self._queue_swap(row - 1, row - 2)
@@ -3691,11 +3837,37 @@ class MainWindow(QMainWindow):
     def toggle_queue(self) -> None:
         self.queue_dock.setVisible(not self.queue_dock.isVisible())
 
+    def scroll_queue_to_current(self) -> None:
+        """Reveal the playing row: select and scroll it into view."""
+        for row in range(self._queue_list.count()):
+            item = self._queue_list.item(row)
+            if item.data(Qt.ItemDataRole.UserRole + 1) == "current":
+                self._queue_list.setCurrentRow(row)
+                self._queue_list.scrollToItem(
+                    item,
+                    QAbstractItemView.ScrollHint.PositionAtCenter,
+                )
+                return
+
+    def _remove_selected_queue_row(self) -> None:
+        """Keyboard Delete: drop the selected row if it's upcoming."""
+        item = self._queue_list.currentItem()
+        if item is None:
+            return
+        if item.data(Qt.ItemDataRole.UserRole + 1) != "upcoming":
+            return     # the playing row stays pinned
+        row = self._queue_list.row(item)
+        self.queue_remove_requested.emit(row - 1)   # upcoming index
+
     def set_queue(self, upcoming: list[Track], current: Track | None = None) -> None:
         self._queue_list.clear()
+        self._queue_time.setText(
+            queue_tools.remaining_label([t.duration_sec for t in upcoming])
+        )
         if current is not None:
             row = TrackRow(self._palette, current, 0)
             row._title.setText(f"▶ {current.title}")
+            row.set_burning(True)          # the playing row breathes
             item = QListWidgetItem()
             item.setSizeHint(row.sizeHint())
             item.setData(Qt.ItemDataRole.UserRole, current)
@@ -3790,6 +3962,13 @@ class MainWindow(QMainWindow):
         self.player_bar.apply_palette(palette)
         self.theater_view.apply_palette(palette)
         self.stats_view.apply_palette(palette)
+        self.home_view.apply_palette(palette)
+        self.history_view.apply_palette(palette)
+        # the queue dock's rows retint where they stand
+        for i in range(self._queue_list.count()):
+            w = self._queue_list.itemWidget(self._queue_list.item(i))
+            if isinstance(w, TrackRow):
+                w.apply_palette(palette)
         self.setStyleSheet(build_stylesheet(palette))
         self._refresh_nav_icons()
 

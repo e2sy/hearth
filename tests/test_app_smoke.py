@@ -140,3 +140,69 @@ def test_mini_player_has_a_palette_entry(tmp_path, qapp):
     labels = [a.label for a in hearth._palette_actions()]
     assert "Mini player" in labels
     hearth.shutdown()
+
+
+# --- wave 3: reopen where you left off ---
+
+def test_last_view_roundtrip(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    hearth.window.show_view("stats")
+    assert hearth.window._last_view == "stats"
+    hearth.shutdown()
+
+    reopened = make_hearth(tmp_path)
+    assert reopened.window._last_view == "stats"
+    reopened.shutdown()
+
+
+def test_last_view_unknown_value_falls_back_home(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    hearth.settings.setValue("last_view", "narnia")
+    hearth.shutdown()
+
+    reopened = make_hearth(tmp_path)
+    assert reopened.window._last_view in ("home", reopened.window.VIEWS[0])
+    reopened.shutdown()
+
+
+# --- wave 3: the pocket's spot survives ---
+
+def test_mini_position_survives_reopen(tmp_path, qapp):
+    from PyQt6.QtCore import QPoint
+
+    hearth = make_hearth(tmp_path)
+    hearth._open_mini_player()
+    hearth._mini_window.move(QPoint(64, 48))
+    hearth._remember_mini_position()
+    hearth.shutdown()
+
+    reopened = make_hearth(tmp_path)
+    reopened._open_mini_player()
+    assert reopened._mini_window.pos().x() == 64
+    assert reopened._mini_window.pos().y() == 48
+    reopened.shutdown()
+
+
+def test_mini_position_offscreen_is_ignored(tmp_path, qapp):
+    from PyQt6.QtCore import QPoint
+
+    hearth = make_hearth(tmp_path)
+    hearth.settings.setValue("mini/pos", QPoint(-99999, -99999))
+    hearth._open_mini_player()
+    # the window must not be dragged off-screen by a stale spot
+    assert hearth._mini_window.pos().x() > -99999
+    hearth.shutdown()
+
+
+# --- wave 3b: maximized is a state, not a size ---
+
+def test_bool_setting_reads_strings_and_bools(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    hearth.settings.setValue("flag/yes", "true")
+    hearth.settings.setValue("flag/no", "false")
+    hearth.settings.setValue("flag/one", "1")
+    assert hearth._bool_setting("flag/yes") is True
+    assert hearth._bool_setting("flag/no") is False
+    assert hearth._bool_setting("flag/one") is True
+    assert hearth._bool_setting("flag/missing", True) is True
+    hearth.shutdown()

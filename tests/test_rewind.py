@@ -131,3 +131,49 @@ def test_first_play_odd_format_degrades():
     stats["first_play"] = "not-a-date"
     scenes = build_rewind_story(stats, [], [], [])
     assert not any("began on" in s for s in scenes)
+
+
+# --- wave 3: the live streak (current_streak) ---
+
+from datetime import datetime, timedelta
+
+from hearth.rewind import current_streak
+
+
+def _d(n_days_ago: int, today: str) -> str:
+    t = datetime.strptime(today, "%Y-%m-%d") - timedelta(days=n_days_ago)
+    return t.strftime("%Y-%m-%d")
+
+
+def test_streak_zero_when_never_played():
+    assert current_streak([], today="2026-03-10") == 0
+
+
+def test_streak_counts_today():
+    days = [("2026-03-10", 3), ("2026-03-09", 2), ("2026-03-08", 1)]
+    assert current_streak(days, today="2026-03-10") == 3
+
+
+def test_streak_survives_an_unlit_morning():
+    # yesterday lit, today not yet — the streak is still alive
+    days = [("2026-03-09", 2), ("2026-03-08", 1)]
+    assert current_streak(days, today="2026-03-10") == 2
+
+
+def test_streak_cold_after_two_dark_days():
+    days = [("2026-03-07", 2), ("2026-03-06", 1)]
+    assert current_streak(days, today="2026-03-10") == 0
+
+
+def test_streak_ignores_gap_in_the_middle():
+    days = [("2026-03-10", 1), ("2026-03-08", 1)]   # the 9th went dark
+    assert current_streak(days, today="2026-03-10") == 1
+
+
+def test_streak_ignores_junk_dates():
+    days = [("garbage", 1), ("2026-03-10", 2)]
+    assert current_streak(days, today="2026-03-10") == 1
+
+
+def test_streak_bad_today_anchor_is_zero():
+    assert current_streak([("2026-03-10", 1)], today="not a day") == 0

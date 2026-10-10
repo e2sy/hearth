@@ -64,6 +64,23 @@ STRINGS: dict[str, dict[str, str]] = {
         "wallpaper": "Wallpaper",
         "visualizer": "Visualizer",
         "hotkeys": "Hotkeys",
+        # wave 3 additions (en source strings)
+        "queue_remaining": "{label} left",
+        "reverse": "Reverse",
+        "dedupe": "Dedup",
+        "jump_to_now": "Now",
+        "shuffle_upcoming": "Shuffle upcoming",
+        "bigger_text": "Bigger text",
+        "smaller_text": "Smaller text",
+        "day_streak": "day streak",
+        "filter_plays": "Filter these plays…",
+        "last_view": "Reopen last view",
+        "mini_pos": "Remember mini player position",
+        "greeting_morning": "Morning fire",
+        "greeting_afternoon": "Afternoon fire",
+        "greeting_evening": "Evening fire",
+        "greeting_night": "Night fire",
+        "hero_invite": ". What are we playing?",
     },
     # Hindi partial — transport + tray essentials.
     "hi": {

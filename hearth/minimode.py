@@ -221,7 +221,7 @@ def build_mini_widget(
     says, re-emits button presses through the callbacks above, and
     never talks to the player core itself.
     """
-    from PyQt6.QtCore import QSize, Qt, QTimer
+    from PyQt6.QtCore import QEasingCurve, QSize, Qt, QTimer, QPropertyAnimation
     from PyQt6.QtWidgets import (
         QHBoxLayout,
         QLabel,
@@ -271,7 +271,16 @@ def build_mini_widget(
                 f"color:{palette.text};"
             )
             blur, dy, alpha = config.DEPTH_SHADOWS["float"]
-            add_shadow(self, blur=blur, dy=dy, alpha=alpha)
+            self._shadow = add_shadow(self, blur=blur, dy=dy, alpha=alpha)
+            # hover breathe: the ember floats a little closer to the
+            # hand while the cursor is over it, then settles back
+            self._breathe = QPropertyAnimation(
+                self._shadow, b"blurRadius", self._shadow)
+            self._breathe.setEasingCurve(QEasingCurve.Type.OutCubic)
+            # reduced motion: the marquee window grows wide enough that
+            # a long title never walks — the text simply sits and reads
+            if not config.MOTION_ENABLED:
+                self._model.marquee.set_width(80)
 
             lay = QVBoxLayout(self)
             lay.setContentsMargins(14, 10, 14, 10)
@@ -451,6 +460,9 @@ def build_mini_widget(
             self.hide()
 
         def _pulse(self) -> None:
+            from . import config as _config
+            if not _config.MOTION_ENABLED:
+                return      # reduced motion: the title holds still
             self._model.marquee.tick()
             shown = self._model.title_window()
             if shown != self._title.text():
@@ -487,5 +499,26 @@ def build_mini_widget(
         def mouseDoubleClickEvent(self, event) -> None:  # noqa: N802 — Qt naming
             self._expand_now()
             super().mouseDoubleClickEvent(event)
+
+        # --- hover breathe (one persistent ramp, always restartable) ---
+
+        def enterEvent(self, event) -> None:  # noqa: N802 — Qt naming
+            blur = config.DEPTH_SHADOWS["float"][0]
+            self._start_breathe(blur + 8, 200)
+            super().enterEvent(event)
+
+        def leaveEvent(self, event) -> None:  # noqa: N802 — Qt naming
+            self._start_breathe(config.DEPTH_SHADOWS["float"][0], 320)
+            super().leaveEvent(event)
+
+        def _start_breathe(self, end_blur: int, ms: int) -> None:
+            from . import config as _config
+            if not _config.MOTION_ENABLED:
+                return                     # reduced motion: the ember rests
+            self._breathe.stop()
+            self._breathe.setDuration(max(1, ms))
+            self._breathe.setStartValue(float(self._shadow.blurRadius()))
+            self._breathe.setEndValue(float(end_blur))
+            self._breathe.start()
 
     return MiniPlayerWindow()

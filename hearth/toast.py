@@ -102,6 +102,12 @@ class NowPlayingToast(QWidget):
         slide_toast(self, ms=320)   # rise + fade into place
         self._timer.start(config.TOAST_LIFETIME_MS)
 
+    def mousePressEvent(self, event) -> None:  # noqa: N802 — Qt naming
+        """A tap sends the whisper away early — nobody reads to the end."""
+        self._timer.stop()
+        self._fade_out()
+        super().mousePressEvent(event)
+
     def reposition(self) -> None:
         screen = QApplication.primaryScreen()
         if screen is None:

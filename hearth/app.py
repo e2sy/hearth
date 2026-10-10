@@ -31,7 +31,7 @@ from PyQt6.QtWidgets import (
     QSystemTrayIcon,
 )
 
-from . import config, plugins, theme, world, ytm_resilience
+from . import config, plugins, queue_tools, theme, world, ytm_resilience
 from .ambient import AmbientChannel
 from .catalog import Catalog
 from .command_palette import CommandAction, CommandPalette
@@ -534,6 +534,9 @@ class Hearth:
         w.queue_reorder_requested.connect(self._reorder_queue)
         w.queue_jump_requested.connect(self._jump_to_queue_index)
         w.queue_clear_requested.connect(self._clear_queue)
+        w.queue_reverse_requested.connect(self._reverse_queue)
+        w.queue_dedupe_requested.connect(self._dedupe_queue)
+        w.queue_shuffle_requested.connect(self.core.shuffle)
         w.mute_toggled.connect(self._toggle_mute)
         w.radio_requested.connect(self._start_radio)
         w.artist_opened.connect(self._open_artist)
@@ -677,7 +680,21 @@ class Hearth:
                 "prev_track": self.core.previous,
                 "toggle_panel": self._toggle_surface,
                 "focus_search": self._focus_search,
+                "mute": self._toggle_mute,
+                "volume_up": lambda: self._nudge_volume(1),
+                "volume_down": lambda: self._nudge_volume(-1),
+                "cycle_repeat": self._cycle_repeat_hotkey,
             }[action])
+
+    def _nudge_volume(self, direction: int) -> None:
+        """Global-hotkey volume step: 5% of the dial per press."""
+        self.core.set_volume(
+            max(0.0, min(1.0, self.core.volume + direction * 0.05)))
+
+    def _cycle_repeat_hotkey(self) -> None:
+        """Global-hotkey repeat cycle with a spoken status."""
+        mode = self.core.cycle_repeat()
+        self.surface.set_status(f"Repeat: {mode}")
 
     def _install_palette_hotkey(self) -> None:
         """Ctrl+K pops the command palette (never a reserved system chord)."""
@@ -857,6 +874,28 @@ class Hearth:
         self.core.engine.upcoming.clear()
         self.core.queue_changed.emit()
         self.surface.set_status("Queue cleared")
+
+    def _reverse_queue(self) -> None:
+        """Flip the upcoming order (queue dock 'Reverse' chip)."""
+        self.core.engine.set_order(queue_tools.reverse_upcoming(
+            self.core.engine.upcoming))
+        self.core.queue_changed.emit()
+        self.surface.set_status("Queue reversed")
+
+    def _dedupe_queue(self) -> None:
+        """Drop repeated tracks from the upcoming queue (first wins)."""
+        before = len(self.core.engine.upcoming)
+        kept = queue_tools.dedupe(
+            list(self.core.engine.upcoming), key=lambda t: t.video_id)
+        dropped = before - len(kept)
+        if not dropped:
+            self.surface.set_status("No duplicates in the queue")
+            return
+        self.core.engine.set_order(kept)
+        self.core.queue_changed.emit()
+        self.surface.set_status(
+            f"Removed {dropped} duplicate track"
+            f"{'s' if dropped != 1 else ''} from the queue")
 
     _pre_mute_volume: float | None = None
 
@@ -1314,6 +1353,8 @@ class Hearth:
             CommandAction("Mini player", self._toggle_mini_player,
                           "mini pocket floating small tiny compact window "
                           "always on top drag"),
+            CommandAction("Copy track info", self._copy_track_info,
+                          "copy clipboard now playing title artist share"),
         ]
         view_labels = {
             "home": "Go to Home",
@@ -1334,6 +1375,14 @@ class Hearth:
             acts.append(CommandAction(f"Theme: {pal.label}",
                                       lambda k=key: self._apply_palette_key(k),
                                       f"palette color {key}"))
+        acts.append(CommandAction(
+            "Bigger text",
+            lambda: self._font_scale_step(1),
+            "accessibility font size larger zoom eyesight"))
+        acts.append(CommandAction(
+            "Smaller text",
+            lambda: self._font_scale_step(-1),
+            "accessibility font size smaller zoom"))
         for rate in config.PLAYBACK_RATES:
             acts.append(CommandAction(f"Speed {rate:g}x",
                                       lambda r=rate: self.core.set_rate(r),
@@ -1356,11 +1405,56 @@ class Hearth:
         self.settings.setValue("theme", key)
         self.surface.set_status(f"Theme: {pal.label}")
 
+    # --- text size (the accessibility dial) ---
+
+    def _apply_font_scale(self, scale: float) -> None:
+        """Apply a text scale to the whole app and remember it.
+
+        The multiplier rides on the application font's point size, so
+        every widget that honors the font grows or shrinks together.
+        The base size is captured once — repeated applications must not
+        compound (1.1 × 1.1 × 1.1 … is how soup happens).
+        """
+        scale = config.clamp_font_scale(scale)
+        self._font_scale = scale
+        # the base size parks on the qapp, not the instance: a restart
+        # inside the same process (tests, single-instance handoff) must
+        # not compound 1.2 × 1.2 × …  In a fresh process this is simply
+        # captured once at first boot.
+        base = getattr(self.qapp, "_hearth_base_point", 0.0)
+        if base <= 0:
+            base = float(self.qapp.font().pointSizeF())
+            if base <= 0:
+                base = 10.0
+            self.qapp._hearth_base_point = base
+        font = self.qapp.font()
+        font.setPointSizeF(base * scale)
+        self.qapp.setFont(font)
+        self.settings.setValue("font_scale", scale)
+
+    def _font_scale_step(self, direction: int) -> None:
+        """Palette action: one step up or down the text-size dial."""
+        new_scale = config.font_scale_step(
+            getattr(self, "_font_scale", 1.0), direction)
+        self._apply_font_scale(new_scale)
+        pct = round(new_scale * 100)
+        self.surface.set_status(f"Text size: {pct}%")
+
     def _palette_toggle_favorite(self) -> None:
         """Palette action: pin/unpin whatever is playing right now."""
         track = self.core.engine.current
         if track is not None:
             self._toggle_pin(track)
+
+    def _copy_track_info(self) -> None:
+        """Copy 'Title — Artist' for the playing track to the clipboard."""
+        track = self.core.engine.current
+        if track is None:
+            self.surface.set_status("Nothing playing to copy")
+            return
+        text = f"{track.title} — {track.artist}"
+        QApplication.clipboard().setText(text)
+        self.surface.set_status(f"Copied: {text}")
 
     # --- plugins (v0.7.0): palette packs + shelf sources, trusted installs ---
 
@@ -1706,6 +1800,7 @@ class Hearth:
     def _toggle_mini_player(self) -> None:
         """🪟 Pocket hearth: a tiny, draggable, always-on-top transport."""
         if self._mini_window is not None and self._mini_window.isVisible():
+            self._remember_mini_position()
             self._mini_window.hide()
             self.surface.set_status("Pocket hearth closed")
             return
@@ -1731,11 +1826,26 @@ class Hearth:
                 self._mini_window.apply_track(current.title, current.artist)
         self._mini_window.show()
         self._mini_window.raise_()
+        self._restore_mini_position()
         self.surface.set_status("Pocket hearth glowing — drag it anywhere")
+
+    def _restore_mini_position(self) -> None:
+        """Put the pocket back where its owner dragged it last time."""
+        pos = self.settings.value("mini/pos")
+        if pos is not None and hasattr(pos, "x"):
+            screen = self.qapp.primaryScreen().availableGeometry()
+            if screen.contains(pos):
+                self._mini_window.move(pos)
+
+    def _remember_mini_position(self) -> None:
+        """Save the pocket's spot (called on hide/shutdown)."""
+        if self._mini_window is not None:
+            self.settings.setValue("mini/pos", self._mini_window.pos())
 
     def _expand_mini(self) -> None:
         """⤢ or double-click on the pocket: the main window takes the stage."""
         if self._mini_window is not None:
+            self._remember_mini_position()
             self._mini_window.hide()
         self.window.showNormal()
         self.window.raise_()
@@ -2185,6 +2295,13 @@ class Hearth:
         rate = float(self.settings.value("rate", 1.0))
         self.core.set_rate(rate)
         self.window.player_bar.set_speed_label(self.core.rate)
+        # text scale (accessibility dial; junk falls back to 100%)
+        self._apply_font_scale(
+            config.clamp_font_scale(self.settings.value("font_scale", 1.0)))
+        # reopen where you left off (unknown or absent → home)
+        last_view = str(self.settings.value("last_view", "home"))
+        if last_view in self.window.VIEWS:
+            self.window.show_view(last_view)
         repeat = str(self.settings.value("repeat", config.REPEAT_OFF))
         if repeat in config.REPEAT_MODES:
             self.core.set_repeat(repeat)
@@ -2224,6 +2341,15 @@ class Hearth:
         except (TypeError, ValueError):
             return default
 
+    def _bool_setting(self, key: str, default: bool = False) -> bool:
+        """Read a boolean setting; strings like 'true'/'1' count as True."""
+        value = self.settings.value(key, default)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in ("true", "1", "yes", "on")
+        return bool(value)
+
     def _restore_session(self) -> None:
         pos = self.settings.value("geometry/pos")
         if pos is not None:
@@ -2234,6 +2360,9 @@ class Hearth:
         win_pos = self.settings.value("window/pos")
         if win_pos is not None:
             self.window.move(win_pos)
+        # maximized is a state, not a size — it rides back separately
+        if self._bool_setting("window/maximized"):
+            self.window.setWindowState(Qt.WindowState.WindowMaximized)
         favorites = self.store.favorites()
         if favorites:
             self.surface.set_status(f"{len(favorites)} favorites pinned")
@@ -2255,6 +2384,11 @@ class Hearth:
         self.settings.setValue("geometry/pos", self.panel.pos())
         self.settings.setValue("window/size", self.window.size())
         self.settings.setValue("window/pos", self.window.pos())
+        self.settings.setValue(
+            "window/maximized",
+            bool(self.window.windowState() & Qt.WindowState.WindowMaximized))
+        self.settings.setValue(
+            "last_view", getattr(self.window, "_last_view", "home"))
         self._save_session_snapshot()
 
     # --- the style closet (v0.8.0): glass looks + custom wallpapers ---
@@ -2418,6 +2552,7 @@ class Hearth:
     def shutdown(self) -> None:
         # Let in-flight jobs land while their recipients are still alive.
         QThreadPool.globalInstance().waitForDone(5000)
+        self._remember_mini_position()   # the pocket's spot survives too
         if self._remote is not None:
             self._remote.stop()   # the phone remote burns out with the app
         self.ambient.stop()   # release the ambience sink fully on the way out

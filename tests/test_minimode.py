@@ -8,7 +8,7 @@ import pytest
 from PyQt6.QtCore import Qt
 
 from hearth import minimode
-from hearth.minimode import Marquee, MiniPlayerModel, fmt_clock
+from hearth.minimode import Marquee, MiniPlayerModel, build_mini_widget, fmt_clock
 
 
 def _palette():
@@ -248,3 +248,21 @@ def test_widget_positions_the_seek_bar_from_progress(qapp):
     w.apply_track("Song", "Artist")
     w.apply_position(25_000, 100_000)
     assert w._seek.value() == 250
+
+
+# --- wave 3: the marquee rests under reduced motion ---
+
+def test_marquee_holds_still_when_frozen(qapp, monkeypatch):
+    from hearth import config as _config
+
+    monkeypatch.setattr(_config, "MOTION_ENABLED", False)
+    model = MiniPlayerModel()
+    model.set_track("A very long title that would definitely walk across the window", "Artist")
+    mini = build_mini_widget(_palette(), model)
+    assert mini._model.marquee.width == 80      # grown so the text fits
+    before = mini._title.text()
+    for _ in range(30):
+        mini._pulse()                            # ticks do nothing now
+    assert mini._title.text() == before
+    mini.close()
+    mini.deleteLater()

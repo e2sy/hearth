@@ -135,6 +135,41 @@ DEPTH_SHADOWS = {               # elevation table: (blur, dy, alpha) ground shad
     "float": (34, 12, 190),     # frameless floaters (mini, panel, launcher, toast)
 }
 
+# --- v0.9.2: accessibility dials ---
+MOTION_ENABLED = True            # False = reduced motion: no lifts, pulses,
+                                 # slides — surfaces keep their rest shadows
+FONT_SCALE_MIN = 0.85           # smallest allowed text scale
+FONT_SCALE_MAX = 1.30           # largest — past this, fixed layouts crack
+
+
+def clamp_font_scale(value) -> float:
+    """Coerce a stored font scale to a safe float multiplier.
+
+    Junk from the settings file (None, 'abc', 99) falls back to 1.0 or
+    clamps into range — a bad stored value must never resize the whole
+    app into soup.
+    """
+    try:
+        scale = float(value)
+    except (TypeError, ValueError):
+        return 1.0
+    return max(FONT_SCALE_MIN, min(FONT_SCALE_MAX, scale))
+
+
+def font_scale_step(current: float, direction: int) -> float:
+    """The next font scale one step up (direction=1) or down (-1).
+
+    Nine steps from min to max; the result clamps at both ends and the
+    current value is coerced first, so stepping from a junk setting is
+    still safe.
+    """
+    steps = 8
+    current = clamp_font_scale(current)
+    span = FONT_SCALE_MAX - FONT_SCALE_MIN
+    step = span / steps
+    target = current + direction * step
+    return max(FONT_SCALE_MIN, min(FONT_SCALE_MAX, round(target, 2)))
+
 # --- v1.0.0 groundwork ---
 CROSSFADE_ENABLED = False       # opt-in dual-player crossfade
 CROSSFADE_MAX_MS = 3000         # upper bound of the crossfade slider
@@ -217,6 +252,10 @@ DEFAULT_HOTKEYS = {
     "prev_track": "Ctrl+Alt+Left",
     "toggle_panel": "Ctrl+Alt+E",
     "focus_search": "Ctrl+Alt+F",
+    "mute": "Ctrl+Alt+M",
+    "volume_up": "Ctrl+Alt+Up",
+    "volume_down": "Ctrl+Alt+Down",
+    "cycle_repeat": "Ctrl+Alt+R",
 }
 
 # System chords that should never be bound in the app.
@@ -297,6 +336,20 @@ PALETTES: dict[str, Palette] = {
         hairline="#223029", text="#e8f5ee", text_dim="#93a89d",
         accent="#1db954", accent_soft="#52e08a", danger="#e2694f",
         success="#7fd0a0", selection="#14422a", scroll="#223029",
+    ),
+    "emberdusk": Palette(
+        key="emberdusk", label="Ember Dusk",
+        bg="#151019", surface="#1f1725", surface_alt="#2b2033",
+        hairline="#3e2f4a", text="#f5ecf4", text_dim="#a793ad",
+        accent="#ff8c5a", accent_soft="#ffb489", danger="#e2694f",
+        success="#8fbf6f", selection="#4a2c1a", scroll="#3e2f4a",
+    ),
+    "lantern": Palette(
+        key="lantern", label="Lantern",
+        bg="#000000", surface="#0d0d0d", surface_alt="#1a1a1a",
+        hairline="#4d4d4d", text="#ffffff", text_dim="#c8c8c8",
+        accent="#ffd23f", accent_soft="#ffe58a", danger="#ff5c47",
+        success="#6fe86f", selection="#3d3000", scroll="#4d4d4d",
     ),
 }
 

@@ -70,14 +70,17 @@ def test_playerbar_floats_with_depth_radius():
 
 def test_glass_mode_frosts_the_depth_tones():
     theme.set_style("glass")
-    css = theme.build_stylesheet(GROVE)
-    surf_a = theme.STYLES["glass"].panel_alpha
-    r, g, b = (int(GROVE.surface[i:i + 2], 16) for i in (1, 3, 5))
-    assert f"rgba({r}, {g}, {b}, {surf_a}%)" in css     # panes stay translucent
-    # the spotlight follows the canvas into the glass (100% without wallpaper)
-    glow = theme._mix(GROVE.bg, GROVE.accent, 0.07)
-    gr, gg, gb = (int(glow[i:i + 2], 16) for i in (1, 3, 5))
-    assert f"rgba({gr}, {gg}, {gb}, 100%)" in css
+    try:
+        css = theme.build_stylesheet(GROVE)
+        surf_a = theme.STYLES["glass"].panel_alpha
+        r, g, b = (int(GROVE.surface[i:i + 2], 16) for i in (1, 3, 5))
+        assert f"rgba({r}, {g}, {b}, {surf_a}%)" in css     # panes stay translucent
+        # the spotlight follows the canvas into the glass (100% without wallpaper)
+        glow = theme._mix(GROVE.bg, GROVE.accent, 0.07)
+        gr, gg, gb = (int(glow[i:i + 2], 16) for i in (1, 3, 5))
+        assert f"rgba({gr}, {gg}, {gb}, 100%)" in css
+    finally:
+        theme.set_style(None)   # the frost melts: never leak into other tests
 
 
 # ----------------------------------------------------------------- floaters
@@ -125,3 +128,18 @@ def test_frameless_floaters_carry_shadows(qapp):
     assert mini.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
     mini.close()
     mini.deleteLater()
+
+
+# --- wave 3: focus rims and the pressed handle ---
+
+def test_focus_rims_exist_for_lists_and_buttons():
+    css = theme.build_stylesheet(GROVE)
+    assert "QListWidget:focus" in css
+    assert "QPushButton:focus" in css
+    assert "$accent_soft" not in css        # tokens must all be resolved
+
+
+def test_slider_handle_has_a_pressed_face():
+    css = theme.build_stylesheet(GROVE)
+    assert "QSlider::handle:horizontal:pressed" in css
+    assert "QSlider::sub-page:horizontal:active" in css

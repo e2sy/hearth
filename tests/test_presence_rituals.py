@@ -760,3 +760,47 @@ def test_pyproject_declares_discord_extra():
     assert any("pypresence" in dep for dep in extra)
     assert config.DISCORD_RPC_ENABLED is False     # asleep in tests/CI
     assert config.DISCORD_CLIENT_ID == ""          # user-set, empty by default
+
+
+# --- wave 3: the history filter box ---
+
+def test_history_filter_narrows_client_side(qapp, tmp_path):
+    store = HearthStore(tmp_path / "hist.db")
+    store.log_play(make_track(video_id="aa", title="WinterSun", artist="Nordic"))
+    store.log_play(make_track(video_id="bb", title="Deep Fire", artist="Ember Trio"))
+    view = HistoryView(get_palette("grove"), store=store)
+    view.refresh()
+    assert view._list.count() == 2
+    view._filter.setText("wintersun")
+    assert view._list.count() == 1
+    view._filter.setText("wintersun ember")     # both words must fit one record
+    assert view._list.count() == 0
+    view._filter.setText("")
+    assert view._list.count() == 2
+
+
+def test_stats_view_shows_the_streak_tile(qapp, tmp_path):
+    from hearth.window import StatsView
+    store = HearthStore(tmp_path / "stats.db")
+    today = datetime.now().strftime("%Y-%m-%d")
+    store.log_play(make_track(video_id="s1"))
+    view = StatsView(get_palette("grove"), store=store)
+    view.refresh()
+    assert view._tiles["streak"].text() == "1"    # today is lit
+
+
+# --- wave 3b: the Clear chip on the history page ---
+
+def test_history_clear_chip_wipes_and_reports(qapp, tmp_path):
+    store = HearthStore(tmp_path / "chip.db")
+    store.log_play(make_track(video_id="c1"))
+    store.log_play(make_track(video_id="c2"))
+    view = HistoryView(get_palette("grove"), store=store)
+    view.refresh()
+    assert view._clear_btn.isVisibleTo(view) or not view._clear_btn.isHidden()
+    gone = []
+    view.history_cleared.connect(gone.append)
+    view._clear_btn.click()
+    assert gone == [2]
+    assert store.history_count() == 0
+    assert view._list.count() == 0

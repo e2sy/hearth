@@ -225,3 +225,25 @@ def test_eqbars_glossy_paint(qapp):
     grabbed = eq.grab()
     assert not grabbed.isNull()
     eq.set_active(False)
+
+
+# --- wave 3: a tap sends the toast away early ---
+
+def test_toast_click_dismisses(qapp):
+    from PyQt6.QtCore import QPointF, QEvent, Qt
+    from PyQt6.QtGui import QMouseEvent
+
+    from .test_models import make_track
+    from hearth.toast import NowPlayingToast
+
+    toast = NowPlayingToast("grove")
+    toast.announce(make_track())
+    assert toast.isVisible()
+    ev = QMouseEvent(QEvent.Type.MouseButtonPress, QPointF(20, 20),
+                     QPointF(20, 20), Qt.MouseButton.LeftButton,
+                     Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier)
+    toast.mousePressEvent(ev)
+    assert not toast._timer.isActive()      # lifetime cut short
+    toast._fade.stop()                       # don't let the fade timer run wild
+    toast.hide()
+    toast.deleteLater()

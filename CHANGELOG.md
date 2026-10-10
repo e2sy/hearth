@@ -7,6 +7,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Wave 3 — the living room (motion + muscle)**: the 3D room answers the
+  hand and the listener gets new power. *Motion*: a pure lift ladder
+  (`hearth/motion.py`) drives hover-lift and press-plant on shelf/discover
+  cards and the transport flats, staggered "grounding" entrances for shelf
+  cards, a rise-in command palette, a breathing shadow on the mini player,
+  a breathing accent glow on the playing row in the queue, pressed slider
+  faces, and findable keyboard-focus rims — all switchable off with
+  `config.MOTION_ENABLED` (reduced motion keeps every resting shadow).
+  *Muscle*: queue dock shows the remaining time plus Reverse / Dedup / Now
+  (jump to playing) / Shuffle-upcoming; two new palettes (Ember Dusk,
+  Lantern high-contrast); a text-size dial (Ctrl+K "Bigger/Smaller text",
+  85–130%, restart-safe and compounding-proof); four new global hotkeys
+  (mute, volume up/down, repeat cycle); Ctrl+1..9 jumps straight to views;
+  the History page grows a client-side filter box; the Stats dashboard
+  gains a live "day streak" tile (`rewind.current_streak`); the app reopens
+  on the last view you used and the mini player remembers its corner.
+  The glass test no longer leaks its style into other tests.
+  982 tests green, up from 864.
 - **The 3D pass — Hearth in Relief** (`docs/UI-DEPTH.md`): Spotify is a flat
   poster; Hearth locks into depth. One light from above — a radial spotlight
   floor the whole room sits on — and every surface at a height: carved cards

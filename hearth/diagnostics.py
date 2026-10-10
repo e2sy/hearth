@@ -57,7 +57,8 @@ def _look_lines() -> list[str]:
             pass
         return [
             f"look:      palette={config.DEFAULT_PALETTE} "
-            f"packs={len(config.PALETTES)} style={style}"
+            f"packs={len(config.PALETTES)} style={style}",
+            f"a11y:      motion={'on' if config.MOTION_ENABLED else 'off (reduced)'}",
         ]
     except Exception:  # noqa: BLE001
         return ["look:      (theme unavailable)"]

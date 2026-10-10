@@ -47,3 +47,35 @@ def mix(a: str, b: str, t: float) -> str:
     g = round(ag + (bg - ag) * t)
     bl = round(ab + (bb - ab) * t)
     return f"#{r:02x}{g:02x}{bl:02x}"
+
+
+def text_match(fields: list[str], query: str) -> bool:
+    """Does a record match a filter query?
+
+    Every whitespace-separated word in the query must appear (case-
+    insensitive) in at least one of the fields — so 'rick never' needs
+    both words somewhere. An empty or blank query matches everything,
+    and None fields are simply skipped. This is the pure kernel behind
+    the history page's filter box.
+    """
+    words = (query or "").lower().split()
+    if not words:
+        return True
+    hay = " ".join(str(f) for f in fields if f).lower()
+    return all(w in hay for w in words)
+
+
+def fire_greeting(hour: int) -> str:
+    """The hero line's hello, honest to the clock.
+
+    Morning, afternoon, evening — and small hours get their own warmth
+    ('Night fire'). Junk hours clamp into a day; nothing raises.
+    """
+    hour = max(0, min(23, int(hour) if hour is not None else 9))
+    if 5 <= hour < 12:
+        return "Morning fire"
+    if 12 <= hour < 17:
+        return "Afternoon fire"
+    if 17 <= hour < 23:
+        return "Evening fire"
+    return "Night fire"
