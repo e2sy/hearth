@@ -60,6 +60,14 @@ class EqBars(QWidget):
         self.update()
 
     def set_active(self, active: bool) -> None:
+        from . import config   # lazy: panel stays importable without config users
+
+        if active and not config.MOTION_ENABLED:
+            # reduced motion: the bars hold one honest resting height
+            self._timer.stop()
+            self._physics.pos = [0.12] * self._physics.bars
+            self.update()
+            return
         if active and not self._timer.isActive():
             self._physics.impulse(1.0)
             self._timer.start()

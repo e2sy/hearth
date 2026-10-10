@@ -49,3 +49,15 @@ def test_motion_on_restores_the_choreography(qapp, monkeypatch):
     monkeypatch.setattr(config, "MOTION_ENABLED", True)
     card = QPushButton("card")
     assert effects.hover_lift(card) is not None
+
+
+def test_visualizer_bars_rest_when_frozen(qapp, frozen_motion):
+    from hearth.panel import EqBars
+
+    bars = EqBars(get_palette("grove"))
+    bars.set_active(True)
+    assert not bars._timer.isActive()     # no spring loop under reduced motion
+    assert all(abs(p - 0.12) < 1e-9 for p in bars._physics.pos)
+
+
+from hearth.config import get_palette   # noqa: E402  (kept beside its user)
