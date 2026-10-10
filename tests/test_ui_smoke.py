@@ -23,11 +23,12 @@ def test_stylesheet_has_every_token():
 
 
 def test_stylesheet_compiles_for_every_palette():
-    # the 2020s layer derives extra tones per palette; none may leak a token
+    # the flat layer derives extra tones per palette; none may leak a token
     for key in PALETTES:
         sheet = build_stylesheet(get_palette(key))
         assert "$" not in sheet
-        assert "qlineargradient" in sheet   # depth is the point
+        assert "qlineargradient" not in sheet   # flat surfaces, honest color
+        assert "background:" in sheet
 
 
 def test_mix_blends_toward_target():
@@ -73,9 +74,9 @@ def test_panel_track_and_state(qapp):
     panel = FloatingPanel("moss")
     panel.set_track(make_track())
     panel.set_playing(True)
-    assert panel._btn_play.text() == "⏸"
+    assert not panel._btn_play.icon().isNull()   # pause glyph painted in
     panel.set_playing(False)
-    assert panel._btn_play.text() == "▶"
+    assert not panel._btn_play.icon().isNull()   # play glyph painted in
     panel.set_track(None)
     assert "nothing playing" in panel._title.text()
 

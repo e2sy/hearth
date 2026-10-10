@@ -32,7 +32,7 @@ class ImportDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("🟢 Import from Spotify")
+        self.setWindowTitle("Import from Spotify")
         self.setModal(True)
         self.resize(560, 420)
 

@@ -221,7 +221,7 @@ def build_mini_widget(
     says, re-emits button presses through the callbacks above, and
     never talks to the player core itself.
     """
-    from PyQt6.QtCore import Qt, QTimer
+    from PyQt6.QtCore import QSize, Qt, QTimer
     from PyQt6.QtWidgets import (
         QHBoxLayout,
         QLabel,
@@ -231,12 +231,15 @@ def build_mini_widget(
         QWidget,
     )
 
+    from . import icons
+
     class MiniPlayerWindow(QWidget):
         """A draggable, always-on-top ember for the screen's corner."""
 
         def __init__(self):
             super().__init__()
             self._model = model
+            self._palette = palette
             self._drag_offset = None
             self.setWindowTitle("Hearth — mini player")
             self.setFixedSize(MINI_WIDTH, MINI_HEIGHT)
@@ -258,24 +261,30 @@ def build_mini_widget(
             # top row: accent dot, marquee title, pin, expand, close
             top = QHBoxLayout()
             top.setSpacing(8)
-            self._dot = QLabel("🔥")
-            self._dot.setStyleSheet("font-size:15px;border:none;")
+            self._dot = QLabel()
+            self._dot.setPixmap(icons.pixmap("flame", palette.accent, 15))
+            self._dot.setFixedSize(15, 15)
+            self._dot.setScaledContents(True)
+            self._dot.setStyleSheet("border:none;")
             self._title = QLabel(model.title_window())
             self._title.setStyleSheet(
                 f"color:{palette.text};font-weight:700;font-size:13px;border:none;"
             )
             top.addWidget(self._dot)
             top.addWidget(self._title, 1)
-            self._pin = QPushButton("📌")
+            self._pin = QPushButton()
             self._pin.setToolTip("Toggle always-on-top")
-            self._expand = QPushButton("⤢")
+            self._expand = QPushButton()
             self._expand.setToolTip("Back to the full hearth (or double-click)")
-            self._close = QPushButton("✕")
-            for b in (self._pin, self._expand, self._close):
+            self._close = QPushButton()
+            for b, glyph in ((self._pin, "pin"), (self._expand, "expand"),
+                             (self._close, "close")):
                 b.setFixedSize(26, 22)
                 b.setCursor(Qt.CursorShape.PointingHandCursor)
+                b.setIcon(icons.icon(glyph, palette.text_dim, 13))
+                b.setIconSize(QSize(13, 13))
                 b.setStyleSheet(
-                    f"border:none;background:transparent;color:{palette.text_dim};font-size:12px;"
+                    "border:none;background:transparent;"
                 )
             self._pin.clicked.connect(self._toggle_pin)
             self._expand.clicked.connect(self._expand_now)
@@ -302,9 +311,9 @@ def build_mini_widget(
             # bottom row: transport + slim seek
             bottom = QHBoxLayout()
             bottom.setSpacing(10)
-            self._prev = QPushButton("⏮")
-            self._play = QPushButton(model.play_glyph())
-            self._next = QPushButton("⏭")
+            self._prev = QPushButton()
+            self._play = QPushButton()
+            self._next = QPushButton()
             self._play.setFixedSize(38, 30)
             for b in (self._prev, self._next):
                 b.setFixedSize(30, 30)
@@ -312,11 +321,11 @@ def build_mini_widget(
                 b.setCursor(Qt.CursorShape.PointingHandCursor)
                 b.setStyleSheet(
                     f"border:none;border-radius:15px;background:{palette.surface_alt};"
-                    f"color:{palette.text};font-size:14px;"
+                    "color:transparent;font-size:1px;"
                 )
             self._play.setStyleSheet(
                 f"border:none;border-radius:19px;background:{palette.accent};"
-                f"color:{palette.bg};font-size:15px;font-weight:800;"
+                "color:transparent;font-size:1px;"
             )
             self._seek = QSlider(Qt.Orientation.Horizontal)
             self._seek.setRange(0, 1000)
@@ -341,11 +350,23 @@ def build_mini_widget(
             ):
                 if cb is not None:
                     btn.clicked.connect(cb)
+            self._retint()
 
             # the marquee walk: ~10 Hz is smooth without being busy
             self._ticker = QTimer(self)
             self._ticker.timeout.connect(self._pulse)
             self._ticker.start(100)
+
+        def _retint(self) -> None:
+            """Paint the transport + chrome icons in the palette's tones."""
+            p = self._palette
+            self._prev.setIcon(icons.icon("prev", p.text, 14))
+            self._next.setIcon(icons.icon("next", p.text, 14))
+            self._play.setIcon(icons.icon(
+                "pause" if self._model.playing else "play", p.bg, 16))
+            self._prev.setIconSize(QSize(14, 14))
+            self._next.setIconSize(QSize(14, 14))
+            self._play.setIconSize(QSize(16, 16))
 
         # --- mirrors in (the main window calls these) ---
 
@@ -355,7 +376,8 @@ def build_mini_widget(
 
         def apply_playing(self, playing: bool) -> None:
             self._model.set_playing(playing)
-            self._play.setText(self._model.play_glyph())
+            self._play.setIcon(icons.icon(
+                "pause" if playing else "play", self._palette.bg, 16))
 
         def apply_position(self, position_ms: int, duration_ms: int | None = None) -> None:
             self._model.set_position(position_ms)
@@ -406,7 +428,8 @@ def build_mini_widget(
             self._title.setText(self._model.title_window())
             self._artist.setText(self._model.artist_label())
             self._clock.setText(self._model.clock())
-            self._play.setText(self._model.play_glyph())
+            self._play.setIcon(icons.icon(
+                "pause" if self._model.playing else "play", self._palette.bg, 16))
             self._seek.blockSignals(True)
             self._seek.setValue(int(self._model.progress_fraction() * 1000))
             self._seek.blockSignals(False)

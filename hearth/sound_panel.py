@@ -49,7 +49,7 @@ class SoundForgeDialog(QDialog):
 
     def __init__(self, parent=None, state: SoundState | None = None):
         super().__init__(parent)
-        self.setWindowTitle("🎚️ Sound Forge")
+        self.setWindowTitle("Sound Forge")
         self.setModal(False)
         self.resize(520, 380)
         self._loading = False               # programmatic updates stay quiet

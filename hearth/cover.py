@@ -80,8 +80,8 @@ def reflected_pixmap(pixmap: QPixmap, depth_frac: float = 0.34,
     return out
 
 
-def paint_mark(palette: Palette, side: int = 168, char: str = "🔥") -> QPixmap:
-    """The Hearth mark at any size: flame glyph on a glossy 3D shell tile."""
+def paint_mark(palette: Palette, side: int = 168, char: str = "") -> QPixmap:
+    """The Hearth mark at any size: a painted vector flame on a glossy 3D shell tile."""
     pixmap = QPixmap(side, side)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
@@ -124,12 +124,14 @@ def paint_mark(palette: Palette, side: int = 168, char: str = "🔥") -> QPixmap
     painter.setPen(Qt.PenStyle.NoPen)
     painter.fillPath(tile, bloom)
 
-    # the glyph itself
-    painter.setPen(QColor(palette.accent))
-    font = QFont()
-    font.setPixelSize(max(12, int(side * 0.62)))
-    painter.setFont(font)
-    painter.drawText(pixmap.rect(), 0x0084, char)  # AlignCenter
+    # the mark itself: the crisp vector flame (never a font-dependent emoji)
+    from . import icons
+
+    glyph_side = max(12, int(side * 0.58))
+    mark = icons.pixmap("flame", palette.accent, glyph_side)
+    painter.drawPixmap(
+        (side - glyph_side) // 2, (side - glyph_side) // 2, mark,
+    )
     painter.end()
     return pixmap
 
