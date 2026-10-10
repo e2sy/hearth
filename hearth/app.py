@@ -1821,7 +1821,7 @@ class Hearth:
         pos = self.settings.value("mini/pos")
         if pos is not None and hasattr(pos, "x"):
             screen = self.qapp.primaryScreen().availableGeometry()
-            if screen.intersects(pos):
+            if screen.contains(pos):
                 self._mini_window.move(pos)
 
     def _remember_mini_position(self) -> None:
