@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from PyQt6.QtCore import (
     QEasingCurve,
+    QEvent,
+    QObject,
     QParallelAnimationGroup,
     QPoint,
     QPropertyAnimation,
@@ -26,6 +28,8 @@ from PyQt6.QtWidgets import (
     QGraphicsOpacityEffect,
     QWidget,
 )
+
+from . import motion
 
 
 def add_shadow(widget: QWidget, color: str = "#000000", blur: int = 26,
@@ -98,6 +102,106 @@ def fade_in(widget: QWidget, ms: int = 220) -> None:
     _ramp(effect, ms).start()
 
 
+class Lift:
+    """Hover choreography for one widget, along the pure lift ladder.
+
+    Owns two persistent, restartable ramps (blur and y-offset) parked on
+    the widget's shadow effect — same lifetime rules as every animation
+    here: created once, parented to the effect, always safe to restart.
+    Color (alpha) jumps to the target level's value at ramp start; the
+    blur and offset do the visible easing.
+    """
+
+    def __init__(self, effect: QGraphicsDropShadowEffect,
+                 base_level: int = motion.LEVEL_REST,
+                 color: str = "#000000"):
+        self.effect = effect
+        self.base = base_level
+        self.color = color
+        self.hovered = False
+        self.pressed = False
+        self._blur = QPropertyAnimation(effect, b"blurRadius", effect)
+        self._dy = QPropertyAnimation(effect, b"yOffset", effect)
+        for anim in (self._blur, self._dy):
+            anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+    def _to(self, level: int, ms: int) -> None:
+        blur, dy, alpha = motion.shadow_for(level)
+        c = QColor(self.color)
+        c.setAlpha(max(0, min(255, alpha)))
+        self.effect.setColor(c)
+        for anim, end in (
+            (self._blur, float(blur)),
+            (self._dy, float(dy)),
+        ):
+            anim.stop()
+            anim.setDuration(max(1, ms))
+            anim.setStartValue(float(self.effect.blurRadius())
+                               if anim is self._blur
+                               else float(self.effect.yOffset()))
+            anim.setEndValue(end)
+            anim.start()
+
+    def _level(self) -> int:
+        return motion.level_for(self.base, self.hovered, self.pressed)
+
+    def enter(self) -> None:
+        self.hovered = True
+        self._to(self._level(), motion.LIFT_MS)
+
+    def leave(self) -> None:
+        self.hovered = False
+        self.pressed = False
+        self._to(self._level(), motion.SETTLE_MS)
+
+    def press(self) -> None:
+        self.pressed = True
+        self._to(self._level(), motion.PLANT_MS)
+
+    def release(self) -> None:
+        self.pressed = False
+        self._to(self._level(), motion.LIFT_MS)
+
+
+class _LiftFilter(QObject):
+    """Funnel enter/leave/press/release into a Lift. Never consumes."""
+
+    def __init__(self, lift: Lift):
+        super().__init__(lift.effect)
+        self._lift = lift
+
+    def eventFilter(self, obj, event) -> bool:  # noqa: N802 - Qt naming
+        et = event.type()
+        if et == QEvent.Type.Enter:
+            self._lift.enter()
+        elif et == QEvent.Type.Leave:
+            self._lift.leave()
+        elif et == QEvent.Type.MouseButtonPress:
+            self._lift.press()
+        elif et == QEvent.Type.MouseButtonRelease:
+            self._lift.release()
+        return False
+
+
+def hover_lift(widget: QWidget, base_level: int = motion.LEVEL_REST,
+               color: str = "#000000") -> Lift:
+    """Give a widget its hover life: rise on enter, sink on press,
+    settle on leave — along the pure lift ladder (hearth/motion.py).
+
+    Installs its own ground shadow at the resting level (a widget can
+    carry only one graphics effect, so this *is* the shadow). The Lift
+    is parked at `widget._hearth_lift` and the filter is parented to
+    the effect, so everything dies with the widget.
+    """
+    blur, dy, alpha = motion.shadow_for(base_level)
+    effect = add_shadow(widget, color=color, blur=blur, dy=dy,
+                        alpha=alpha)
+    lift = Lift(effect, base_level=base_level, color=color)
+    widget.installEventFilter(_LiftFilter(lift))
+    widget._hearth_lift = lift
+    return lift
+
+
 def slide_toast(widget: QWidget, ms: int = 320) -> None:
     """Toast entrance: rise from below the final resting point while fading in."""
     effect = _ensure_opacity_effect(widget)
@@ -130,4 +234,5 @@ def slide_toast(widget: QWidget, ms: int = 320) -> None:
 
 __all__ = [
     "add_shadow", "add_glow", "set_glow_color", "fade_in", "slide_toast",
+    "Lift", "hover_lift",
 ]
