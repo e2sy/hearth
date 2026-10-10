@@ -24,6 +24,7 @@ from PyQt6.QtCore import (
 from PyQt6.QtGui import QAction, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
+    QDialog,
     QFileDialog,
     QMenu,
     QMessageBox,
@@ -46,8 +47,11 @@ from .jobs import (
     ArtistJob,
     ArtistLookupJob,
     DiscoverJob,
+    EnhanceJob,
+    ImportJob,
     LoadJob,
     LyricsJob,
+    LyricSearchJob,
     RadioJob,
     ScopedSearchJob,
     SearchJob,
@@ -55,13 +59,19 @@ from .jobs import (
     _SignalCarrier,
 )
 from .local_scan import LocalScanJob
+from .import_dialog import ImportDialog
 from .lyrics import SyncedLyrics
 from .lyrics_overlay import LyricsOverlay
+from .minimode import MiniPlayerModel, build_mini_widget
 from .models import Album, Artist, Collection, Track
 from .mpris import MPRIS_AVAILABLE, MprisService
 from .panel import FloatingPanel
+from .party_dialog import PartyInboxDialog
 from .player import PlaybackCore
-from .remote import RemoteServer
+from .remote import RemoteServer, SuggestionInbox
+from .sound_panel import SoundForgeDialog
+from . import sound_shape
+from .sound_shape import SoundState
 from .storage import HearthStore
 from .theme import lyrics_font
 from .toast import NowPlayingToast
@@ -427,6 +437,20 @@ class Hearth:
         self.command_palette = CommandPalette(palette_key, parent=self.window)
         # the phone remote: created lazily on first 📱, one session per run
         self._remote: RemoteServer | None = None
+        # the party hat: guest suggestions from the LAN remote (created with it)
+        self._party_inbox: SuggestionInbox | None = None
+        self._party_dialog: PartyInboxDialog | None = None
+        self._party_seen = 0
+        self._party_poll = QTimer(self.qapp)
+        self._party_poll.setInterval(4000)
+        self._party_poll.timeout.connect(self._check_party_inbox)
+        self._party_poll.start()
+        # the Sound Forge bench: one dialog per run, knobs out
+        self._sound_dialog: SoundForgeDialog | None = None
+        # the pocket hearth: a tiny always-on-top transport (built on first use;
+        # the model mirrors playback from the moment the app lights)
+        self._mini_model = MiniPlayerModel()
+        self._mini_window = None
         # wake-up alarm: one-shot, tray-scheduled, fades the room back in
         self.alarm = AlarmController(parent=self.qapp)
         self.alarm.fired.connect(self._fire_alarm)
@@ -529,6 +553,8 @@ class Hearth:
         w.local_rescan_requested.connect(self._local_rescan)
         w.glow_mix_requested.connect(self._glow_mix)
         w.remote_requested.connect(self._open_remote)
+        w.enhance_playlist_requested.connect(self._enhance_playlist)
+        w.spotify_import_requested.connect(self._open_spotify_import)
         w.play_pause_requested.connect(self.core.toggle)
         w.next_requested.connect(self.core.next)
         w.prev_requested.connect(self.core.previous)
@@ -567,6 +593,12 @@ class Hearth:
         # (its handler keeps test mode off the network, like _on_stream_lost)
         self.core.preresolve_requested.connect(self._on_preresolve)
         self.window.now_view.crossfade_changed.connect(self._on_crossfade_changed)
+        # the pocket hearth mirrors playback (cheap model writes even when
+        # the window has never been opened, so it never shows stale state)
+        self.core.track_changed.connect(self._mini_on_track)
+        self.core.state_changed.connect(self._mini_on_state)
+        self.core.position_changed.connect(self._mini_on_position)
+        self.core.duration_changed.connect(self._mini_on_duration)
 
     def _build_tray(self) -> None:
         if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -673,15 +705,35 @@ class Hearth:
         self._launch(job)
 
     def _run_scoped_search(self, query: str, scope: str) -> None:
-        """Songs / Videos / Albums scopes from the search-page chips."""
+        """Songs / Videos / Albums / Lyrics scopes from the search-page chips."""
         if scope == "songs":
             self._run_search(query)
+            return
+        if scope == "lyrics":
+            self._run_lyric_search(query)
             return
         self.surface.set_status(f"Searching {scope}…")
         job = ScopedSearchJob(self.catalog, query, scope=scope)
         job.signals.finished.connect(self._show_scoped_results)
         job.signals.failed.connect(lambda msg: self.surface.set_status(f"Search failed: {msg}"))
         self._launch(job)
+
+    def _run_lyric_search(self, query: str) -> None:
+        """📝 A remembered line becomes the song: cache first, LRCLIB second."""
+        self.window.search_view.set_header("Lyric matches")
+        self.surface.set_status("Searching lyrics…")
+        job = LyricSearchJob(self.catalog, self.store, query)
+        job.signals.finished.connect(self._show_lyric_results)
+        job.signals.failed.connect(lambda msg: self.surface.set_status(f"Lyric search failed: {msg}"))
+        self._launch(job)
+
+    def _show_lyric_results(self, tracks: list) -> None:
+        tracks = [t for t in (tracks or []) if isinstance(t, Track)]
+        self._show_search_results(tracks)
+        self.surface.set_status(
+            f"{len(tracks)} lyric matches" if tracks
+            else "No lyric matches — try a longer, more exact line"
+        )
 
     def _show_scoped_results(self, payload) -> None:
         scope, results = payload
@@ -1256,6 +1308,13 @@ class Hearth:
             CommandAction("Mute / Unmute", self._toggle_mute, "silence volume"),
             CommandAction("Toggle favorite", self._palette_toggle_favorite,
                           "pin heart like"),
+            CommandAction("Party suggestions", self._review_party_suggestions,
+                          "party guest inbox suggest review queue"),
+            CommandAction("Sound Forge (equalizer)", self._open_sound_forge,
+                          "eq equalizer sound karaoke preamp audio forge"),
+            CommandAction("Mini player", self._toggle_mini_player,
+                          "mini pocket floating small tiny compact window "
+                          "always on top drag"),
         ]
         view_labels = {
             "home": "Go to Home",
@@ -1497,6 +1556,15 @@ class Hearth:
                 elif name == "vol" and volume is not None:
                     core.set_volume(max(0.0, min(1.0, float(volume))))
 
+            def suggest(self_inner, item: dict) -> bool:
+                """The party hat: a guest's paste lands in the host's inbox."""
+                if self._party_inbox is None:
+                    self._party_inbox = SuggestionInbox()
+                return self._party_inbox.push(item)
+
+            def pending_suggestions(self_inner) -> int:
+                return len(self._party_inbox) if self._party_inbox else 0
+
         return Bridge()
 
     def _open_remote(self) -> None:
@@ -1516,6 +1584,193 @@ class Hearth:
             f"{self._remote.url()}\n\n"
             "The link is the key — anyone who has it can control playback.",
         )
+
+    def _enhance_playlist(self, playlist_id: int) -> None:
+        """✨ Ask the radio for a few more like the ones already here."""
+        if self.store is None:
+            return
+        self.surface.set_status("Enhancing playlist…")
+        job = EnhanceJob(
+            self.store, playlist_id,
+            lambda seed, n: self.catalog.radio(seed.video_id, limit=n),
+        )
+        job.signals.finished.connect(
+            lambda payload: self._enhance_done(playlist_id, payload)
+        )
+        job.signals.failed.connect(
+            lambda msg: self.surface.set_status(f"Enhance failed: {msg}")
+        )
+        self._launch(job)
+
+    def _enhance_done(self, playlist_id: int, payload) -> None:
+        added, picks = payload
+        self.window.refresh_playlists()
+        if added:
+            self.window.open_playlist(playlist_id)
+        self.surface.set_status(
+            f"✨ Enhanced — {len(added)} new tracks sprinkled in"
+            if added else "Enhance found nothing new — this playlist already covers its radio"
+        )
+
+    def _open_spotify_import(self) -> None:
+        """🟢 Paste a Spotify playlist; Hearth rebuilds it on YouTube Music."""
+        dialog = ImportDialog(self.window)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        text = dialog.paste_text()
+        if not text.strip():
+            self.surface.set_status("Nothing to import — the paste was empty")
+            return
+        self.surface.set_status("Importing from Spotify… (matching every song)")
+        job = ImportJob(
+            self.store, text,
+            lambda q: self.catalog.search_songs(q, limit=3),
+            name=dialog.playlist_name(),
+            fmt=dialog.format_choice(),
+        )
+        job.signals.finished.connect(self._spotify_import_done)
+        job.signals.failed.connect(
+            lambda msg: self.surface.set_status(f"Import failed: {msg}")
+        )
+        self._launch(job)
+
+    def _spotify_import_done(self, report) -> None:
+        self.surface.set_status(report.summary())
+        if report.playlist_id:
+            self.window.refresh_playlists()
+            self.window.open_playlist(report.playlist_id)
+
+    # --- the party hat: guest suggestions -----------------------------------
+
+    def _check_party_inbox(self) -> None:
+        """Nudge the host when guests suggest songs (and refresh an open view)."""
+        if not self._party_inbox:
+            return
+        pending = len(self._party_inbox)
+        if pending == self._party_seen:
+            if self._party_dialog is not None:
+                self._party_dialog.refresh()
+            return
+        self._party_seen = pending
+        if self._party_dialog is not None:
+            self._party_dialog.refresh()
+        if pending:
+            self.surface.set_status(
+                f"🎉 {pending} guest suggestion(s) waiting — Ctrl+K → 'Party suggestions'"
+            )
+
+    def _review_party_suggestions(self) -> None:
+        """Open (or raise) the guest-suggestion review surface."""
+        if self._party_inbox is None:
+            self._party_inbox = SuggestionInbox()
+        if self._party_dialog is None:
+            self._party_dialog = PartyInboxDialog(self._party_inbox, parent=self.window)
+            self._party_dialog.accept_requested.connect(self._accept_party_suggestion)
+            self._party_dialog.empty.connect(self._party_box_emptied)
+        self._party_dialog.refresh()
+        self._party_dialog.show()
+        self._party_dialog.raise_()
+        self._party_dialog.activateWindow()
+
+    def _accept_party_suggestion(self, entry: dict) -> None:
+        """A guest's pick joins the queue — the host stays in charge."""
+        track = Track(
+            video_id=str(entry.get("video_id") or ""),
+            title=str(entry.get("title") or "Guest pick"),
+            artist=str(entry.get("artist") or ""),
+        )
+        if not track.video_id:
+            return
+        self._enqueue(track)
+        self.surface.set_status(f"🎉 Queued {track.title} — the party asked nicely")
+
+    def _party_box_emptied(self) -> None:
+        self._party_seen = 0
+        self.surface.set_status("Party inbox cleared — every pick had its answer")
+
+    # --- the Sound Forge bench -----------------------------------------------
+
+    def _open_sound_forge(self) -> None:
+        """🎚️ EQ bands, preamp, karaoke — knobs for the room's sound."""
+        if self._sound_dialog is None:
+            saved = self.store.sound_settings() if self.store is not None else {}
+            self._sound_dialog = SoundForgeDialog(
+                parent=self.window, state=SoundState.from_dict(saved)
+            )
+            self._sound_dialog.state_changed.connect(self._on_sound_state)
+        self._sound_dialog.show()
+        self._sound_dialog.raise_()
+        self._sound_dialog.activateWindow()
+
+    # --- the pocket hearth (floating mini player) ---
+
+    def _toggle_mini_player(self) -> None:
+        """🪟 Pocket hearth: a tiny, draggable, always-on-top transport."""
+        if self._mini_window is not None and self._mini_window.isVisible():
+            self._mini_window.hide()
+            self.surface.set_status("Pocket hearth closed")
+            return
+        self._open_mini_player()
+
+    def _open_mini_player(self) -> None:
+        """Light the pocket hearth in the current palette, current song in."""
+        if self._mini_window is None:
+            pal_key = str(self.settings.value("theme", config.DEFAULT_PALETTE))
+            pal = config.PALETTES.get(pal_key) or config.PALETTES[config.DEFAULT_PALETTE]
+            self._mini_window = build_mini_widget(
+                pal,
+                self._mini_model,
+                on_play_pause=self.core.toggle,
+                on_next=self.core.next,
+                on_prev=self.core.previous,
+                on_seek=self.core.seek,
+                on_expand=self._expand_mini,
+            )
+            current = self.core.engine.current
+            if current is not None:
+                self._mini_model.set_track(current.title, current.artist)
+                self._mini_window.apply_track(current.title, current.artist)
+        self._mini_window.show()
+        self._mini_window.raise_()
+        self.surface.set_status("Pocket hearth glowing — drag it anywhere")
+
+    def _expand_mini(self) -> None:
+        """⤢ or double-click on the pocket: the main window takes the stage."""
+        if self._mini_window is not None:
+            self._mini_window.hide()
+        self.window.showNormal()
+        self.window.raise_()
+        self.window.activateWindow()
+
+    def _mini_on_track(self, track) -> None:
+        if track is None:
+            self._mini_model.set_track("", "")
+        else:
+            self._mini_model.set_track(track.title, track.artist)
+        if self._mini_window is not None and self._mini_window.isVisible():
+            self._mini_window.apply_track(
+                self._mini_model.title, self._mini_model.artist
+            )
+
+    def _mini_on_state(self, playing: bool) -> None:
+        self._mini_model.set_playing(playing)
+        if self._mini_window is not None and self._mini_window.isVisible():
+            self._mini_window.apply_playing(playing)
+
+    def _mini_on_position(self, position_ms: int) -> None:
+        self._mini_model.set_position(position_ms)
+        if self._mini_window is not None and self._mini_window.isVisible():
+            self._mini_window.apply_position(position_ms)
+
+    def _mini_on_duration(self, duration_ms: int) -> None:
+        self._mini_model.set_duration(duration_ms)
+
+    def _on_sound_state(self, state) -> None:
+        """Every knob move: persist it, apply what the backend honors today."""
+        if self.store is not None:
+            self.store.save_sound_settings(state.to_dict())
+        self.core.set_preamp(state.preamp_db)
+        self.surface.set_status(f"🎚️ {sound_shape.sound_summary(state)}")
 
     def _glow_mix(self) -> None:
         """✨ One tap in the On Repeat shelf: your rotation plus kindred fire."""
@@ -1925,6 +2180,8 @@ class Hearth:
 
     def _restore_settings(self) -> None:
         self.core.set_volume(float(self.settings.value("volume", 0.8)))
+        saved_sound = self.store.sound_settings() if self.store is not None else {}
+        self.core.set_preamp(SoundState.from_dict(saved_sound).preamp_db)
         self.panel.set_volume(self.core.volume)
         rate = float(self.settings.value("rate", 1.0))
         self.core.set_rate(rate)
