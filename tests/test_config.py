@@ -58,3 +58,37 @@ def test_validate_catches_invisible_text():
         success="#8fbf6f", selection="#4a3517", scroll="#3a2f22",
     )
     assert any("bg and text" in p for p in validate_palette(bad))
+
+
+# --- the wave-3 palettes: Ember Dusk + Lantern ---
+
+def test_ember_dusk_exists_and_is_valid():
+    p = PALETTES["emberdusk"]
+    assert p.label == "Ember Dusk"
+    assert validate_palette(p) == []
+
+
+def test_lantern_exists_and_is_valid():
+    p = PALETTES["lantern"]
+    assert p.label == "Lantern"
+    assert validate_palette(p) == []
+
+
+def test_lantern_is_genuinely_high_contrast():
+    p = PALETTES["lantern"]
+    # white on true black: max luminance distance, for tired eyes
+    assert p.text == "#ffffff"
+    assert p.bg == "#000000"
+    # and the accent never drifts near the text's brightness band
+    assert p.accent != p.text and p.accent_soft != p.text
+
+
+def test_new_palettes_lookup_and_fall_back():
+    assert get_palette("emberdusk") is PALETTES["emberdusk"]
+    assert get_palette("lantern") is PALETTES["lantern"]
+    assert get_palette("nope") is PALETTES[DEFAULT_PALETTE]
+
+
+def test_new_palettes_ship_as_builtin_keys():
+    from hearth.config import BUILTIN_PALETTE_KEYS
+    assert {"emberdusk", "lantern"} <= set(BUILTIN_PALETTE_KEYS)
