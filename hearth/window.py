@@ -55,7 +55,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from . import config, icons, motion, share, world
+from . import config, icons, motion, queue_tools, share, world
 from .config import Palette, get_palette
 from .cover import CoverTile, reflected_pixmap
 from .effects import (
@@ -2861,6 +2861,8 @@ class MainWindow(QMainWindow):
     queue_reorder_requested = pyqtSignal(list)    # new upcoming order
     queue_jump_requested = pyqtSignal(int)        # upcoming index to play now
     queue_clear_requested = pyqtSignal()
+    queue_reverse_requested = pyqtSignal()        # flip the upcoming order
+    queue_dedupe_requested = pyqtSignal()         # drop repeated tracks
     radio_requested = pyqtSignal(object)          # Track | None (None = current)
     rate_cycled = pyqtSignal()
     sleep_requested = pyqtSignal(int)             # minutes; 0 = off
@@ -3080,7 +3082,20 @@ class MainWindow(QMainWindow):
         body_lay.setContentsMargins(0, 0, 0, 0)
         body_lay.setSpacing(2)
         tools = QHBoxLayout()
+        self._queue_time = QLabel("")
+        self._queue_time.setProperty("dim", True)
+        tools.addWidget(self._queue_time)
         tools.addStretch(1)
+        dedupe_btn = QPushButton("Dedup")
+        dedupe_btn.setProperty("flat", True)
+        dedupe_btn.setToolTip("Drop repeated tracks (first copy stays)")
+        dedupe_btn.clicked.connect(self.queue_dedupe_requested.emit)
+        tools.addWidget(dedupe_btn)
+        reverse_btn = QPushButton("Reverse")
+        reverse_btn.setProperty("flat", True)
+        reverse_btn.setToolTip("Flip the upcoming order")
+        reverse_btn.clicked.connect(self.queue_reverse_requested.emit)
+        tools.addWidget(reverse_btn)
         clear_btn = QPushButton("Clear")
         clear_btn.setProperty("flat", True)
         clear_btn.setToolTip("Remove every upcoming track")
@@ -3722,6 +3737,9 @@ class MainWindow(QMainWindow):
 
     def set_queue(self, upcoming: list[Track], current: Track | None = None) -> None:
         self._queue_list.clear()
+        self._queue_time.setText(
+            queue_tools.remaining_label([t.duration_sec for t in upcoming])
+        )
         if current is not None:
             row = TrackRow(self._palette, current, 0)
             row._title.setText(f"▶ {current.title}")

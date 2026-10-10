@@ -31,7 +31,7 @@ from PyQt6.QtWidgets import (
     QSystemTrayIcon,
 )
 
-from . import config, plugins, theme, world, ytm_resilience
+from . import config, plugins, queue_tools, theme, world, ytm_resilience
 from .ambient import AmbientChannel
 from .catalog import Catalog
 from .command_palette import CommandAction, CommandPalette
@@ -534,6 +534,8 @@ class Hearth:
         w.queue_reorder_requested.connect(self._reorder_queue)
         w.queue_jump_requested.connect(self._jump_to_queue_index)
         w.queue_clear_requested.connect(self._clear_queue)
+        w.queue_reverse_requested.connect(self._reverse_queue)
+        w.queue_dedupe_requested.connect(self._dedupe_queue)
         w.mute_toggled.connect(self._toggle_mute)
         w.radio_requested.connect(self._start_radio)
         w.artist_opened.connect(self._open_artist)
@@ -857,6 +859,28 @@ class Hearth:
         self.core.engine.upcoming.clear()
         self.core.queue_changed.emit()
         self.surface.set_status("Queue cleared")
+
+    def _reverse_queue(self) -> None:
+        """Flip the upcoming order (queue dock 'Reverse' chip)."""
+        self.core.engine.set_order(queue_tools.reverse_upcoming(
+            self.core.engine.upcoming))
+        self.core.queue_changed.emit()
+        self.surface.set_status("Queue reversed")
+
+    def _dedupe_queue(self) -> None:
+        """Drop repeated tracks from the upcoming queue (first wins)."""
+        before = len(self.core.engine.upcoming)
+        kept = queue_tools.dedupe(
+            list(self.core.engine.upcoming), key=lambda t: t.video_id)
+        dropped = before - len(kept)
+        if not dropped:
+            self.surface.set_status("No duplicates in the queue")
+            return
+        self.core.engine.set_order(kept)
+        self.core.queue_changed.emit()
+        self.surface.set_status(
+            f"Removed {dropped} duplicate track"
+            f"{'s' if dropped != 1 else ''} from the queue")
 
     _pre_mute_volume: float | None = None
 
