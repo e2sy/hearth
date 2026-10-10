@@ -140,3 +140,26 @@ def test_mini_player_has_a_palette_entry(tmp_path, qapp):
     labels = [a.label for a in hearth._palette_actions()]
     assert "Mini player" in labels
     hearth.shutdown()
+
+
+# --- wave 3: reopen where you left off ---
+
+def test_last_view_roundtrip(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    hearth.window.show_view("stats")
+    assert hearth.window._last_view == "stats"
+    hearth.shutdown()
+
+    reopened = make_hearth(tmp_path)
+    assert reopened.window._last_view == "stats"
+    reopened.shutdown()
+
+
+def test_last_view_unknown_value_falls_back_home(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    hearth.settings.setValue("last_view", "narnia")
+    hearth.shutdown()
+
+    reopened = make_hearth(tmp_path)
+    assert reopened.window._last_view in ("home", reopened.window.VIEWS[0])
+    reopened.shutdown()

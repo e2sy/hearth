@@ -3269,6 +3269,7 @@ class MainWindow(QMainWindow):
             return
         index = self.VIEWS.index(name)
         self.stack.setCurrentIndex(index)
+        self._last_view = name      # the app persists this on shutdown
         current = self.stack.currentWidget()
         if current is not None:
             fade_in(current, ms=200)   # the stage crossfades in

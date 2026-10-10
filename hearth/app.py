@@ -2269,6 +2269,10 @@ class Hearth:
         # text scale (accessibility dial; junk falls back to 100%)
         self._apply_font_scale(
             config.clamp_font_scale(self.settings.value("font_scale", 1.0)))
+        # reopen where you left off (unknown or absent → home)
+        last_view = str(self.settings.value("last_view", "home"))
+        if last_view in self.window.VIEWS:
+            self.window.show_view(last_view)
         repeat = str(self.settings.value("repeat", config.REPEAT_OFF))
         if repeat in config.REPEAT_MODES:
             self.core.set_repeat(repeat)
@@ -2339,6 +2343,8 @@ class Hearth:
         self.settings.setValue("geometry/pos", self.panel.pos())
         self.settings.setValue("window/size", self.window.size())
         self.settings.setValue("window/pos", self.window.pos())
+        self.settings.setValue(
+            "last_view", getattr(self.window, "_last_view", "home"))
         self._save_session_snapshot()
 
     # --- the style closet (v0.8.0): glass looks + custom wallpapers ---
