@@ -62,6 +62,7 @@ from .effects import (
     add_glow,
     add_shadow,
     fade_in,
+    hover_lift,
     set_glow_color,
 )
 from .lyrics import LrcLine, SyncedLyrics
@@ -208,8 +209,7 @@ class Shelf(QWidget):
         inner.addWidget(title, 1)
         inner.addWidget(artist)
         card.clicked.connect(lambda _=False, t=track, i=index: self.card_picked.emit(t, list(self._tracks)))
-        blur, dy, alpha = config.DEPTH_SHADOWS["card"]
-        add_shadow(card, blur=blur, dy=dy, alpha=alpha)
+        hover_lift(card, base_level=1)
         return card
 
 
@@ -725,6 +725,7 @@ class DiscoverView(QWidget):
         inner.addWidget(title, 1)
         inner.addWidget(sub)
         card.clicked.connect(lambda _=False, t=thing: self.collection_opened.emit(t))
+        hover_lift(card, base_level=1)
         return card
 
     def set_track_list(self, title: str, tracks: list[Track]) -> None:
