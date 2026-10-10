@@ -491,6 +491,7 @@ class PlaybackCore(QObject):
         self.engine = QueueEngine()
         self.autoplay: bool = config.AUTOPLAY_DEFAULT
         self._volume = 0.8
+        self._preamp_db = 0.0   # the Sound Forge bench's live knob
         self._rate = 1.0
         self._player = None
         self._audio_out = None
@@ -991,10 +992,36 @@ class PlaybackCore(QObject):
 
     def set_volume(self, value: float) -> None:
         self._volume = max(0.0, min(1.0, float(value)))
+        self._apply_output_volume()
+
+    def _apply_output_volume(self) -> None:
+        """Master volume × preamp → the output device (and the ramp)."""
+        effective = self.effective_volume()
         if self._audio_out is not None:
-            self._audio_out.setVolume(self._volume)
+            self._audio_out.setVolume(effective)
         if self._xf is not None:
-            self._xf.base_volume = self._volume   # keep the ramp scaled to master
+            self._xf.base_volume = effective   # keep the ramp scaled to master
+
+    def effective_volume(self) -> float:
+        """What actually reaches the device: user volume shaped by preamp."""
+        from .sound_shape import effective_volume
+
+        return effective_volume(self._volume, self._preamp_db)
+
+    def set_preamp(self, db: float) -> None:
+        """Sound Forge preamp — the forge hook that is real today.
+
+        Negative dB tames a hot master on the actual output; the band
+        gains and karaoke cut wait for the v1.0 shaped pipeline (their
+        math lives in sound_shape, ready to consume)."""
+        from .sound_shape import clamp_preamp
+
+        self._preamp_db = clamp_preamp(db)
+        self._apply_output_volume()
+
+    @property
+    def preamp_db(self) -> float:
+        return self._preamp_db
 
     @property
     def volume(self) -> float:

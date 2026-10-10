@@ -5,11 +5,13 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import logging
 import sqlite3
 import time
 from datetime import datetime
 from pathlib import Path
 
+from . import config
 from .config import (
     HISTORY_PAGE_SIZE,
     ON_REPEAT_DECAY_DAYS,
@@ -95,10 +97,26 @@ CREATE TABLE IF NOT EXISTS podcast_episodes (
     added_at   REAL NOT NULL DEFAULT (unixepoch('now')),
     PRIMARY KEY (feed_id, guid)
 );
+CREATE TABLE IF NOT EXISTS lyrics_cache (
+    video_id   TEXT PRIMARY KEY,
+    artist     TEXT NOT NULL DEFAULT '',
+    title      TEXT NOT NULL DEFAULT '',
+    plain      TEXT NOT NULL DEFAULT '',
+    synced     TEXT NOT NULL DEFAULT '',
+    cached_at  REAL NOT NULL DEFAULT (unixepoch('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_lyrics_cached ON lyrics_cache (cached_at DESC);
+CREATE TABLE IF NOT EXISTS sound_settings (
+    id         INTEGER PRIMARY KEY CHECK (id = 1),
+    payload    TEXT NOT NULL DEFAULT '{}',
+    saved_at   REAL NOT NULL DEFAULT (unixepoch('now'))
+);
 """
 
 # Bare URLs in an .m3u carry the video id in a v= query parameter.
 _VIDEO_ID_RE = re.compile(r"[?&]v=([A-Za-z0-9_-]+)")
+
+log = logging.getLogger(__name__)
 
 
 class HearthStore:
@@ -1127,3 +1145,103 @@ class HearthStore:
         if not track.video_id or not track.title:
             return None
         return track
+
+    # --- lyrics cache (Room 6.4 — line search works offline from here) ---
+
+    def cache_lyrics(
+        self,
+        video_id: str,
+        artist: str,
+        title: str,
+        plain: str | None,
+        synced: str | None,
+    ) -> bool:
+        """Remember a fetched lyrics payload; touch-on-write refreshes age.
+
+        Only entries that actually carry text are stored; the cache
+        trims itself to config.LYRICS_CACHE_MAX newest entries. False on
+        nothing-worth-storing.
+        """
+        video_id = (video_id or "").strip()
+        if not video_id or not (plain or synced):
+            return False
+        try:
+            self._db.execute(
+                "INSERT INTO lyrics_cache (video_id, artist, title, plain, synced, cached_at)"
+                " VALUES (?, ?, ?, ?, ?, ?)"
+                " ON CONFLICT(video_id) DO UPDATE SET artist=excluded.artist,"
+                " title=excluded.title, plain=excluded.plain, synced=excluded.synced,"
+                " cached_at=excluded.cached_at",
+                (video_id, artist or "", title or "", plain or "", synced or "",
+                 time.time()),
+            )
+            self._db.execute(
+                "DELETE FROM lyrics_cache WHERE video_id NOT IN ("
+                " SELECT video_id FROM lyrics_cache ORDER BY cached_at DESC"
+                " LIMIT ?)",
+                (int(config.LYRICS_CACHE_MAX),),
+            )
+            self._db.commit()
+        except sqlite3.Error as exc:
+            log.info("lyrics cache write failed: %s", exc)
+            return False
+        return True
+
+    def cached_lyrics(self, video_id: str) -> tuple[str | None, str | None]:
+        """The stored (plain, synced) pair for a video, or (None, None)."""
+        row = self._db.execute(
+            "SELECT plain, synced FROM lyrics_cache WHERE video_id = ?",
+            ((video_id or "").strip(),),
+        ).fetchone()
+        if not row:
+            return None, None
+        return (row[0] or None, row[1] or None)
+
+    def lyric_entries(self) -> list[tuple[str, str, str, str]]:
+        """Every cache entry as (video_id, artist, title, searchable_text).
+
+        The searchable text prefers synced LRC (it carries the same
+        words, line-labeled) and falls back to plain text.
+        """
+        rows = self._db.execute(
+            "SELECT video_id, artist, title, plain, synced FROM lyrics_cache"
+            " ORDER BY cached_at DESC"
+        ).fetchall()
+        entries: list[tuple[str, str, str, str]] = []
+        for video_id, artist, title, plain, synced in rows:
+            text = (synced or "").strip() or (plain or "").strip()
+            if text:
+                entries.append((video_id, artist or "", title or "", text))
+        return entries
+
+    def clear_lyrics_cache(self) -> int:
+        """Broom the whole lyrics cache; returns how many entries went."""
+        cur = self._db.execute("DELETE FROM lyrics_cache")
+        self._db.commit()
+        return int(cur.rowcount or 0)
+
+    # --- sound settings (the forge bench remembers its knobs) ---
+
+    def save_sound_settings(self, payload: dict) -> None:
+        """Store the SoundState dict (one row, id=1, replaced wholesale)."""
+        blob = json.dumps(payload or {}, ensure_ascii=False)
+        self._db.execute(
+            "INSERT INTO sound_settings (id, payload) VALUES (1, ?)"
+            " ON CONFLICT(id) DO UPDATE SET payload = excluded.payload,"
+            " saved_at = unixepoch('now')",
+            (blob,),
+        )
+        self._db.commit()
+
+    def sound_settings(self) -> dict:
+        """The stored sound dict, or {} when nothing was saved yet."""
+        row = self._db.execute(
+            "SELECT payload FROM sound_settings WHERE id = 1"
+        ).fetchone()
+        if not row:
+            return {}
+        try:
+            data = json.loads(row[0])
+            return data if isinstance(data, dict) else {}
+        except (ValueError, TypeError):
+            return {}
