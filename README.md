@@ -365,6 +365,31 @@ Hearth](#-inside-the-hearth) already wears this pass — the accent halo
 behind covers, the gradient surfaces and the floor reflection are the
 glass layer doing its thing.
 
+## 🫀 The Living Room — motion & muscle (wave 3)
+
+The 3D system (`docs/UI-DEPTH.md`) grew a pulse and the listener grew
+new hands. No new dependencies — everything is the same pure-Qt
+toolkit, driven by one pure arithmetic module (`hearth/motion.py`):
+
+- **Hover life** — shelf and discover cards rise toward the light as
+  the cursor arrives and plant down while pressed (a pure five-level
+  "lift ladder" drives every shadow); the transport flats greet the
+  hand the same way
+- **Entrances instead of pops** — shelf cards land one after another
+  (26 ms steps, capped), the Ctrl+K launcher rises 14 px into place,
+  and the playing row in the queue breathes on a gentle accent glow
+- **Reduced motion, one switch** — `config.MOTION_ENABLED = False`
+  stills the whole room while every surface keeps its resting shadow
+- **Queue muscle** — the Up-next dock shows how long the road runs
+  ("42 min left") plus Reverse, Dedup, Now (jump to the playing row)
+  and Shuffle-upcoming
+- **Listener comforts** — two new palettes (**Ember Dusk**, **Lantern**
+  high-contrast), a text-size dial (Ctrl+K → "Bigger text"), four new
+  global hotkeys (mute, volume up/down, repeat), Ctrl+1..9 to jump
+  straight to a view, a filter box on the History page, a live
+  "day streak" tile on Stats, and the app reopens where you left off —
+  view and mini-player corner included
+
 ## 🧭 How Hearth Grew
 
 Five ships, five waves — each one a full layer of the app:
