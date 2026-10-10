@@ -298,6 +298,20 @@ PALETTES: dict[str, Palette] = {
         accent="#1db954", accent_soft="#52e08a", danger="#e2694f",
         success="#7fd0a0", selection="#14422a", scroll="#223029",
     ),
+    "emberdusk": Palette(
+        key="emberdusk", label="Ember Dusk",
+        bg="#151019", surface="#1f1725", surface_alt="#2b2033",
+        hairline="#3e2f4a", text="#f5ecf4", text_dim="#a793ad",
+        accent="#ff8c5a", accent_soft="#ffb489", danger="#e2694f",
+        success="#8fbf6f", selection="#4a2c1a", scroll="#3e2f4a",
+    ),
+    "lantern": Palette(
+        key="lantern", label="Lantern",
+        bg="#000000", surface="#0d0d0d", surface_alt="#1a1a1a",
+        hairline="#4d4d4d", text="#ffffff", text_dim="#c8c8c8",
+        accent="#ffd23f", accent_soft="#ffe58a", danger="#ff5c47",
+        success="#6fe86f", selection="#3d3000", scroll="#4d4d4d",
+    ),
 }
 
 DEFAULT_PALETTE = "grove"
