@@ -166,12 +166,14 @@ class CoverTile(QLabel):
     # --- content ---
 
     def set_mark(self) -> None:
+        self._mark_only = True
         self._set_pixmap(paint_mark(self._palette, self._side))
 
     def set_track_cover(self, url: str) -> None:
         if not url:
             self.set_mark()
             return
+        self._mark_only = False
         if self._nam is None:
             self._nam = QNetworkAccessManager(self)
         if self._reply is not None:
@@ -216,5 +218,7 @@ class CoverTile(QLabel):
 
     def apply_palette(self, palette: Palette) -> None:
         self._palette = palette
-        if self.pixmap() is None:
+        # a painted mark must follow the room's new colors; a real cover
+        # photo is palette-neutral and stays
+        if getattr(self, "_mark_only", True):
             self.set_mark()

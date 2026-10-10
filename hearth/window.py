@@ -140,6 +140,11 @@ class TrackRow(QWidget):
         else:
             stop_pulse(self)
 
+    def apply_palette(self, palette: Palette) -> None:
+        """Retint the row's painted surfaces (the flame mark follows)."""
+        self._palette = palette
+        self._cover.apply_palette(palette)
+
 
 class Shelf(QWidget):
     """A titled horizontal strip of track cards ('Made for you' vibes)."""
@@ -211,6 +216,17 @@ class Shelf(QWidget):
         has = bool(self._tracks)
         self._strip_area.setVisible(has)
         self._empty.setVisible(not has)
+
+    def apply_palette(self, palette: Palette) -> None:
+        """Retint the shelf's painted marks (cards keep their covers)."""
+        self._palette = palette
+        for i in range(self._strip_lay.count()):
+            card = self._strip_lay.itemAt(i).widget()
+            if card is None:
+                continue
+            tile = card.findChild(CoverTile)
+            if tile is not None:
+                tile.apply_palette(palette)
 
     def _make_card(self, track: Track, index: int) -> QPushButton:
         card = QPushButton()
@@ -354,6 +370,14 @@ class TrackListView(QWidget):
         menu = QMenu(self)
         self.menu_requested.emit(track, menu)
         menu.exec(self._list.viewport().mapToGlobal(pos))
+
+    def apply_palette(self, palette: Palette) -> None:
+        self._palette = palette
+        # rows on screen retint in place; hidden views rebuild on entry
+        for i in range(self._list.count()):
+            w = self._list.itemWidget(self._list.item(i))
+            if isinstance(w, TrackRow):
+                w.apply_palette(palette)
 
 
 class SearchView(TrackListView):
@@ -3936,6 +3960,8 @@ class MainWindow(QMainWindow):
         self.player_bar.apply_palette(palette)
         self.theater_view.apply_palette(palette)
         self.stats_view.apply_palette(palette)
+        self.home_view.apply_palette(palette)
+        self.history_view.apply_palette(palette)
         self.setStyleSheet(build_stylesheet(palette))
         self._refresh_nav_icons()
 
