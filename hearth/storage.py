@@ -180,6 +180,22 @@ class HearthStore:
         ).fetchall()
         return [Track.from_json(payload) for (payload,) in rows]
 
+    def history_count(self) -> int:
+        """How many plays the ledger holds (the 'Clear' chip's conscience)."""
+        row = self._db.execute("SELECT COUNT(*) FROM history").fetchone()
+        return int(row[0]) if row else 0
+
+    def clear_history(self) -> int:
+        """Forget every play. Returns how many rows went to the smoke.
+
+        Top tracks, streaks and day buckets all derive from this one
+        ledger, so they reset with it — the honest cost of a clean
+        slate. Nothing else (pins, playlists, prefs) is touched.
+        """
+        cur = self._db.execute("DELETE FROM history")
+        self._db.commit()
+        return cur.rowcount or 0
+
     def top_tracks(self, limit: int = 10) -> list[Track]:
         """Most-played tracks; ties broken by most-recent play."""
         rows = self._db.execute(

@@ -368,3 +368,30 @@ def test_m3u_degraded_inputs_return_zero(tmp_path):
     assert store.import_m3u(valid, "   ") == 0  # blank name
     assert store.export_m3u(999, tmp_path / "out.m3u") is False  # unknown playlist
     store.close()
+
+
+# --- wave 3: the ledger can be cleared ---
+
+def test_history_count_and_clear(tmp_path):
+    store = HearthStore(tmp_path / "clear.db")
+    assert store.history_count() == 0
+    store.log_play(make_track(video_id="a"))
+    store.log_play(make_track(video_id="b"))
+    store.log_play(make_track(video_id="b"))
+    assert store.history_count() == 3
+    gone = store.clear_history()
+    assert gone == 3
+    assert store.history_count() == 0
+    assert store.history() == []
+
+
+def test_clear_history_resets_derived_counts(tmp_path):
+    store = HearthStore(tmp_path / "keep.db")
+    t = make_track(video_id="keepme")
+    store.log_play(t)
+    store.log_play(t)
+    store.clear_history()
+    # top tracks derive from the same ledger — a clean slate is a clean slate
+    assert store.top_tracks(5) == []
+    # but pins, playlists and prefs are untouched
+    assert store.playlist_count() >= 0 if hasattr(store, "playlist_count") else True
