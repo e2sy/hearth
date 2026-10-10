@@ -69,7 +69,7 @@ from .effects import (
 )
 from .lyrics import LrcLine, SyncedLyrics
 from .models import Album, Artist, Track
-from .rewind import build_rewind_story
+from .rewind import build_rewind_story, current_streak
 from .storage import HearthStore
 from .theme import (
     STYLES,
@@ -1904,7 +1904,8 @@ class StatsView(QWidget):
         for key, caption in (("plays", "plays"),
                              ("minutes", "minutes listened"),
                              ("uniques", "unique tracks"),
-                             ("days", "days listened")):
+                             ("days", "days listened"),
+                             ("streak", "day streak")):
             tile = QVBoxLayout()
             tile.setSpacing(1)
             value = QLabel("0")
@@ -1988,6 +1989,10 @@ class StatsView(QWidget):
         self._tiles["minutes"].setText(str(int(summary.get("est_minutes") or 0)))
         self._tiles["uniques"].setText(str(int(summary.get("unique_tracks") or 0)))
         self._tiles["days"].setText(str(int(summary.get("days_listened") or 0)))
+        streak = current_streak(days)
+        self._tiles["streak"].setText(str(streak))
+        self._tiles["streak"].setToolTip(
+            "Consecutive days with a play, alive through yesterday")
         first = str(summary.get("first_play") or "")
         self._first_lit.setText(
             f"First lit {first[:10]}" if first else "")

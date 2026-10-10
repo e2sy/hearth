@@ -777,3 +777,13 @@ def test_history_filter_narrows_client_side(qapp, tmp_path):
     assert view._list.count() == 0
     view._filter.setText("")
     assert view._list.count() == 2
+
+
+def test_stats_view_shows_the_streak_tile(qapp, tmp_path):
+    from hearth.window import StatsView
+    store = HearthStore(tmp_path / "stats.db")
+    today = datetime.now().strftime("%Y-%m-%d")
+    store.log_play(make_track(video_id="s1"))
+    view = StatsView(get_palette("grove"), store=store)
+    view.refresh()
+    assert view._tiles["streak"].text() == "1"    # today is lit
