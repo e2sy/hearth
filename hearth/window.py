@@ -338,7 +338,8 @@ class SearchView(TrackListView):
     search_scoped = pyqtSignal(str, str)      # query, scope ("songs"/"videos"/"albums")
     album_opened = pyqtSignal(object)         # Album (double-click an album result)
 
-    SCOPES = (("songs", "♪ Songs"), ("videos", "▶ Videos"), ("albums", "💿 Albums"))
+    SCOPES = (("songs", "♪ Songs"), ("videos", "▶ Videos"), ("albums", "💿 Albums"),
+              ("lyrics", "📝 Lyrics"))
 
     def __init__(self, palette: Palette):
         super().__init__(palette)
@@ -431,6 +432,7 @@ class LibraryView(QWidget):
     menu_requested = pyqtSignal(object, object)
     create_playlist_requested = pyqtSignal()
     import_requested = pyqtSignal()              # 📥 import playlists (JSON / M3U)
+    spotify_import_requested = pyqtSignal()      # 🟢 paste a Spotify playlist
 
     def __init__(self, palette: Palette):
         super().__init__()
@@ -451,8 +453,14 @@ class LibraryView(QWidget):
         import_btn.setToolTip("Import playlists from JSON or M3U files")
         import_btn.clicked.connect(lambda _=False: self.import_requested.emit())
         self._import_btn = import_btn
+        spotify_btn = QPushButton("🟢 From Spotify")
+        spotify_btn.setProperty("chip", True)
+        spotify_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        spotify_btn.setToolTip("Paste a Spotify playlist (JSON, Exportify CSV, or embed page) and Hearth rebuilds it on YouTube Music")
+        spotify_btn.clicked.connect(lambda _=False: self.spotify_import_requested.emit())
         head.addWidget(hero)
         head.addStretch(1)
+        head.addWidget(spotify_btn)
         head.addWidget(import_btn)
         head.addWidget(new_btn)
         outer.addLayout(head)
@@ -868,6 +876,7 @@ class PlaylistView(TrackListView):
     shuffle_requested_sig = pyqtSignal(list)
     rename_requested = pyqtSignal(int)
     delete_requested = pyqtSignal(int)
+    enhance_requested = pyqtSignal(int)          # ✨ grow this playlist
 
     def __init__(self, palette: Palette, playlist_id: int, name: str):
         super().__init__(palette)
@@ -885,7 +894,10 @@ class PlaylistView(TrackListView):
         rename.clicked.connect(lambda: self.rename_requested.emit(self.playlist_id))
         delete = QPushButton("Delete")
         delete.clicked.connect(lambda: self.delete_requested.emit(self.playlist_id))
-        for b in (play, shuffle, rename, delete):
+        enhance = QPushButton("✨ Enhance")
+        enhance.setToolTip("Sprinkle a few radio-shaped tracks like the ones already here")
+        enhance.clicked.connect(lambda: self.enhance_requested.emit(self.playlist_id))
+        for b in (play, shuffle, enhance, rename, delete):
             actions.addWidget(b)
         actions.addStretch(1)
         self.layout().insertLayout(2, actions)
@@ -2803,6 +2815,8 @@ class MainWindow(QMainWindow):
     local_rescan_requested = pyqtSignal()            # 🔄 rescan remembered roots
     glow_mix_requested = pyqtSignal()                # ✨ one-tap Glow Mix ritual
     remote_requested = pyqtSignal()                  # 📱 open the phone remote
+    enhance_playlist_requested = pyqtSignal(int)     # ✨ sprinkle into playlist id
+    spotify_import_requested = pyqtSignal()          # 🟢 paste a Spotify playlist
     play_pause_requested = pyqtSignal()
     next_requested = pyqtSignal()
     prev_requested = pyqtSignal()
@@ -3067,6 +3081,9 @@ class MainWindow(QMainWindow):
             self.local_rescan_requested.emit)
         self.home_view.glow_mix_requested.connect(self.glow_mix_requested.emit)
         self.library_view.import_requested.connect(self._import_files_dialog)
+        self.library_view.spotify_import_requested.connect(
+            self.spotify_import_requested.emit
+        )
         for view in (self.search_view, self.library_view._recent):
             view.menu_requested.connect(self._track_menu)
         self.player_bar.play_pause_requested.connect(self.play_pause_requested.emit)
@@ -3265,6 +3282,7 @@ class MainWindow(QMainWindow):
             )
             view.rename_requested.connect(self._rename_playlist)
             view.delete_requested.connect(self._delete_playlist)
+            view.enhance_requested.connect(self.enhance_playlist_requested.emit)
             view.menu_requested.connect(self._playlist_track_menu)
             self.stack.addWidget(view)
         existing = self.findChild(PlaylistView, f"playlist-{playlist_id}")

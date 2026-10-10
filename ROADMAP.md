@@ -4,8 +4,12 @@
 > [README](README.md). It is revisited every release — waves get promoted,
 > re-scoped, or retired, but the fire never gets a "maybe".
 >
-> Last stoked: **2026-10-09** (v0.7.2 shipped; v0.8.0 "The Long Winter Nights"
-> and v0.9.0 "The Mindful Flame" charted). Earlier, by crew decision, every wave was folded into
+> Last stoked: **2026-10-10** (v0.7.2 shipped; v0.8.0 "The Long Winter
+> Nights" and v0.9.0 "The Mindful Flame" charted; wave-2 engines landed
+> and then went visible — the 📝 lyric chip on Search, the ✨ Enhance
+> button on every playlist, the 🟢 From Spotify paste dialog, the 🎉
+> party inbox review surface, and the 🎚️ Sound Forge bench with a real
+> preamp riding the master volume; 827 tests green). Earlier, by crew decision, every wave was folded into
 > **one main version** — all four themes, one fire, built in order. Every
 > add-on discussed with the crew has a row here; nothing lives only in a
 > chat log anymore.
@@ -185,6 +189,12 @@ wave closes out for good.*
    Clamp, Late Night, plus a user preset slot). Presets are pure JSON —
    same data-file rule as palettes. *(accepts: A/B toggle, per-output-device
    memory, off-by-default when backend probe fails)*
+   ***(bench landed, wave 2)*** — `hearth/sound_shape.py` carries the full
+   band table, presets, and karaoke mid/side math, and the 🎚️ Sound Forge
+   panel (Ctrl+K) is live with a **real preamp** folded into the master
+   volume; the band curve and the cut engage the day a PCM tap exists
+   (Qt Multimedia exposes none — the math is ready and tested for the
+   v1.0 shaped pipeline). Settings persist in `sound_settings`.
 2. **Loudness normalization** — the catalog's loudness hints become a
    ReplayGain-style pass: no more reaching for the volume knob when a
    quiet acoustic track follows a mastered-to-death single. *(accepts:
@@ -233,6 +243,9 @@ output paths.
    box; Hearth matches against the LRCLIB text it already caches. The
    fastest "what song says…" answer on any desktop. *(accepts: works from
    cache offline, scores results, deep-links to the glowing line)*
+   ***(built + wired, wave 2)*** — the 📝 Lyrics chip on the search page:
+   cache hits play directly, LRCLIB hits earn one catalog search each
+   (`resolve_lyric_hits`), all on the worker pool.
 5. **Cache manager** — diagnostics grew a log tail; now show the caches
    themselves: covers, lyrics, stream pre-resolve — with sizes and a
    broom. *(accepts: per-cache clear with one tap, size shown without
@@ -284,6 +297,10 @@ state; all three features survive the offscreen suite.
    and votes the next one up. Party mode keeps host playback authoritative.
    *(accepts: host-only transport, vote settles <1 s on LAN, spectator
    mode can never pause the host's music)*
+   ***(inbox shipped, wave 2)*** — guests can already paste suggestions
+   from the remote page (`/api/suggest`); the host side now answers: a
+   Bridge suggest hook, a 4 s poller nudge, and the 🎉 Party suggestions
+   review surface (Ctrl+K) where every guest pick is queued or skipped.
 3. ♻️ **Windows SMTC** — the MPRIS2 row's twin finishes: lockscreen and
    media keys on Windows, same fake-bus test discipline via the SMTC
    shim. *(accepts: CI on windows-latest asserts play/pause/next events)*
@@ -366,6 +383,16 @@ collaborative spark.*
    quietly appends three tracks from the current radio signal, marked
    as suggestions and one-tap removable. *(accepts: off by default,
    suggested rows visually distinct, never interrupts manual queueing)*
+5. **Playlist Enhance** *(built, wave 2)* — a one-tap sprinkle: the
+   playlist's most-frequent-artist seed asks the radio for a few more
+   tracks like the ones already burning; every pick carries its seed
+   ("radio from …"), echoes and duplicates never land, and a shy radio
+   is an honest short list. Engines in `hearth/enhance.py`.
+   *(accepts: deterministic against a fixed suggester, playlist tracks
+   never suggested back)*
+   ***(wired, wave 2)*** — the ✨ Enhance button sits on every playlist;
+   picks grow via `catalog.radio` on the worker pool and the view
+   refreshes itself.
 
 **Room bar:** every feed is explainable ("because you played …"), every
 feed is dismissible, and none of them ever touch the audio path.
@@ -493,6 +520,16 @@ replaces; none of them adds a dependency on the audio thread.
 4. **window.py decomposition** — the 3.8k-line window becomes view
    modules behind a thin shell before more shelves land. *(accepts:
    no behavior change, smoke suite green, imports documented)*
+5. **Playlist importer — the Welcome Mat** *(built + wired, wave 2)* — move in
+   without retyping: paste a Spotify JSON export, an Exportify CSV, or
+   an embed-page HTML, and Hearth matches every song on YT Music
+   (video-noise cleaned, lead-artist queries, duplicates collapsed)
+   into a real playlist with an honest receipt. Engines in
+   `hearth/switchboard.py`. *(accepts: never raises on a bad paste,
+   unmatched songs are listed not hidden, no Spotify login or keys)*
+   ***(wired, wave 2)*** — the 🟢 From Spotify button in Your Library
+   opens the paste dialog (name + format override) and the import runs
+   on the worker pool, then the rebuilt playlist opens itself.
 
 **Room bar:** small rows still land with headless tests; the sync
 bridge never sees a key until the user types it.
