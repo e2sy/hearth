@@ -299,6 +299,8 @@ class HomeView(QWidget):
 
     def apply_palette(self, palette: Palette) -> None:
         self._palette = palette
+        for shelf in self._shelves.values():
+            shelf.apply_palette(palette)
 
 
 class TrackListView(QWidget):
@@ -3962,6 +3964,11 @@ class MainWindow(QMainWindow):
         self.stats_view.apply_palette(palette)
         self.home_view.apply_palette(palette)
         self.history_view.apply_palette(palette)
+        # the queue dock's rows retint where they stand
+        for i in range(self._queue_list.count()):
+            w = self._queue_list.itemWidget(self._queue_list.item(i))
+            if isinstance(w, TrackRow):
+                w.apply_palette(palette)
         self.setStyleSheet(build_stylesheet(palette))
         self._refresh_nav_icons()
 
