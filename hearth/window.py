@@ -2049,6 +2049,8 @@ class HistoryView(TrackListView):
     Show-more button. Zero new storage methods, zero network.
     """
 
+    history_cleared = pyqtSignal(int)   # rows the Clear chip wiped
+
     def __init__(self, palette: Palette, store: HearthStore | None = None,
                  page_size: int | None = None):
         super().__init__(palette)
@@ -2080,6 +2082,13 @@ class HistoryView(TrackListView):
         self._more_btn.clicked.connect(self._show_more)
         self._more_btn.hide()
 
+        self._clear_btn = QPushButton("Clear")
+        self._clear_btn.setProperty("chip", True)
+        self._clear_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._clear_btn.setToolTip("Forget every play (top tracks reset too)")
+        self._clear_btn.clicked.connect(self._clear_history_now)
+        self._clear_btn.hide()
+
         # the filter box: client-side narrowing of whatever is listed
         self._filter = QLineEdit()
         self._filter.setPlaceholderText("Filter these plays…")
@@ -2093,6 +2102,7 @@ class HistoryView(TrackListView):
         row = QHBoxLayout()
         row.addWidget(self._chips_area, 1)
         row.addWidget(self._more_btn)
+        row.addWidget(self._clear_btn)
         lay = self.layout()
         lay.insertLayout(1, row)                       # below the header
         lay.insertWidget(lay.indexOf(self._list), self._filter)
@@ -2114,6 +2124,7 @@ class HistoryView(TrackListView):
         self._empty.setVisible(not has_any)
         self._list.setVisible(has_any)
         self._chips_area.setVisible(has_any)
+        self._clear_btn.setVisible(has_any)   # nothing to clear, no chip
         self._build_chips(days[: config.HISTORY_CHIP_DAYS])
         self._load_current()
 
@@ -2188,6 +2199,18 @@ class HistoryView(TrackListView):
         else:
             shown = self._all
         self.set_tracks(shown)
+
+    def _clear_history_now(self) -> None:
+        """The Clear chip: wipe the listening ledger, repaint, confess."""
+        if self.store is None:
+            return
+        try:
+            gone = self.store.clear_history()
+        except Exception:   # noqa: BLE001 - a grumpy store beats a crash
+            gone = 0
+        self._day = None
+        self.refresh()
+        self.history_cleared.emit(gone)
 
     def _show_more(self) -> None:
         """Append the next 'All' page (day views stay single-page)."""
@@ -3207,6 +3230,10 @@ class MainWindow(QMainWindow):
             lambda t, ctx: self.playlist_picked.emit(list(ctx), list(ctx).index(t))
         )
         self.history_view.menu_requested.connect(self._track_menu)
+        self.history_view.history_cleared.connect(
+            lambda gone: self.set_status(
+                f"Cleared {gone} plays — the ledger is smoke"
+                if gone else "Nothing to clear"))
         # drive-by fix (31-c5b gap): the Local view's buttons speak view-local
         # signal names — relay them onto the MainWindow signals the app hears
         self.local_view.add_folder_requested.connect(

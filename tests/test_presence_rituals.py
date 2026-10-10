@@ -787,3 +787,20 @@ def test_stats_view_shows_the_streak_tile(qapp, tmp_path):
     view = StatsView(get_palette("grove"), store=store)
     view.refresh()
     assert view._tiles["streak"].text() == "1"    # today is lit
+
+
+# --- wave 3b: the Clear chip on the history page ---
+
+def test_history_clear_chip_wipes_and_reports(qapp, tmp_path):
+    store = HearthStore(tmp_path / "chip.db")
+    store.log_play(make_track(video_id="c1"))
+    store.log_play(make_track(video_id="c2"))
+    view = HistoryView(get_palette("grove"), store=store)
+    view.refresh()
+    assert view._clear_btn.isVisibleTo(view) or not view._clear_btn.isHidden()
+    gone = []
+    view.history_cleared.connect(gone.append)
+    view._clear_btn.click()
+    assert gone == [2]
+    assert store.history_count() == 0
+    assert view._list.count() == 0
