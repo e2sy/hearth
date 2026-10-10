@@ -2395,6 +2395,12 @@ class PlayerBar(QWidget):
         for b in (self._btn_shuffle, self._btn_prev, self._btn_play,
                   self._btn_next, self._btn_repeat):
             b.setCursor(Qt.CursorShape.PointingHandCursor)
+        # the flats live flat on the bar and rise to greet the cursor;
+        # the play button keeps its glow (one effect per widget) and its
+        # pressed-sink QSS ramp instead
+        for b in (self._btn_shuffle, self._btn_prev, self._btn_next,
+                  self._btn_repeat):
+            hover_lift(b, base_level=0)
         self._btn_play.setFixedSize(44, 36)
         self._btn_shuffle.setIconSize(QSize(16, 16))
         self._btn_prev.setIconSize(QSize(16, 16))
