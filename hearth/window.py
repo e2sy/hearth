@@ -55,7 +55,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from . import config, icons, share, world
+from . import config, icons, motion, share, world
 from .config import Palette, get_palette
 from .cover import CoverTile, reflected_pixmap
 from .effects import (
@@ -186,6 +186,12 @@ class Shelf(QWidget):
         for index, track in enumerate(self._tracks):
             card = self._make_card(track, index)
             self._strip_lay.addWidget(card)
+            # entrance cascade: each card's ground shadow lands a step
+            # after its neighbour's — a shelf doesn't pop, it settles
+            QTimer.singleShot(
+                motion.stagger_ms(index),
+                lambda c=card: getattr(c, "_hearth_lift", None) and c._hearth_lift.ground(),
+            )
         has = bool(self._tracks)
         self._strip_area.setVisible(has)
         self._empty.setVisible(not has)

@@ -122,6 +122,7 @@ class Lift:
         self.pressed = False
         self._blur = QPropertyAnimation(effect, b"blurRadius", effect)
         self._dy = QPropertyAnimation(effect, b"yOffset", effect)
+        self._tint = QPropertyAnimation(effect, b"color", effect)
         for anim in (self._blur, self._dy):
             anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
@@ -161,6 +162,30 @@ class Lift:
     def release(self) -> None:
         self.pressed = False
         self._to(self._level(), motion.LIFT_MS)
+
+    def ground(self, ms: int = motion.FADE_MS) -> None:
+        """Entrance: the ground shadow grows in from nothing.
+
+        Used for staggered cascades — a card doesn't pop, it lands. The
+        blur and alpha ramp from zero to the resting level while the
+        surface itself is simply there. Safe to call repeatedly.
+        """
+        blur, _dy, alpha = motion.shadow_for(self.base)
+        c0 = QColor(self.color)
+        c0.setAlpha(0)
+        c1 = QColor(self.color)
+        c1.setAlpha(max(0, min(255, alpha)))
+        self.effect.setColor(c0)
+        self._tint.stop()
+        self._tint.setDuration(max(1, ms))
+        self._tint.setStartValue(c0)
+        self._tint.setEndValue(c1)
+        self._tint.start()
+        self._blur.stop()
+        self._blur.setDuration(max(1, ms))
+        self._blur.setStartValue(0.0)
+        self._blur.setEndValue(float(blur))
+        self._blur.start()
 
 
 class _LiftFilter(QObject):
