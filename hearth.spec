@@ -13,7 +13,7 @@ spec works for all three (PyInstaller picks the right hook set per
 platform automatically).
 """
 
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_submodules, collect_all
 
 block_cipher = None
 
@@ -21,13 +21,21 @@ import os  # noqa: E402
 
 # Force-collect the Qt multimedia plugin trees so the FFmpeg backend
 # ships inside the bundle (the lazy imports inside ``player.py`` hide
-# the dependency from PyInstaller's static analysis).
-hiddenimports = [
+# the dependency from PyInstaller's static analysis). ``collect_all``
+# pulls in the Python submodules, the Qt plugins (DLLs under
+# plugins/multimedia/), and the data files (translations, qml).
+_hiddenimports = [
     "PyQt6.QtMultimedia",
     "PyQt6.QtMultimediaWidgets",
+    "faulthandler",  # stdlib, but PyInstaller sometimes misses it
 ]
-hiddenimports += collect_submodules("yt_dlp")
-hiddenimports += collect_submodules("ytmusicapi")
+_hiddenimports += collect_submodules("yt_dlp")
+_hiddenimports += collect_submodules("ytmusicapi")
+
+# Explicitly bundle all of PyQt6.QtMultimedia's plugins (FFmpeg backend,
+# audio plugins, etc.). Without this the QMediaPlayer constructor can
+# crash at runtime when no FFmpeg backend is found on the system path.
+_datas_mm, _binaries_mm, _hidden_mm = collect_all("PyQt6.QtMultimedia")
 
 # Some Qt shared libs are loaded via dlopen at runtime (libEGL, libGLESv2
 # on Linux; these are bundled with the PyQt6 wheel under Qt6/lib).
@@ -36,7 +44,7 @@ _qt_lib_dir = os.path.join(
     os.path.dirname(__import__("PyQt6").__file__),
     "Qt6", "lib",
 )
-_binaries = []
+_binaries = list(_binaries_mm)
 for _so in ("libEGL.so.1", "libGLESv2.so.2"):
     _p = os.path.join(_qt_lib_dir, _so)
     if os.path.exists(_p):
@@ -46,8 +54,8 @@ a = Analysis(
     ["launcher.py"],
     pathex=["."],
     binaries=_binaries,
-    datas=[],
-    hiddenimports=hiddenimports,
+    datas=_datas_mm,
+    hiddenimports=_hiddenimports + _hidden_mm,
     runtime_hooks=[],
     excludes=[
         # Test-only deps we never want in a shipping bundle.
