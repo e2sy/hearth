@@ -7,6 +7,40 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **Windows lockscreen integration is wired up** (`hearth/smtc.py`,
+  `hearth/app.py`): the MPRIS row's twin is finally connected. The pure
+  mappers (`metadata_map`, `timeline_map`, `button_command`) and the
+  `SmtcService` lifecycle were already in place, but the service was
+  never instantiated from `app.py` — on Windows, the lockscreen, the
+  volume flyout, and the hardware media keys had no idea Hearth was
+  playing. A new `create_windows_bridge()` factory builds a real
+  `SystemMediaTransportControls` instance via `winsdk`, routes
+  `ButtonPressed` events back through `button_command` into the same
+  playback core the tray uses, and degrades to a silent no-op on any
+  non-Windows / non-winsdk box (so Linux/macOS tests stay clean). A
+  new `config.SMTC_ENABLED` flag mirrors `config.MPRIS_ENABLED`. The
+  `data_dir()` docstring now also documents the Windows and macOS
+  paths (it was Linux-only), and the `--ribbon` flag is detected with
+  an exact argv match instead of a fragile substring scan.
+- **`launch.bat` surfaces silent `pythonw.exe` failures**: the GUI
+  launcher has no console and no stderr, so a failed import (missing
+  dependency, broken venv, AV interference, PyQt6 DLL hell) used to look
+  like "the app did nothing". Stderr is now redirected to a
+  `%APPDATA%\hearth\Hearth\startup.err` log; if the boot crashes, the
+  traceback is printed to the console and `launch_debug.bat` is
+  suggested. On a successful boot the empty err log is cleaned up so a
+  later crash doesn't surface stale output.
+- **`install.bat` no longer silently swallows pip self-upgrade
+  failures**: on locked-down corporate Windows boxes with proxy / cert
+  setups, the `pip install --upgrade pip` step can fail even when the
+  requirements install (which uses the bundled pip) would have worked.
+  The failure is now logged and the install continues instead of being
+  masked; the requirements install itself is the hard fail.
+- **`LYRICS_FONT_FAMILIES` is now cross-platform**: previously the
+  lyrics font dropdown was Windows-skewed (`Segoe UI`, `Consolas`); on
+  Linux every entry silently fell through to Qt's default. The list
+  now spans Windows / macOS / Linux and includes serif, mono, and
+  fallback families.
 - **Wave 3 — the living room (motion + muscle)**: the 3D room answers the
   hand and the listener gets new power. *Motion*: a pure lift ladder
   (`hearth/motion.py`) drives hover-lift and press-plant on shelf/discover

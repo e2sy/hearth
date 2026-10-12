@@ -61,7 +61,7 @@ class InstanceGuard:
             socket.waitForBytesWritten(300)
             socket.disconnectFromServer()
             return
-        QLocalServer.removeServer(INSTANCE_KEY)  # clear stale socket (Linux)
+        QLocalServer.removeServer(INSTANCE_KEY)  # clear stale pipe/socket from a crashed run
         self.server = QLocalServer()
         self.server.listen(INSTANCE_KEY)
 

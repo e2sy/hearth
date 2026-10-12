@@ -103,6 +103,7 @@ GLOW_MIX_SIZE = 30             # tracks pulled into a one-tap Glow Mix
 # --- opt-in bridges & services (guarded imports, silent when absent) ---
 DISCORD_RPC_ENABLED = False    # Discord Rich Presence via pypresence (opt-in)
 MPRIS_ENABLED = True           # MPRIS2 dbus service (Linux only, guarded)
+SMTC_ENABLED = True           # Windows SystemMediaTransportControls (guarded)
 UPDATE_CHECK_ENABLED = False   # "a newer hearth is lit" whisper (opt-in)
 UPDATE_CHECK_INTERVAL_H = 12   # hours between release checks
 
@@ -116,7 +117,11 @@ THEATER_COVER = 380             # giant cover side inside theater mode
 # --- v0.8.0: lyrics settings (font presets for Now Playing + the overlay) ---
 LYRICS_SIZE_PRESETS = {"S": 20, "M": 28, "L": 40}   # px per S/M/L key
 LYRICS_DEFAULT_SIZE_KEY = "M"                        # fallback when unset/unknown
-LYRICS_FONT_FAMILIES = ("Segoe UI", "Inter", "Georgia", "Consolas")
+LYRICS_FONT_FAMILIES = (
+    "Segoe UI", "Inter", "SF Pro Display",            # Windows / cross / macOS
+    "Noto Sans", "Ubuntu", "Cantarell",               # Linux
+    "Georgia", "Consolas", "Menlo", "DejaVu Sans",    # serif / mono / fallback
+)
 
 # --- v0.8.0: the style closet (glass looks + custom wallpaper engine) ---
 STYLE_DEFAULT = "hearth"          # the classic warm-gradient look

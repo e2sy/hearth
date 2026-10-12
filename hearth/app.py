@@ -72,6 +72,11 @@ from .remote import RemoteServer, SuggestionInbox
 from .sound_panel import SoundForgeDialog
 from . import sound_shape
 from .sound_shape import SoundState
+from .smtc import (
+    SMTC_AVAILABLE,
+    SmtcService,
+    create_windows_bridge,
+)
 from .storage import HearthStore
 from .theme import lyrics_font
 from .toast import NowPlayingToast
@@ -96,7 +101,17 @@ AMBIENT_KIND_LABELS = {
 
 
 def data_dir() -> Path:
-    """Per-OS app data directory (Linux: ~/.local/share/Hearth)."""
+    """Per-OS app data directory.
+
+    - Linux:   ``~/.local/share/Hearth/hearth``
+    - Windows: ``%APPDATA%\\hearth\\Hearth``
+      (typically ``C:\\Users\\<user>\\AppData\\Roaming\\hearth\\Hearth``)
+    - macOS:   ``~/Library/Application Support/Hearth/hearth``
+
+    Driven by ``QStandardPaths.AppDataLocation`` — both the organization
+    name (``hearth``) and the application name (``Hearth``) must be set
+    on the QApplication before this is called (the Hearth ctor does).
+    """
     base = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
     path = Path(base)
     path.mkdir(parents=True, exist_ok=True)
@@ -382,10 +397,9 @@ class Hearth:
         self.qapp.setOrganizationName(config.ORG_NAME)
         self.qapp.setQuitOnLastWindowClosed(False)
         self._enable_streaming = enable_streaming
-        flags = " ".join(argv or [])
         if ui_mode is not None:
             self.ui_mode = ui_mode
-        elif "--ribbon" in flags:
+        elif "--ribbon" in (argv or []):
             self.ui_mode = "ribbon"
         else:
             self.ui_mode = "window"
@@ -480,6 +494,32 @@ class Hearth:
             self.mpris.connect(self.core, summon=self._summon,
                                quit=self.qapp.quit)
             self.mpris.start()
+
+        # Windows SMTC: the MPRIS row's twin. On Windows the lockscreen,
+        # the volume flyout, and the hardware media keys all route
+        # through SystemMediaTransportControls; without it the app is
+        # invisible to every Windows shell that knows how to control
+        # music. The bridge is built lazily by ``create_windows_bridge``
+        # — it returns ``None`` on any non-Windows / non-winsdk box, so
+        # the service is a silent no-op the same way MPRIS is without
+        # dbus. Button presses (play / pause / next / prev) are routed
+        # back through ``_smtc_dispatch`` into the same core the tray
+        # uses, so the audio path is never touched.
+        self._smtc_bridge = (
+            create_windows_bridge(on_command=self._smtc_dispatch)
+            if config.SMTC_ENABLED and SMTC_AVAILABLE else None
+        )
+        self.smtc = SmtcService(
+            bridge=self._smtc_bridge,
+            get_track=lambda: getattr(self.core.engine, "current", None),
+            is_playing=lambda: bool(getattr(self.core, "is_playing", False)),
+            get_position_ms=lambda: int(getattr(self.core, "position_ms", 0)),
+            get_duration_ms=self._smtc_get_duration_ms,
+            on_command=self._smtc_dispatch,
+        )
+        if config.SMTC_ENABLED and (SMTC_AVAILABLE or self._smtc_bridge is not None):
+            self.smtc.connect(self.core)
+            self.smtc.start()
 
         # Discord Rich Presence: opt-in, guarded, silent everywhere pypresence
         # is absent — and it never touches the audio path. It only wakes up
@@ -602,6 +642,9 @@ class Hearth:
         self.core.state_changed.connect(self._mini_on_state)
         self.core.position_changed.connect(self._mini_on_position)
         self.core.duration_changed.connect(self._mini_on_duration)
+        # SMTC cache: the duration_changed value feeds the lockscreen's
+        # timeline without a per-tick getattr into the media backend.
+        self.core.duration_changed.connect(self._smtc_on_duration)
 
     def _build_tray(self) -> None:
         if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -2160,6 +2203,73 @@ class Hearth:
         self.panel.raise_()
         self.panel.activateWindow()
 
+    # --- services: SMTC button dispatch (Windows lockscreen / media keys) ---
+
+    def _smtc_get_duration_ms(self) -> int:
+        """Best-known track duration in ms; 0 when nothing's loaded.
+
+        The player core doesn't expose ``duration_ms`` as a direct
+        attribute (it lives on the backend media handle), so we mirror
+        the same fallback MPRIS uses: the cached ``duration_changed``
+        value, or the track's own ``duration_sec`` parsed to ms.
+        """
+        try:
+            cached = getattr(self, "_smtc_duration_ms", 0)
+            if cached:
+                return int(cached)
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            track = getattr(self.core.engine, "current", None)
+            if track is not None:
+                from .models import parse_duration
+                seconds = track.duration_sec or parse_duration(track.duration)
+                return int(max(0.0, float(seconds)) * 1000)
+        except Exception:  # noqa: BLE001
+            pass
+        return 0
+
+    def _smtc_on_duration(self, duration_ms: int) -> None:
+        """Cache the most recent duration_changed so the getter is fast."""
+        try:
+            self._smtc_duration_ms = max(0, int(duration_ms))
+        except Exception:  # noqa: BLE001
+            pass
+        # Forward to the service's own handler too (so the bridge timeline
+        # updates without waiting for the next throttle tick).
+        try:
+            self.smtc._on_duration(duration_ms)
+        except Exception:  # noqa: BLE001
+            pass
+
+    def _smtc_dispatch(self, cmd: str) -> None:
+        """Route an OS-side SMTC button press into the playback core.
+
+        The mapping is the lockscreen's vocabulary (``toggle`` /
+        ``play`` / ``pause`` / ``next`` / ``prev``) — the same names
+        :func:`hearth.smtc.button_command` produces. Every branch is
+        wrapped so a grumpy core or a missing method never propagates
+        back into the OS event handler (which would crash the bridge).
+        """
+        try:
+            core = self.core
+            if core is None:
+                return
+            if cmd == "toggle":
+                core.toggle()
+            elif cmd == "play":
+                if not core.is_playing:
+                    core.toggle()
+            elif cmd == "pause":
+                if core.is_playing:
+                    core.toggle()
+            elif cmd == "next":
+                core.next()
+            elif cmd == "prev":
+                core.previous()
+        except Exception as exc:  # noqa: BLE001 - never bite back into the OS
+            log.debug("SMTC dispatch(%s) swallowed: %s", cmd, exc)
+
     def _toggle_surface(self) -> None:
         if self.ui_mode == "window":
             self.window.setVisible(not self.window.isVisible())
@@ -2557,6 +2667,7 @@ class Hearth:
             self._remote.stop()   # the phone remote burns out with the app
         self.ambient.stop()   # release the ambience sink fully on the way out
         self.mpris.stop()
+        self.smtc.stop()   # tell the Windows lockscreen the hearth is cold
         self.presence.stop()  # and let Discord forget the hearth until next time
         self._persist()
         self.store.close()
