@@ -64,7 +64,13 @@ def set_glow_color(effect: QGraphicsDropShadowEffect, color: str,
     """Recolor an existing glow (used on palette swaps)."""
     c = QColor(color)
     c.setAlpha(max(0, min(255, alpha)))
-    effect.setColor(c)
+    try:
+        effect.setColor(c)
+    except RuntimeError:
+        # The effect's parent widget was deleted (view rebuild during
+        # track change). The Python wrapper is still alive but the C++
+        # object is gone — there's nothing to recolor. Bail quietly.
+        pass
 
 
 def _ensure_opacity_effect(widget: QWidget) -> QGraphicsOpacityEffect | None:
@@ -103,6 +109,29 @@ def fade_in(widget: QWidget, ms: int = 220) -> None:
     _ramp(effect, ms).start()
 
 
+def _alive(qt_obj) -> bool:
+    """True if the Qt object's underlying C++ instance still exists.
+
+    PyQt6 raises ``RuntimeError: wrapped C/C++ object of type X has
+    been deleted`` when you touch a Python wrapper whose C++ object
+    has been destroyed (typically because its parent widget was
+    deleted during a view rebuild). This helper lets callers bail
+    out before the touch instead of catching the exception after.
+
+    Uses ``sip.isdeleted`` when sip is available (it always is under
+    PyQt6); falls back to a probe try/except for non-sip envs.
+    """
+    try:
+        from sip import isdeleted  # type: ignore[import-not-found]
+        return not bool(isdeleted(qt_obj))
+    except Exception:  # noqa: BLE001 - sip not importable in some envs
+        try:
+            qt_obj.objectName()  # cheap touch that works on any QObject
+            return True
+        except RuntimeError:
+            return False
+
+
 class Lift:
     """Hover choreography for one widget, along the pure lift ladder.
 
@@ -111,6 +140,13 @@ class Lift:
     here: created once, parented to the effect, always safe to restart.
     Color (alpha) jumps to the target level's value at ramp start; the
     blur and offset do the visible easing.
+
+    Lifetime safety: the shadow effect is parented to its widget, so
+    when the widget is deleted (e.g. a card in a shelf is replaced
+    during a track change) the C++ effect object dies too — but the
+    Python ``Lift`` wrapper can still be alive, holding a stale ref.
+    Every method that touches the effect bails out cleanly via
+    :func:`_alive` so the dangle never raises into the event loop.
     """
 
     def __init__(self, effect: QGraphicsDropShadowEffect,
@@ -128,21 +164,29 @@ class Lift:
             anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     def _to(self, level: int, ms: int) -> None:
+        if not _alive(self.effect):
+            return                # the card that hosted us was deleted
         blur, dy, alpha = motion.shadow_for(level)
         c = QColor(self.color)
         c.setAlpha(max(0, min(255, alpha)))
-        self.effect.setColor(c)
-        for anim, end in (
-            (self._blur, float(blur)),
-            (self._dy, float(dy)),
+        try:
+            self.effect.setColor(c)
+            start_blur = float(self.effect.blurRadius())
+            start_dy = float(self.effect.yOffset())
+        except RuntimeError:
+            return                # double-deleted mid-call; nothing to do
+        for anim, end, start in (
+            (self._blur, float(blur), start_blur),
+            (self._dy, float(dy), start_dy),
         ):
             anim.stop()
             anim.setDuration(max(1, ms))
-            anim.setStartValue(float(self.effect.blurRadius())
-                               if anim is self._blur
-                               else float(self.effect.yOffset()))
+            anim.setStartValue(start)
             anim.setEndValue(end)
-            anim.start()
+            try:
+                anim.start()
+            except RuntimeError:
+                return            # the animation's parent (the effect) died
 
     def _level(self) -> int:
         return motion.level_for(self.base, self.hovered, self.pressed)
@@ -171,22 +215,33 @@ class Lift:
         blur and alpha ramp from zero to the resting level while the
         surface itself is simply there. Safe to call repeatedly.
         """
+        if not _alive(self.effect):
+            return                # the surface we'd land on is already gone
         blur, _dy, alpha = motion.shadow_for(self.base)
         c0 = QColor(self.color)
         c0.setAlpha(0)
         c1 = QColor(self.color)
         c1.setAlpha(max(0, min(255, alpha)))
-        self.effect.setColor(c0)
+        try:
+            self.effect.setColor(c0)
+        except RuntimeError:
+            return
         self._tint.stop()
         self._tint.setDuration(max(1, ms))
         self._tint.setStartValue(c0)
         self._tint.setEndValue(c1)
-        self._tint.start()
+        try:
+            self._tint.start()
+        except RuntimeError:
+            return
         self._blur.stop()
         self._blur.setDuration(max(1, ms))
         self._blur.setStartValue(0.0)
         self._blur.setEndValue(float(blur))
-        self._blur.start()
+        try:
+            self._blur.start()
+        except RuntimeError:
+            return
 
 
 class _LiftFilter(QObject):
@@ -274,14 +329,32 @@ class _Pulse(QObject):
         self._timer.start()
 
     def _on_tick(self) -> None:
+        # The Pulse's QTimer is parented to the effect, so when the
+        # effect's C++ object dies the timer dies with it — touching
+        # either one raises RuntimeError. The check below bails before
+        # any touch; the try/except handles the race where the effect
+        # dies between the check and the call.
+        if not _alive(self._effect) or not _alive(self._timer):
+            return                # host gone — leave the dead objects alone
         self._tick_n += 1
-        self._effect.setBlurRadius(
-            motion.pulse_blur(self._tick_n,
-                              low=motion.PULSE_BLUR_LOW,
-                              high=motion.PULSE_BLUR_HIGH))
+        try:
+            self._effect.setBlurRadius(
+                motion.pulse_blur(self._tick_n,
+                                  low=motion.PULSE_BLUR_LOW,
+                                  high=motion.PULSE_BLUR_HIGH))
+        except RuntimeError:
+            # Race: effect died between the _alive check and the call.
+            # Don't try to stop the timer — it's parented to the dead
+            # effect and is itself dead by now.
+            pass
 
     def stop(self) -> None:
-        self._timer.stop()
+        if not _alive(self._timer):
+            return
+        try:
+            self._timer.stop()
+        except RuntimeError:
+            pass
 
 
 def slide_toast(widget: QWidget, ms: int = 320) -> None:

@@ -515,10 +515,24 @@ def build_mini_widget(
             from . import config as _config
             if not _config.MOTION_ENABLED:
                 return                     # reduced motion: the ember rests
+            # The shadow effect is parented to this widget — if the
+            # widget was scheduled for deletion between the enter/leave
+            # event firing and this method running (race during a
+            # mini-player rebuild on session restore), the underlying
+            # C++ effect is gone but the Python wrapper is still alive.
+            # Touching it raises RuntimeError; bail quietly instead of
+            # taking the whole app down.
+            try:
+                start_blur = float(self._shadow.blurRadius())
+            except RuntimeError:
+                return
             self._breathe.stop()
             self._breathe.setDuration(max(1, ms))
-            self._breathe.setStartValue(float(self._shadow.blurRadius()))
+            self._breathe.setStartValue(start_blur)
             self._breathe.setEndValue(float(end_blur))
-            self._breathe.start()
+            try:
+                self._breathe.start()
+            except RuntimeError:
+                pass
 
     return MiniPlayerWindow()
