@@ -98,7 +98,7 @@ jobs:
           tar -czf hearth-linux-x64.tar.gz hearth
           sha256sum hearth-linux-x64.tar.gz > hearth-linux-x64.tar.gz.sha256
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: hearth-linux-x64
           path: |
@@ -156,7 +156,7 @@ jobs:
           $hash = (Get-FileHash .\hearth-win-x64.zip -Algorithm SHA256).Hash
           "$hash  hearth-win-x64.zip" | Out-File -Encoding ascii .\hearth-win-x64.zip.sha256
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: hearth-win-x64
           path: |
