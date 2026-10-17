@@ -29,8 +29,8 @@
 <a href="https://github.com/qtjg/hearth"><img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=20&duration=3200&pause=900&color=FF7A18&center=true&vCenter=true&width=860&height=72&lines=Search+%E2%86%92+stream+%E2%86%92+smile.+No+account%2C+no+keys.;Artist+pages+%C2%B7+synced+lyrics+%C2%B7+74+world+stations;Gradients+%C2%B7+glows+%C2%B7+3D+covers+%C2%B7+crossfades;Seven+themes+%C2%B7+one+cozy+hearth" alt="Hearth in one breath"/></a>
 
 [![CI](https://github.com/qtjg/hearth/actions/workflows/ci.yml/badge.svg)](https://github.com/qtjg/hearth/actions/workflows/ci.yml)
-![tests](https://img.shields.io/badge/tests-646%20passing-3fb950?style=flat-square&logo=pytest&logoColor=white)
-![version](https://img.shields.io/badge/version-v0.7.2-ff7a18?style=flat-square)
+![tests](https://img.shields.io/badge/tests-1007%20passing-3fb950?style=flat-square&logo=pytest&logoColor=white)
+![version](https://img.shields.io/badge/version-v0.7.6-ff7a18?style=flat-square)
 ![lyrics](https://img.shields.io/badge/lyrics-LRCLIB%20synced-7b2ff7?style=flat-square)
 ![python](https://img.shields.io/badge/python-3.10%2B-3776ab?style=flat-square&logo=python&logoColor=white)
 ![Qt](https://img.shields.io/badge/UI-PyQt6-41cd52?style=flat-square&logo=qt&logoColor=white)
@@ -40,6 +40,10 @@
 **A full three-pane desktop music player for YouTube Music.**
 
 *Sidebar navigation · Home shelves · Playlists · Now Playing with lyrics · Endless radio · Runs where you run*
+
+⬇️ **Don't want to build?** [Grab the ready-made **Windows exe**](https://github.com/e2sy/hearth/releases/latest) — every release ships a smoke-tested `hearth-win-x64.zip` plus a Linux `.tar.gz`, SHA-256 checksums included.
+
+🔥 **New in v0.7.6 — the two most-reported bugs are fixed**: songs no longer stop in the middle, and search works again (web fallback when the catalogue is bot-checked). [Changelog →](CHANGELOG.md)
 
 <a href="https://github.com/qtjg"><img src="https://img.shields.io/badge/designed_%26_built_by-Mayank_Bhaskar-ff7a18?style=flat-square&labelColor=1b1f2a" alt="Designed and built by Mayank Bhaskar"/></a>
 <a href="https://github.com/qtjg?tab=followers"><img src="https://img.shields.io/github/followers/qtjg?style=flat-square&color=7b2ff7&labelColor=1b1f2a&label=follow" alt="GitHub followers of qtjg"/></a>
@@ -109,6 +113,26 @@ picture:
 - **■ Halt** — three dead tracks in a row end in a clean stop with a clear
   status: no silent zombie pauses, no flooded terminal. Qt's own chatter now
   lands in the rotating `hearth.log` instead of stderr, demoted to debug.
+
+**v0.7.6 — the immune system learned three new tricks:**
+
+- **🩹 Truncation healing** — YouTube sometimes starves a throttled stream, and
+  `QMediaPlayer` then reports `EndOfMedia` while the song is barely halfway
+  through — the core used to accept that as a natural finish and roll to the
+  next track (or fall silent). Any early `EndOfMedia` (before 92% of the
+  track's known duration) is now healed exactly like a mid-song stream death:
+  a freshly resolved URL rejoins the song at the cut point, under the same
+  bounded rejoin budget. Unknown-length tracks and live radio are never judged
+  premature, and a stream that never produced audio still ends honestly.
+- **🔍 Search that can't go deaf** — the search box consulted only the YT Music
+  guest catalogue; one bot-checked leg and the page showed zero results, looking
+  completely broken. Search now runs *everywhere* — songs → videos → the
+  yt-dlp web index — and a pasted link the catalogue cannot name is resolved
+  straight from the web, so rare uploads finally play.
+- **🛡️ Hardened resolution** — a failed stream resolve retries with a fresh
+  extractor (bounded attempts, 15s socket timeout, yt-dlp-level retries)
+  instead of leaving dead air, and the yt-dlp floor was raised to 2025.9.23
+  because stale bundled extractors are the top cause of YouTube failures.
 
 <details>
 <summary>🧊 About the 3D artwork</summary>
@@ -532,6 +556,29 @@ It builds against Arch's system Python and Qt6 stack (`python-pyqt6`,
 ---
 
 ## 🪟 Windows & 🍎 macOS
+
+### Option A — download the built exe (no Python needed)
+
+Every tagged release (`v*.*.*`) is compiled on GitHub's real Windows / Linux
+runners, smoke-tested — the binary must boot and run the Qt event loop for six
+seconds before the build is allowed to succeed — and then attached to the
+release automatically:
+
+| File | Platform | What it is |
+|:---|:---|:---|
+| [`hearth-win-x64.zip`](https://github.com/e2sy/hearth/releases/latest) | 🪟 Windows 10/11 | Single-file `hearth.exe` — unzip, double-click, done |
+| [`hearth-linux-x64.tar.gz`](https://github.com/e2sy/hearth/releases/latest) | 🐧 Linux x64 | Single-file ELF — `tar -xzf`, then `./hearth` |
+| `*.sha256` | both | SHA-256 checksums to verify the download |
+
+Grab them from the [**latest release page**](https://github.com/e2sy/hearth/releases/latest).
+Since **v0.7.6** the exe also self-heals mid-song stream truncation and falls
+back to web search when the catalogue is bot-checked — see [the immune
+system](#-the-immune-system--self-healing-playback-v063) and the
+[changelog](CHANGELOG.md). If the exe ever crashes on your machine, the crash
+dumper writes the full traceback to `%APPDATA%\hearth\Hearth\hearth-crash.log`
+— paste it into an issue and the next release will hunt it down.
+
+### Option B — run from source
 
 ```bat
 install.bat

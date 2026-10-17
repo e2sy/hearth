@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.7.6] — 2026-10-17
+
 ### Fixed
 - **Playback no longer stops in the middle of a song** (`hearth/player.py`,
   `hearth/config.py`): YouTube increasingly truncates throttled streams, and

@@ -250,7 +250,7 @@ IMPORT_MAX_TRACKS = 1000        # parsed songs accepted per Spotify import
 PARTY_INBOX_MAX = 50            # pending guest suggestions the host keeps
 ENHANCE_SIZE = 5                # default tracks sprinkled by the Enhance service
 
-VERSION = "0.7.2"
+VERSION = "0.7.6"
 
 REPEAT_OFF = "off"
 REPEAT_ALL = "all"
