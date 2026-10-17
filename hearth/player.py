@@ -1218,12 +1218,44 @@ class PlaybackCore(QObject):
         With crossfade armed and a healthy primed shadow, the fade takes
         over instead: the queue advance moves to the END of the ramp
         (the promotion), exactly once.
+
+        A stream that reports EndOfMedia far before the track's known
+        runtime was never a natural finish — it is YouTube truncating a
+        throttled URL. Healing it with a fresh URL (the same mid-song
+        rejoin the error path uses) keeps the song playing instead of
+        skipping ahead or falling silent.
         """
+        current = self.engine.current
+        if (current is not None
+                and self._stream_played
+                and self._is_premature_end(current)):
+            log.warning(
+                "stream for %r ended at %sms of ~%ss — treating as truncation",
+                current.title, self._last_pos_ms, current.duration_sec,
+            )
+            if self._try_rejoin(current, "truncated"):
+                return
+            self._skip_or_stop(current)
+            return
         log.debug("track finished — rolling into the next one")
         self._error_streak = 0   # a natural finish proves the pipeline is healthy
         if self._xf_engage():
             return
         self.next()
+
+    def _is_premature_end(self, track: Track) -> bool:
+        """True when EndOfMedia landed far short of the track's runtime.
+
+        Judged against the catalogue's duration (metadata), not the
+        player's parsed duration — a truncated stream's own reported
+        length is exactly the lie we are unmasking. Unknown durations
+        and live radio (duration_sec == 0) can never be judged premature.
+        """
+        expected_sec = int(getattr(track, "duration_sec", 0) or 0)
+        if expected_sec <= 0:
+            return False
+        expected_ms = int(expected_sec * 1000 * config.STREAM_TRUNCATION_RATIO)
+        return 0 <= self._last_pos_ms < expected_ms
 
     def _xf_rearm(self) -> None:
         """A fresh stream just took the primary: settle crossfade state.

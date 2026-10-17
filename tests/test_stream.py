@@ -81,3 +81,39 @@ def test_resolve_survives_failure():
     url, loudness = resolve_stream_url("https://youtube.com/watch?v=x", ydl_factory=boom_factory)
     assert url is None
     assert loudness is None
+
+
+def test_resolve_retries_with_fresh_extractor(monkeypatch):
+    """A dropped first extraction gets one more shot with a fresh YoutubeDL."""
+    import types
+
+    calls: list[int] = []
+
+    class FlakyYDL:
+        def __init__(self, opts):
+            calls.append(1)
+            self.info = {
+                "formats": [fmt(abr=160, url="fresh")],
+                "loudness": -12.0,
+            }
+
+        def extract_info(self, url, download=False):
+            if len(calls) == 1:   # first instance: the CDN hung up
+                raise RuntimeError("transient")
+            return self.info
+
+    fake_module = types.SimpleNamespace(YoutubeDL=FlakyYDL)
+    monkeypatch.setitem(__import__("sys").modules, "yt_dlp", fake_module)
+    url, loudness = resolve_stream_url("https://youtube.com/watch?v=x")
+    assert len(calls) == 2    # a fresh YoutubeDL was built for the retry
+    assert url == "fresh"
+    assert loudness == -12.0
+
+
+def test_resolve_applies_network_guards():
+    from hearth.stream import _ydl_opts
+
+    opts = _ydl_opts()
+    assert opts["socket_timeout"] == 15    # a hung CDN can't stall a play
+    assert opts["retries"] >= 1            # transient HTTP hiccups absorbed
+    assert opts["noplaylist"] is True

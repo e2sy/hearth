@@ -27,7 +27,7 @@ classifiers = [
 dependencies = [
     "PyQt6>=6.6.0,<7",
     "ytmusicapi>=1.7.0,<2",
-    "yt-dlp>=2024.8.0",
+    "yt-dlp>=2025.9.23",
     "requests>=2.31.0,<3",
 ]
 

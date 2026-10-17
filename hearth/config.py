@@ -61,6 +61,17 @@ STREAM_MAX_RECOVERIES = 3         # rejoin attempts per track before giving up
 STREAM_RECOVERY_RESET_MS = 30_000  # this much healthy playback renews the budget
 STREAM_RESUME_BACKSTEP_MS = 1_200  # rewind a little on rejoin so we never land on the last byte
 STALL_POLLS = 24                   # frozen position while "playing" for this many polls = dead stream
+# A throttled/truncated googlevideo stream reports EndOfMedia far before the
+# track's real runtime — the single most common "song stops in the middle"
+# failure today. Any EndOfMedia earlier than this share of the known track
+# duration is treated as a truncation and healed with a fresh URL instead of
+# being mistaken for a natural finish.
+STREAM_TRUNCATION_RATIO = 0.92
+# Stream resolution (LoadJob) is itself network-shaped: a transient failure
+# used to leave the player dead ("Could not resolve"). A small bounded
+# backoff brings silent tracks back without ever spinning forever.
+RESOLVE_MAX_RETRIES = 2            # extra resolve attempts per track (bounded)
+RESOLVE_RETRY_DELAY_MS = 1_500     # backoff base between attempts (scales linearly)
 RETRY_ATTEMPTS = 3
 RETRY_BASE_DELAY = 0.5
 

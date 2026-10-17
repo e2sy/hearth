@@ -6,6 +6,42 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **Playback no longer stops in the middle of a song** (`hearth/player.py`,
+  `hearth/config.py`): YouTube increasingly truncates throttled streams, and
+  QMediaPlayer then reports `EndOfMedia` while the song is barely halfway
+  through — which the core treated as a natural finish and rolled to the next
+  track (or fell silent). Any `EndOfMedia` that lands before
+  `config.STREAM_TRUNCATION_RATIO` (0.92) of the track's known duration is now
+  healed exactly like a mid-song stream death: a freshly resolved URL rejoins
+  the song at the cut point, under the existing bounded rejoin budget.
+  Tracks with unknown duration and live radio are never judged premature, and
+  a stream that never produced audio still ends honestly (no healing loops on
+  restored sessions).
+- **Failed stream resolution retries instead of leaving dead air**
+  (`hearth/app.py`, `hearth/config.py`): when a `LoadJob` failed — first play
+  or mid-song rejoin — the player used to just sit there with a status line.
+  Both paths now share `_launch_load()`, which retries the resolve up to
+  `config.RESOLVE_MAX_RETRIES` (2) times with a linear backoff, stands down
+  the moment the user picks another song, and clears the ledger once audio
+  actually starts.
+- **Search works even when the catalogue leg is bot-checked**
+  (`hearth/jobs.py`, `hearth/catalog.py`): the main search box consulted only
+  the YT Music guest catalogue — one failed leg and the page showed zero
+  results, looking completely broken. `SearchJob` now runs
+  `search_everywhere` (songs → videos → the yt-dlp web index), the same
+  insurance the World Explorer always had. A pasted link the catalogue cannot
+  name is now fetched straight from yt-dlp (`web_track_for_id`), so rare
+  uploads pasted by URL finally resolve.
+- **Stream resolution is network-hardened** (`hearth/stream.py`): playback
+  resolution gets a bounded second attempt with a fresh extractor, a 15s
+  socket timeout, and yt-dlp-level retries, so one dropped handshake no
+  longer kills the play request. The yt-dlp floor was raised to 2025.9.23 —
+  stale bundled extractors are the top cause of YouTube playback failures.
+- **`_map_song` no longer crashes on a null thumbnail**
+  (`hearth/catalog.py`): some `get_song` responses carry `thumbnail: null`,
+  which blew up the `.get("thumbnails")` chain on the pasted-link path.
+
 ### Added
 - **Windows lockscreen integration is wired up** (`hearth/smtc.py`,
   `hearth/app.py`): the MPRIS row's twin is finally connected. The pure

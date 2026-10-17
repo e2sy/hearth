@@ -415,6 +415,11 @@ class Hearth:
         self.catalog = Catalog()
         # video_id -> (plain_text | None, LrcLine list | None)
         self._lyrics_cache: dict[str, tuple[str | None, list | None]] = {}
+        # video_id -> attempts spent resolving this track's stream; a
+        # transient resolve failure used to leave the player dead with
+        # just a status line. Bounded retries (config RESOLVE_*) bring
+        # the song back when the first resolve hiccups.
+        self._resolve_retries: dict[str, int] = {}
         # Discover caches: sections fetched once, playlists per category,
         # explore shelves reused across its three chips.
         self._discover_moods: list | None = None
@@ -1179,16 +1184,7 @@ class Hearth:
             # a local file never needs re-resolving — just rejoin it
             self.core.set_stream(track, local_url, resume_ms=resume_ms)
             return
-        job = LoadJob(track)
-        job.signals.finished.connect(
-            lambda payload: self.core.set_stream(
-                payload[2], payload[0], payload[1], resume_ms=resume_ms
-            )
-        )
-        job.signals.failed.connect(
-            lambda title: self.surface.set_status(f"Could not rejoin: {title}")
-        )
-        self._launch(job)
+        self._launch_load(track, resume_ms=resume_ms)
 
     def _on_preresolve(self, track: Track) -> None:
         """Crossfade groundwork: resolve the NEXT stream while this one plays.
@@ -1250,14 +1246,57 @@ class Hearth:
             # set_stream itself is untouched)
             self.core.set_stream(track, local_url)
             return
+        self._resolve_retries.pop(track.video_id, None)   # a fresh pick = a fresh budget
+        self._launch_load(track)
+
+    def _launch_load(self, track: Track, resume_ms: int = 0) -> None:
+        """Resolve `track`'s stream in the background and start playing it.
+
+        Shared by the first play and the mid-song rejoin: a failed
+        resolve retries with a bounded backoff (config RESOLVE_*)
+        instead of leaving the player silent with only a status line.
+        """
         job = LoadJob(track)
         job.signals.finished.connect(
-            lambda payload: self.core.set_stream(payload[2], payload[0], payload[1])
+            lambda payload, t=track, resume=resume_ms: self._on_resolved(
+                t, payload, resume
+            )
         )
         job.signals.failed.connect(
-            lambda title: self.surface.set_status(f"Could not resolve: {title}")
+            lambda _title, t=track, resume=resume_ms: self._on_resolve_failed(
+                t, resume
+            )
         )
         self._launch(job)
+
+    def _on_resolved(self, track: Track, payload: tuple, resume_ms: int) -> None:
+        """A LoadJob delivered a stream URL — play it, clear the retry ledger."""
+        self._resolve_retries.pop(track.video_id, None)
+        url, loudness, resolved_track = payload
+        self.core.set_stream(resolved_track, url, loudness, resume_ms=resume_ms)
+
+    def _on_resolve_failed(self, track: Track, resume_ms: int) -> None:
+        """The resolve died: retry a bounded number of times, then confess."""
+        if not self._enable_streaming:
+            return
+        # the user picked another song while we were failing — stand down
+        current = self.core.engine.current
+        if current is None or current.video_id != track.video_id:
+            self._resolve_retries.pop(track.video_id, None)
+            return
+        attempts = self._resolve_retries.get(track.video_id, 0)
+        if attempts >= config.RESOLVE_MAX_RETRIES:
+            self._resolve_retries.pop(track.video_id, None)
+            self.surface.set_status(f"Could not resolve: {track.title}")
+            return
+        self._resolve_retries[track.video_id] = attempts + 1
+        self.surface.set_status(
+            f"Resolving {track.title}… attempt {attempts + 2}"
+        )
+        delay = config.RESOLVE_RETRY_DELAY_MS * (attempts + 1)
+        QTimer.singleShot(
+            delay, lambda: self._launch_load(track, resume_ms=resume_ms)
+        )
 
     def _launch(self, job) -> None:
         """Start a QRunnable, keeping it referenced until it completes.

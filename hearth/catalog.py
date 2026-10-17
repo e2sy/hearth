@@ -575,11 +575,13 @@ class Catalog:
     def _map_song(video: dict) -> Track:
         return Track(
             video_id=video["videoId"],
-            title=video.get("title", "Unknown"),
-            artist=video.get("author", "Unknown artist"),
+            title=video.get("title") or "Unknown",
+            artist=video.get("author") or "Unknown artist",
             duration_sec=int(video.get("lengthSeconds") or 0),
             duration=_seconds_to_clock(int(video.get("lengthSeconds") or 0)),
-            thumbnail=(video.get("thumbnail", {}).get("thumbnails") or [{}])[-1].get("url", ""),
+            thumbnail=(
+                (video.get("thumbnail") or {}).get("thumbnails") or [{}]
+            )[-1].get("url", ""),
         )
 
 
@@ -640,3 +642,47 @@ def web_search_tracks(query: str, limit: int = 20) -> list[Track]:
             )
         )
     return tracks
+
+
+def web_track_for_id(video_id: str) -> list[Track]:
+    """yt-dlp metadata for one video id (pasted-link fallback). Never raises.
+
+    When the guest catalogue has never heard of a video the user pasted,
+    this is the honest answer: the link is real, so fetch its title,
+    channel and duration straight from the YouTube index. [] on any
+    failure — the search page then shows zero results, as before, never
+    a crash.
+    """
+    try:
+        import yt_dlp  # lazy: only paid for on the catalogue-miss path
+
+        ydl = yt_dlp.YoutubeDL({
+            "quiet": True,
+            "no_warnings": True,
+            "noplaylist": True,
+            "socket_timeout": 15,
+        })
+        info = ydl.extract_info(
+            f"https://www.youtube.com/watch?v={video_id}", download=False
+        )
+    except Exception as exc:  # noqa: BLE001 - network layer must not crash UI
+        log.warning("web track fetch failed for %s: %s", video_id, exc)
+        return []
+    if not isinstance(info, dict) or not info.get("id"):
+        return []
+    seconds = _duration_to_sec(info.get("duration"))
+    thumbs = info.get("thumbnails") or []
+    channel_id = str(info.get("channel_id") or "")
+    return [
+        Track(
+            video_id=str(info["id"]),
+            title=info.get("title") or "Unknown",
+            artist=info.get("uploader") or info.get("channel") or "Unknown artist",
+            duration=_seconds_to_clock(seconds),
+            duration_sec=seconds,
+            thumbnail=(
+                thumbs[-1].get("url", "") if thumbs else info.get("thumbnail") or ""
+            ),
+            artist_id=channel_id if channel_id.startswith("UC") else "",
+        )
+    ]

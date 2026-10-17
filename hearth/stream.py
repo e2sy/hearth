@@ -51,29 +51,49 @@ def normalization_gain(loudness_db: float | None, target_db: float = -16.0,
     return max(min_gain_db, min(max_gain_db, target_db - float(loudness_db)))
 
 
+def _ydl_opts() -> dict:
+    """Shared YoutubeDL options for playback resolution."""
+    return {
+        "format": "bestaudio",
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+        "default_search": "ytsearch",
+        "retries": 2,            # transient HTTP failures during extraction
+        "socket_timeout": 15,    # a hung CDN must not stall a play request
+    }
+
+
 def resolve_stream_url(
     video_url: str,
     ydl_factory: Callable[[], object] | None = None,
+    attempts: int = 2,
 ) -> tuple[str | None, float | None]:
     """Resolve a direct audio URL for `video_url`.
 
     Returns (url, loudness_db). loudness may be None. Never raises.
+    Tries twice with a fresh YoutubeDL each time — a dropped first
+    handshake shouldn't kill the play request (the second attempt costs
+    nothing when the first succeeded).
     """
+    info = None
     try:
-        if ydl_factory is not None:
-            ydl = ydl_factory()
-            info = ydl.extract_info(video_url, download=False)
-        else:
+        for attempt in range(max(1, attempts)):
+            if ydl_factory is not None:
+                ydl = ydl_factory()
+                info = ydl.extract_info(video_url, download=False)
+                break
             import yt_dlp  # lazy
 
-            ydl = yt_dlp.YoutubeDL({
-                "format": "bestaudio",
-                "quiet": True,
-                "no_warnings": True,
-                "noplaylist": True,
-                "default_search": "ytsearch",
-            })
-            info = ydl.extract_info(video_url, download=False)
+            ydl = yt_dlp.YoutubeDL(_ydl_opts())
+            try:
+                info = ydl.extract_info(video_url, download=False)
+                break
+            except Exception as exc:  # noqa: BLE001 - retry once, then confess
+                if attempt >= max(1, attempts) - 1:
+                    raise
+                log.info("stream resolve attempt %d failed (%s) — retrying",
+                         attempt + 1, exc)
     except Exception as exc:  # noqa: BLE001 - network layer must not crash UI
         log.warning("stream resolve failed for %s: %s", video_url, exc)
         return None, None

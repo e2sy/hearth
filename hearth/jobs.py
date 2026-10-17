@@ -38,15 +38,28 @@ class SearchJob(QRunnable):
         self.limit = limit
 
     def run(self) -> None:  # noqa: D102 - QRunnable entry
-        from .catalog import parse_video_id
+        from .catalog import parse_video_id, web_search_tracks, web_track_for_id
 
         video_id = parse_video_id(self.query)
         if video_id:
             track = self.catalog.song_details(video_id)
-            self.signals.emit_safe(self.signals.finished, [track] if track else [])
-        else:
-            self.signals.emit_safe(self.signals.finished,
-                                   self.catalog.search(self.query, limit=self.limit))
+            if track is not None:
+                self.signals.emit_safe(self.signals.finished, [track])
+                return
+            # The guest catalogue may not know this video (rare uploads,
+            # regional takedowns, a bot-checked leg) — but the video is
+            # real: the pasted link says so. yt-dlp's index vouches for it.
+            self.signals.emit_safe(self.signals.finished, web_track_for_id(video_id))
+            return
+        # search_everywhere: songs -> videos -> the yt-dlp web index. A
+        # bot-checked or starved catalogue leg used to end the search as
+        # a silent zero — the web fallback is what makes search honest.
+        self.signals.emit_safe(
+            self.signals.finished,
+            self.catalog.search_everywhere(
+                self.query, limit=self.limit, fallback=web_search_tracks
+            ),
+        )
 
 
 class ScopedSearchJob(QRunnable):
