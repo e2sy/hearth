@@ -39,6 +39,7 @@ jobs:
         # repo's main branch, PR branches, and macos py3.11/py3.13 alike,
         # never ubuntu/windows). One honest retry keeps the signal: a real
         # failure fails twice and stays red; the teardown flake goes green.
+        shell: bash
         run: |
           if ! python -m pytest tests/ -q; then
             echo "::warning::pytest exited nonzero -- retrying once (known macOS teardown segfault flake)"
