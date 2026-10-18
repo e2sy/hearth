@@ -111,3 +111,125 @@ def test_alive_helper_distinguishes_live_and_dead(qapp):
     del w
     qapp.processEvents()
     assert _alive(lift.effect) is False
+
+
+# --- the parked-fade regression (v0.7.6 audit) ---
+#
+# Qt graphics effects do not compose down the ancestor chain: an opacity
+# effect left parked on a stack page blanks every effect-carrying child
+# beneath it. Home shelves populate at boot while their cards carry
+# ground-shadow effects — with the page effect parked, Top tracks and
+# On Repeat rendered as visible headers over empty strips. fade_in now
+# rents its effect and hands it back when the ramp lands.
+
+
+def _spin(qapp, ms: int) -> None:
+    """Pump the event loop for `ms` so timers and animations run."""
+    from PyQt6.QtCore import QEventLoop, QTimer
+
+    loop = QEventLoop()
+    QTimer.singleShot(ms, loop.quit)
+    loop.exec()
+
+
+def test_fade_in_releases_its_effect_after_the_ramp(qapp):
+    """The ramp lands, the effect comes off — children render plain."""
+    from PyQt6.QtWidgets import QGraphicsOpacityEffect
+
+    from hearth.effects import fade_in
+
+    w = QLabel("page")
+    fade_in(w, ms=40)
+    assert isinstance(w.graphicsEffect(), QGraphicsOpacityEffect)
+    _spin(qapp, 400)   # ramp (40ms) + one deferred release turn
+    assert w.graphicsEffect() is None
+
+
+def test_fade_in_can_run_again_after_release(qapp):
+    """Re-entering a view re-rents a fresh effect and releases it again."""
+    from PyQt6.QtWidgets import QGraphicsOpacityEffect
+
+    from hearth.effects import fade_in
+
+    w = QLabel("page")
+    fade_in(w, ms=30)
+    _spin(qapp, 300)
+    assert w.graphicsEffect() is None
+    fade_in(w, ms=30)   # second visit: a brand-new rental
+    assert isinstance(w.graphicsEffect(), QGraphicsOpacityEffect)
+    _spin(qapp, 300)
+    assert w.graphicsEffect() is None
+
+
+def test_fade_release_bails_for_a_newer_fade(qapp):
+    """A pending release must not strip a newer fade's running effect."""
+    from PyQt6.QtWidgets import QGraphicsOpacityEffect
+
+    from hearth.effects import fade_in
+
+    w = QLabel("page")
+    fade_in(w, ms=30)
+    _spin(qapp, 300)            # first rental released
+    assert w.graphicsEffect() is None
+
+    fade_in(w, ms=500)          # long ramp — a "newer" fade owns it now
+    assert isinstance(w.graphicsEffect(), QGraphicsOpacityEffect)
+    # An older generation's release arriving late must be a no-op.
+    from hearth.effects import _release_fade_effect
+    _release_fade_effect(w, generation=0)
+    assert isinstance(w.graphicsEffect(), QGraphicsOpacityEffect)
+    # Its own landing does the hand-back.
+    _spin(qapp, 900)
+    assert w.graphicsEffect() is None
+
+
+def test_fade_release_survives_a_deleted_widget(qapp):
+    """Teardown between fade and release must not raise.
+
+    The realistic shape: the page's C++ object is destroyed (a view
+    rebuild) while the Python wrapper — and a queued deferred release —
+    still hold it.
+    """
+    from hearth.effects import _release_fade_effect, fade_in
+
+    w = QLabel("doomed page")
+    fade_in(w, ms=30)
+    w.deleteLater()
+    qapp.processEvents()
+    _release_fade_effect(w, generation=1)   # host gone — quiet no-op
+
+
+def test_faded_page_renders_effect_carrying_children(qapp):
+    """The screenshot's exact shape: a shadowed card under a faded page.
+
+    Before the fix the card vanished the moment the page carried the
+    parked opacity effect; after it, the card paints both with and
+    without the (transient) page effect.
+    """
+    from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
+
+    from hearth.effects import fade_in, hover_lift
+
+    page = QWidget()
+    lay = QVBoxLayout(page)
+    card = QLabel("shelf card")
+    hover_lift(card, base_level=1)          # the card's ground shadow
+    lay.addWidget(card)
+
+    images = []
+    page.grab().toImage()                   # paint once without a fade
+    fade_in(page, ms=30)
+    _spin(qapp, 300)                        # ramp lands, effect released
+    images.append(page.grab().toImage())
+
+    mid = images[-1]
+    assert not mid.isNull()
+    # The card is a visible label on a plain page: some pixels lighter
+    # than the page background must exist in the composite.
+    lighter = sum(
+        1
+        for x in range(0, mid.width(), 4)
+        for y in range(0, mid.height(), 4)
+        if mid.pixelColor(x, y).lightness() > 8
+    )
+    assert lighter > 0
