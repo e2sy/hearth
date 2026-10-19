@@ -39,8 +39,8 @@ discord = ["pypresence>=4"]
 hearth = "hearth.app:main"
 
 [project.urls]
-Homepage = "https://github.com/qtjg/hearth"
-Issues = "https://github.com/qtjg/hearth/issues"
+Homepage = "https://github.com/e2sy/hearth"
+Issues = "https://github.com/e2sy/hearth/issues"
 
 [tool.setuptools.packages.find]
 include = ["hearth*"]
