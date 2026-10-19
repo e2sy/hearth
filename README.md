@@ -13,7 +13,7 @@
 <!-- ⬡ 3D-UPGRADE v2 by Mayank Bhaskar -->
 <div align="center">
 
-**made by [Mayank Bhaskar](https://github.com/qtjg)** · ![lang](https://img.shields.io/badge/lang-Python-ff7a18?style=flat&labelColor=0d1117) ![stars](https://img.shields.io/github/stars/e2sy/hearth?style=flat&labelColor=0d1117&color=ff7a18)
+**made by [Mayank Bhaskar](https://github.com/e2sy)** · ![lang](https://img.shields.io/badge/lang-Python-ff7a18?style=flat&labelColor=0d1117) ![stars](https://img.shields.io/github/stars/e2sy/hearth?style=flat&labelColor=0d1117&color=ff7a18)
 
 </div>
 
@@ -45,8 +45,8 @@
 
 🔥 **New in v0.7.6 — the two most-reported bugs are fixed**: songs no longer stop in the middle, and search works again (web fallback when the catalogue is bot-checked). [Changelog →](CHANGELOG.md)
 
-<a href="https://github.com/qtjg"><img src="https://img.shields.io/badge/designed_%26_built_by-Mayank_Bhaskar-ff7a18?style=flat-square&labelColor=1b1f2a" alt="Designed and built by Mayank Bhaskar"/></a>
-<a href="https://github.com/qtjg?tab=followers"><img src="https://img.shields.io/github/followers/qtjg?style=flat-square&color=7b2ff7&labelColor=1b1f2a&label=follow" alt="GitHub followers of qtjg"/></a>
+<a href="https://github.com/e2sy"><img src="https://img.shields.io/badge/designed_%26_built_by-Mayank_Bhaskar-ff7a18?style=flat-square&labelColor=1b1f2a" alt="Designed and built by Mayank Bhaskar"/></a>
+<a href="https://github.com/e2sy?tab=followers"><img src="https://img.shields.io/github/followers/e2sy?style=flat-square&color=7b2ff7&labelColor=1b1f2a&label=follow" alt="GitHub followers of qtjg"/></a>
 
 <img src="docs/assets/ember-divider.svg" width="100%" alt=""/>
 
@@ -158,7 +158,7 @@ beam flow in real time.
 
 ## 🐍 The Firekeeper Snake
 
-Every six hours a scheduled action feeds qtjg's contribution graph to a snake,
+Every six hours a scheduled action feeds e2sy's contribution graph to a snake,
 and it slithers through every green square it has earned. Light and dark
 variants land on the `output` branch and swap automatically to match your
 GitHub theme:
@@ -709,7 +709,7 @@ green.
 <summary>📈 Repo stats</summary>
 
 <a href="https://github.com/e2sy/hearth"><img src="https://github-readme-stats.vercel.app/api/pin/?username=e2sy&repo=hearth&theme=github_dark_orange&show_icons=true" height="160" alt="hearth repo stats"/></a>
-<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=qtjg&layout=compact&theme=github_dark_orange" height="160" alt="top languages"/>
+<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=e2sy&layout=compact&theme=github_dark_orange" height="160" alt="top languages"/>
 
 </details>
 
@@ -721,7 +721,7 @@ green.
 
 <img src="docs/assets/hearth-keeper.svg" width="300" alt="The Hearth Keeper — Hearth's 3D mascot, a friendly robot firekeeper with glowing orange headphones and a hearth flame glowing in its chest"/>
 
-### Designed · Engineered · Maintained by **[Mayank Bhaskar](https://github.com/qtjg)**
+### Designed · Engineered · Maintained by **[Mayank Bhaskar](https://github.com/e2sy)**
 
 Hearth is a one-person build. The product shape, the three-pane window, the
 playback core, the self-healing immune system, every 3D diagram and the mascot
@@ -729,13 +729,13 @@ above, and all **1,019 tests** are imagined, written and maintained end-to-end
 by Mayank — no scaffold, no boilerplate team, just one builder and a fire that
 keeps growing warmer with every release.
 
-<a href="https://github.com/qtjg"><img src="https://img.shields.io/badge/github-%40qtjg-ff7a18?style=for-the-badge&logo=github&logoColor=white&labelColor=1b1f2a" alt="@qtjg on GitHub"/></a>
+<a href="https://github.com/e2sy"><img src="https://img.shields.io/badge/github-%40e2sy-ff7a18?style=for-the-badge&logo=github&logoColor=white&labelColor=1b1f2a" alt="@e2sy on GitHub"/></a>
 <a href="https://github.com/e2sy/hearth/issues/new"><img src="https://img.shields.io/badge/say%20hi-open%20an%20issue-7b2ff7?style=for-the-badge&labelColor=1b1f2a" alt="Open an issue and say hi"/></a>
 
 <br/>
 
-<a href="https://github.com/qtjg"><img src="https://github-readme-stats.vercel.app/api?username=qtjg&show_icons=true&theme=github_dark_orange&hide_border=true&bg_color=0d1117" height="165" alt="Mayank Bhaskar's GitHub stats"/></a>
-<a href="https://github.com/qtjg"><img src="https://github-readme-stats.vercel.app/api/top-langs/?username=qtjg&layout=compact&theme=github_dark_orange&hide_border=true&bg_color=0d1117" height="165" alt="Mayank Bhaskar's top languages"/></a>
+<a href="https://github.com/e2sy"><img src="https://github-readme-stats.vercel.app/api?username=e2sy&show_icons=true&theme=github_dark_orange&hide_border=true&bg_color=0d1117" height="165" alt="Mayank Bhaskar's GitHub stats"/></a>
+<a href="https://github.com/e2sy"><img src="https://github-readme-stats.vercel.app/api/top-langs/?username=e2sy&layout=compact&theme=github_dark_orange&hide_border=true&bg_color=0d1117" height="165" alt="Mayank Bhaskar's top languages"/></a>
 
 </div>
 
@@ -752,7 +752,7 @@ keeps growing warmer with every release.
 <img src="https://capsule-render.vercel.app/api?type=waving&height=110&color=0:7b2ff7,50:ff2d55,100:ff7a18&section=footer" width="100%" alt=""/>
 
 <sub><strong>Hearth</strong> — keep the fire warm. 🔥<br/>
-Crafted with 🔥 by <a href="https://github.com/qtjg"><strong>Mayank Bhaskar</strong></a> · v0.7.0 “The Big Burn”</sub>
+Crafted with 🔥 by <a href="https://github.com/e2sy"><strong>Mayank Bhaskar</strong></a> · v0.7.0 “The Big Burn”</sub>
 
 </div>
 
