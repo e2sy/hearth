@@ -4,8 +4,17 @@ Thanks for considering a contribution.
 
 ## Development setup
 
-Clone the repository and install dependencies per the README. Run the test
-suite before pushing.
+Clone the repository, then:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -e .
+QT_QPA_PLATFORM=offscreen python -m pytest tests/
+```
+
+The offscreen platform is what CI uses (3 OS x 2 Python), so a green
+local run means a green CI run. Run the suite before pushing.
 
 ## Opening a pull request
 
