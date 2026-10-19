@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# Only the newest run per ref survives.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: pytest (${{ matrix.os }} / py${{ matrix.python }})
