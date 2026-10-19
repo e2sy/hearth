@@ -235,3 +235,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.1.0] — earlier
 
 See `git log` for the history before this changelog was introduced.
+
+[unreleased]: https://github.com/e2sy/hearth/compare/v0.7.7...HEAD
+[0.7.7]: https://github.com/e2sy/hearth/compare/v0.7.6...v0.7.7
+[0.7.6]: https://github.com/e2sy/hearth/compare/v0.7.5...v0.7.6
+[0.1.0]: https://github.com/e2sy/hearth/releases/tag/v0.1.0
