@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Use GitHub's private vulnerability reporting:
-https://github.com/qtjg/hearth/security/advisories/new
+https://github.com/e2sy/hearth/security/advisories/new
 
 Please do not open a public issue for anything that could put users at risk
 before a fix ships.
