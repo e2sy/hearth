@@ -166,7 +166,7 @@ GitHub theme:
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/e2sy/hearth/output/github-contribution-grid-snake-dark.svg"/>
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/e2sy/hearth/output/github-contribution-grid-snake.svg"/>
-  <img src="https://raw.githubusercontent.com/qtjg/hearth/output/github-contribution-grid-snake.svg" width="100%" alt="Contribution graph snake"/>
+  <img src="https://raw.githubusercontent.com/e2sy/hearth/output/github-contribution-grid-snake.svg" width="100%" alt="Contribution graph snake"/>
 </picture>
 
 <img src="docs/assets/ember-divider.svg" width="100%" alt=""/>
@@ -788,6 +788,6 @@ python tools/generate_3d_assets.py
 
 <div align="center">
 
-<sub>Built &amp; maintained by <a href="https://github.com/indiancybersecz">@indiancybersecz</a> · MIT Licensed · Issues &amp; PRs welcome</sub>
+<sub>Built &amp; maintained by <a href="https://github.com/e2sy">@e2sy</a> · MIT Licensed · Issues &amp; PRs welcome</sub>
 
 </div>
