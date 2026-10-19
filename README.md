@@ -13,7 +13,7 @@
 <!-- ⬡ 3D-UPGRADE v2 by Mayank Bhaskar -->
 <div align="center">
 
-**made by [Mayank Bhaskar](https://github.com/qtjg)** · ![lang](https://img.shields.io/badge/lang-Python-ff7a18?style=flat&labelColor=0d1117) ![stars](https://img.shields.io/github/stars/qtjg/hearth?style=flat&labelColor=0d1117&color=ff7a18)
+**made by [Mayank Bhaskar](https://github.com/qtjg)** · ![lang](https://img.shields.io/badge/lang-Python-ff7a18?style=flat&labelColor=0d1117) ![stars](https://img.shields.io/github/stars/e2sy/hearth?style=flat&labelColor=0d1117&color=ff7a18)
 
 </div>
 
@@ -26,9 +26,9 @@
 
 <img src="docs/assets/hero-3d.svg" width="100%" alt="Hearth — a cozy three-pane desktop player for YouTube Music"/>
 
-<a href="https://github.com/qtjg/hearth"><img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=20&duration=3200&pause=900&color=FF7A18&center=true&vCenter=true&width=860&height=72&lines=Search+%E2%86%92+stream+%E2%86%92+smile.+No+account%2C+no+keys.;Artist+pages+%C2%B7+synced+lyrics+%C2%B7+74+world+stations;Gradients+%C2%B7+glows+%C2%B7+3D+covers+%C2%B7+crossfades;Seven+themes+%C2%B7+one+cozy+hearth" alt="Hearth in one breath"/></a>
+<a href="https://github.com/e2sy/hearth"><img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=20&duration=3200&pause=900&color=FF7A18&center=true&vCenter=true&width=860&height=72&lines=Search+%E2%86%92+stream+%E2%86%92+smile.+No+account%2C+no+keys.;Artist+pages+%C2%B7+synced+lyrics+%C2%B7+74+world+stations;Gradients+%C2%B7+glows+%C2%B7+3D+covers+%C2%B7+crossfades;Seven+themes+%C2%B7+one+cozy+hearth" alt="Hearth in one breath"/></a>
 
-[![CI](https://github.com/qtjg/hearth/actions/workflows/ci.yml/badge.svg)](https://github.com/qtjg/hearth/actions/workflows/ci.yml)
+[![CI](https://github.com/e2sy/hearth/actions/workflows/ci.yml/badge.svg)](https://github.com/e2sy/hearth/actions/workflows/ci.yml)
 ![tests](https://img.shields.io/badge/tests-1007%20passing-3fb950?style=flat-square&logo=pytest&logoColor=white)
 ![version](https://img.shields.io/badge/version-v0.7.6-ff7a18?style=flat-square)
 ![lyrics](https://img.shields.io/badge/lyrics-LRCLIB%20synced-7b2ff7?style=flat-square)
@@ -164,8 +164,8 @@ variants land on the `output` branch and swap automatically to match your
 GitHub theme:
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/qtjg/hearth/output/github-contribution-grid-snake-dark.svg"/>
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/qtjg/hearth/output/github-contribution-grid-snake.svg"/>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/e2sy/hearth/output/github-contribution-grid-snake-dark.svg"/>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/e2sy/hearth/output/github-contribution-grid-snake.svg"/>
   <img src="https://raw.githubusercontent.com/qtjg/hearth/output/github-contribution-grid-snake.svg" width="100%" alt="Contribution graph snake"/>
 </picture>
 
@@ -523,7 +523,7 @@ Hearth is built on Arch. Two ways to run it:
 
 ```bash
 sudo pacman -S --needed python python-pip ffmpeg git
-git clone https://github.com/qtjg/hearth.git
+git clone https://github.com/e2sy/hearth.git
 cd hearth
 ./install.sh && ./launch.sh
 ```
@@ -708,7 +708,7 @@ green.
 <details>
 <summary>📈 Repo stats</summary>
 
-<a href="https://github.com/qtjg/hearth"><img src="https://github-readme-stats.vercel.app/api/pin/?username=qtjg&repo=hearth&theme=github_dark_orange&show_icons=true" height="160" alt="hearth repo stats"/></a>
+<a href="https://github.com/e2sy/hearth"><img src="https://github-readme-stats.vercel.app/api/pin/?username=e2sy&repo=hearth&theme=github_dark_orange&show_icons=true" height="160" alt="hearth repo stats"/></a>
 <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=qtjg&layout=compact&theme=github_dark_orange" height="160" alt="top languages"/>
 
 </details>
@@ -730,7 +730,7 @@ by Mayank — no scaffold, no boilerplate team, just one builder and a fire that
 keeps growing warmer with every release.
 
 <a href="https://github.com/qtjg"><img src="https://img.shields.io/badge/github-%40qtjg-ff7a18?style=for-the-badge&logo=github&logoColor=white&labelColor=1b1f2a" alt="@qtjg on GitHub"/></a>
-<a href="https://github.com/qtjg/hearth/issues/new"><img src="https://img.shields.io/badge/say%20hi-open%20an%20issue-7b2ff7?style=for-the-badge&labelColor=1b1f2a" alt="Open an issue and say hi"/></a>
+<a href="https://github.com/e2sy/hearth/issues/new"><img src="https://img.shields.io/badge/say%20hi-open%20an%20issue-7b2ff7?style=for-the-badge&labelColor=1b1f2a" alt="Open an issue and say hi"/></a>
 
 <br/>
 
