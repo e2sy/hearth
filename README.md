@@ -641,7 +641,7 @@ hearth/
 │   ├── ytm_resilience.py → junk-card-tolerant YT Music parser layer (Discover)
 │   └── utils.py        → small zero-dependency helpers
 ├── docs/assets/        → animated 3D SVG artwork, banner art & screenshots used by this README
-├── tests/              → 588 headless tests (offscreen Qt platform)
+├── tests/              → 1,019 headless tests (offscreen Qt platform)
 ├── packaging/arch/     → PKGBUILD for a native Arch package
 ├── install.sh / .bat   → one-command venv setup per OS
 ├── launch.sh / .bat    → silent desktop launchers
@@ -725,7 +725,7 @@ green.
 
 Hearth is a one-person build. The product shape, the three-pane window, the
 playback core, the self-healing immune system, every 3D diagram and the mascot
-above, and all **588 tests** are imagined, written and maintained end-to-end
+above, and all **1,019 tests** are imagined, written and maintained end-to-end
 by Mayank — no scaffold, no boilerplate team, just one builder and a fire that
 keeps growing warmer with every release.
 
