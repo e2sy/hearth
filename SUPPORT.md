@@ -2,7 +2,7 @@
 
 ## Questions and discussions
 
-Open a GitHub Discussion (if enabled) or an issue with the `question` label.
+Open a [GitHub Discussion](https://github.com/e2sy/hearth/discussions) or an issue with the `question` label.
 
 ## Bug reports
 
