@@ -41,6 +41,7 @@ QUICK_PICKS = (
     "late night drive",
     "acoustic mornings",
 )
+QUICK_PICKS_SHELF_LIMIT = 12   # cards shown from the blended quick-pick row
 
 # --- radio / autoplay ---
 RADIO_LIMIT = 25          # tracks fetched per Start Radio / autoplay refill

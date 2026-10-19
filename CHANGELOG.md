@@ -6,6 +6,34 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **Home shelves no longer render as headers over empty strips**
+  (`hearth/effects.py`): the entrance fade parked a `QGraphicsOpacityEffect`
+  on every visited stack page and never took it back off. Qt graphics effects
+  do not compose down the ancestor chain, so any effect-carrying child below
+  the page — every shelf card's ground shadow, the now-playing row's
+  breathing glow — was blanked in the composite. Top tracks and On Repeat
+  showed their titles, the reserved strip space and the Glow Mix button, but
+  not one card. `fade_in` now rents its effect: the ramp lands, one deferred
+  event-loop turn later the effect is handed back (guarded by a generation
+  counter against rapid view switching, and by `_alive` against teardown).
+- **Quick picks is a blend, not a last-write-wins race** (`hearth/app.py`,
+  `hearth/config.py`): the six seeded guest-API searches all wrote the same
+  home shelf, so whichever query finished last simply erased the five before
+  it — the row could land as one lonely card. Results now accumulate per
+  query (`_merge_quick_picks`), render as one deduped blend in
+  `config.QUICK_PICKS` order, capped to `config.QUICK_PICKS_SHELF_LIMIT`
+  (12); an empty or junk result contributes nothing and never erases the
+  queries that already landed, and each new home sweep starts clean.
+
+### Added
+- Regression suite for both fixes: fade-rental lifecycle tests (release,
+  re-rent, newer-fade guard, deleted-host guard, and a composite-pixel
+  probe asserting shadowed cards render under a finished fade), home-view
+  render regressions over the full app stack, and Quick picks blend tests
+  (accumulation, dedupe + config order, empty-result tolerance, shelf cap,
+  sweep reset).
+
 ## [0.7.6] — 2026-10-17
 
 ### Fixed

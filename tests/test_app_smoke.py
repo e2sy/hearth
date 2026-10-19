@@ -206,3 +206,151 @@ def test_bool_setting_reads_strings_and_bools(tmp_path, qapp):
     assert hearth._bool_setting("flag/one") is True
     assert hearth._bool_setting("flag/missing", True) is True
     hearth.shutdown()
+
+
+# --- the Quick picks blend (v0.7.6 audit) ---
+#
+# Six seeded queries race the same home shelf; the last finisher used to
+# wipe the five before it, so Quick picks could land as one lonely card.
+# Results now fold into a deduped blend in config order.
+
+
+def test_quick_picks_queries_accumulate_never_overwrite(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    from .test_models import make_track
+
+    first = [make_track(video_id=f"q{i}") for i in range(3)]
+    second = [make_track(video_id=f"r{i}") for i in range(3)]
+
+    blend = hearth._merge_quick_picks(config.QUICK_PICKS[0], first)
+    assert [t.video_id for t in blend] == [t.video_id for t in first]
+
+    blend = hearth._merge_quick_picks(config.QUICK_PICKS[1], second)
+    # the first query's cards survive the second query's arrival
+    assert [t.video_id for t in blend] == (
+        [t.video_id for t in first] + [t.video_id for t in second])
+    hearth.shutdown()
+
+
+def test_quick_picks_blend_dedupes_and_orders_by_config(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    from .test_models import make_track
+
+    late_query = config.QUICK_PICKS[2]
+    shared = make_track(video_id="shared")
+    # the later-config query lands FIRST at runtime — networks race
+    hearth._merge_quick_picks(late_query, [shared, make_track(video_id="b2")])
+    blend = hearth._merge_quick_picks(
+        config.QUICK_PICKS[0], [shared, make_track(video_id="a1")])
+    # the earlier-config query renders first; within it, landed order
+    # stands; the shared video_id is shown exactly once
+    ids = [t.video_id for t in blend]
+    assert ids == ["shared", "a1", "b2"]
+    hearth.shutdown()
+
+
+def test_quick_picks_empty_result_never_erases_the_blend(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    from .test_models import make_track
+
+    hearth._merge_quick_picks(
+        config.QUICK_PICKS[0], [make_track(video_id="keep")])
+    blend = hearth._merge_quick_picks(config.QUICK_PICKS[1], [])
+    assert [t.video_id for t in blend] == ["keep"]
+    # junk rows are folded out, not crashed on
+    blend = hearth._merge_quick_picks(config.QUICK_PICKS[2], ["nope", None])
+    assert [t.video_id for t in blend] == ["keep"]
+    hearth.shutdown()
+
+
+def test_quick_picks_blend_is_capped_to_a_shelf_row(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    from .test_models import make_track
+
+    for i, query in enumerate(config.QUICK_PICKS[:3]):
+        hearth._merge_quick_picks(
+            query, [make_track(video_id=f"{i}-{j}") for j in range(8)])
+    blend = hearth._merge_quick_picks(
+        config.QUICK_PICKS[3], [make_track(video_id="tail")])
+    assert len(blend) == config.QUICK_PICKS_SHELF_LIMIT
+    hearth.shutdown()
+
+
+def test_quick_picks_refresh_resets_the_sweep(tmp_path, qapp):
+    """A new home sweep starts clean; stale results don't haunt it."""
+    hearth = make_hearth(tmp_path)
+    from .test_models import make_track
+
+    hearth._merge_quick_picks(
+        config.QUICK_PICKS[0], [make_track(video_id="old")])
+    hearth._refresh_home()   # enable_streaming=False: no jobs, sweep reset
+    blend = hearth._merge_quick_picks(
+        config.QUICK_PICKS[1], [make_track(video_id="new")])
+    assert [t.video_id for t in blend] == ["new"]
+    hearth.shutdown()
+
+
+# --- the home-shelf render regression (the empty Top tracks screenshot) ---
+#
+# Boot-populated shelves (Top tracks / On Repeat) rendered as visible
+# headers over empty strips: the page's entrance fade parked an opacity
+# effect on the home view, and Qt doesn't compose effects down the
+# ancestor chain — every shadow-carrying shelf card went blank beneath
+# it. After the fix the composite must carry the cards' pixels.
+
+
+def _spin(qapp, ms: int) -> None:
+    from PyQt6.QtCore import QEventLoop, QTimer
+
+    loop = QEventLoop()
+    QTimer.singleShot(ms, loop.quit)
+    loop.exec()
+
+
+def test_home_shelves_render_cards_after_the_fade(tmp_path, qapp):
+    hearth = make_hearth(tmp_path)
+    from .test_models import make_track
+
+    import time as _time
+
+    now = _time.time()
+    for i in range(4):
+        hearth.store.log_play(
+            make_track(video_id=f"hot{i}"), played_at=now - i * 60)
+
+    hearth.window.show()
+    hearth.window.show_view("home")
+    _spin(qapp, 600)   # entrance fade lands + deferred effect release
+
+    hv = hearth.window.home_view
+    # the fade's rental is handed back: no effect parked on the page
+    assert hv.graphicsEffect() is None
+
+    shelf = hv._shelves["Top tracks"]
+    assert len(shelf._tracks) == 4
+    assert shelf._strip_lay.count() == 4
+
+    img = hv.grab().toImage()
+    tl = shelf._strip_area.mapTo(hv, shelf._strip_area.rect().topLeft())
+    lit = sum(
+        1
+        for x in range(tl.x() + 5, min(tl.x() + 240, img.width()), 6)
+        for y in range(tl.y() + 10, min(tl.y() + 200, img.height()), 6)
+        if img.pixelColor(x, y).lightness() > 40
+    )
+    assert lit > 50, f"shelf cards blank in the composite ({lit} lit samples)"
+    hearth.shutdown()
+
+
+def test_home_view_never_keeps_the_fade_effect_between_visits(tmp_path, qapp):
+    """Leaving and re-entering Home never parks a stale effect."""
+    hearth = make_hearth(tmp_path)
+    from .test_models import make_track
+
+    hearth.store.log_play(make_track(video_id="one"))
+    hearth.window.show()
+    for view in ("stats", "home", "history", "home"):
+        hearth.window.show_view(view)
+        _spin(qapp, 350)
+        assert hearth.window.home_view.graphicsEffect() is None
+    hearth.shutdown()

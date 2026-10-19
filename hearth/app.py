@@ -425,6 +425,9 @@ class Hearth:
         self._discover_moods: list | None = None
         self._mood_playlists_cache: dict[str, list[Collection]] = {}
         self._explore_cache: tuple | None = None
+        # Quick picks: per-query results of the current home sweep, folded
+        # into one blend as they land (never last-write-wins).
+        self._quick_picks: dict[str, list[Track]] = {}
         # World Explorer: rotates the genre search seeds so the same dial
         # spins up a different station each visit.
         self._world_spin = 0
@@ -984,16 +987,48 @@ class Hearth:
             self.store.smart_rare_gems(12),
         )
         self._refresh_plugin_shelf()   # plugin shelf sources, off the UI thread
+        # a new sweep starts: the previous sweep's per-query results are
+        # smoke, whatever mode we run in
+        self._quick_picks = {}
         if not self._enable_streaming:
             return  # unit tests: no network shelves
+        # Quick picks: six seeded queries race the same shelf, and the
+        # last finisher used to wipe the five before it. Results now
+        # accumulate per query and render as one deduped blend.
         for query in config.QUICK_PICKS:
             job = SearchJob(self.catalog, query, limit=8)
             job.signals.finished.connect(
-                lambda tracks, q=query: self.window.set_home_shelf(
-                    "Quick picks", tracks
-                ) if tracks else None
+                lambda tracks, q=query: self._on_quick_picks(q, tracks)
             )
             self._launch(job)
+
+    def _on_quick_picks(self, query: str, tracks: list[Track]) -> None:
+        """One Quick picks query landed — fold it in and re-render the blend."""
+        blend = self._merge_quick_picks(query, tracks)
+        if blend:
+            self.window.set_home_shelf("Quick picks", blend)
+
+    def _merge_quick_picks(self, query: str, tracks: list[Track]) -> list[Track]:
+        """Fold `query`'s results into the Quick picks blend and return it.
+
+        Accumulates per-query results in config.QUICK_PICKS order, deduped
+        by video_id (first sighting wins), capped to a shelf-sized row. A
+        query that came back empty contributes nothing but never erases
+        the queries that already landed.
+        """
+        landed = [t for t in (tracks or [])
+                  if isinstance(t, Track) and t.video_id]
+        if landed:
+            self._quick_picks[str(query)] = landed
+        blend: list[Track] = []
+        seen: set[str] = set()
+        for known in config.QUICK_PICKS:
+            for track in self._quick_picks.get(str(known), ()):
+                if track.video_id in seen:
+                    continue
+                seen.add(track.video_id)
+                blend.append(track)
+        return blend[: max(int(config.QUICK_PICKS_SHELF_LIMIT), 0)]
 
     def _refresh_library(self) -> None:
         self.window.set_favorites(self.store.favorites()[:12])

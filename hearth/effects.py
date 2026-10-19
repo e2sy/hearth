@@ -101,12 +101,50 @@ def _ramp(effect: QGraphicsOpacityEffect, ms: int) -> QPropertyAnimation:
 
 
 def fade_in(widget: QWidget, ms: int = 220) -> None:
-    """One-shot opacity ramp; safe to call on every view switch."""
+    """One-shot opacity ramp; safe to call on every view switch.
+
+    The opacity effect is a rental, not a lease: when the ramp lands it
+    comes back off the widget. Qt graphics effects do not compose down
+    the ancestor chain — an opacity effect parked on a page blanks every
+    effect-carrying child beneath it (shelf cards' ground shadows, the
+    now-playing row's breathing glow), so the page must return to the
+    plain render path once its entrance finishes.
+    """
     effect = _ensure_opacity_effect(widget)
     if effect is None:
         return
     effect.setOpacity(0.0)
-    _ramp(effect, ms).start()
+    anim = _ramp(effect, ms)
+    widget._hearth_fade_generation = (
+        getattr(widget, "_hearth_fade_generation", 0) + 1
+    )
+
+    def _hand_back() -> None:
+        # Deferred on purpose: deleting the effect (the animation's
+        # parent) from inside its own finished() signal is unsafe Qt
+        # etiquette, so the release waits one event-loop turn.
+        generation = getattr(widget, "_hearth_fade_generation", 0)
+        QTimer.singleShot(0, lambda: _release_fade_effect(widget, generation))
+
+    if not getattr(effect, "_hearth_release_wired", False):
+        effect._hearth_release_wired = True
+        anim.finished.connect(_hand_back)
+    anim.start()
+
+
+def _release_fade_effect(widget: QWidget, generation: int) -> None:
+    """Take a finished fade's opacity effect back off its page.
+
+    A newer fade on the same widget (rapid view switching) owns the
+    effect now if the generation moved on; its own landing will do the
+    hand-back. A deleted host (teardown) is a no-op via :func:`_alive`.
+    """
+    if not _alive(widget):
+        return
+    if getattr(widget, "_hearth_fade_generation", 0) != generation:
+        return
+    if isinstance(widget.graphicsEffect(), QGraphicsOpacityEffect):
+        widget.setGraphicsEffect(None)
 
 
 def _alive(qt_obj) -> bool:
