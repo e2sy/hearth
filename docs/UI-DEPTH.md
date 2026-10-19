@@ -85,6 +85,35 @@ module — `hearth/motion.py` — so the numbers are testable without Qt:
   helper; surfaces keep their resting shadows. Reduced motion is part
   of the design, not an afterthought.
 
+## The graphics-effect rule
+
+Qt graphics effects are composited per widget, and they do not compose down
+the ancestor chain: an effect attached to a container is evaluated against
+that container's own painting pass, so an effect-carrying *child* below it
+can drop out of the final render entirely. This is not theoretical — it is
+exactly how the home-shelf regression happened. The entrance fade parked a
+long-lived `QGraphicsOpacityEffect` on every visited stack page, and every
+effect-carrying descendant underneath (each shelf card's
+`QGraphicsDropShadowEffect` ground shadow, the now-playing row's breathing
+glow) went blank in the composite. The pages looked fine; the cards were
+simply gone.
+
+Two rules keep that class of bug out:
+
+1. **Rent effects, don't own them.** A transient effect (an entrance fade)
+   must be released as soon as its ramp lands. `effects.fade_in` now hands
+   the opacity effect back one deferred event-loop turn after the ramp
+   finishes, guarded by a generation counter against rapid view switches
+   and by an aliveness check against teardown.
+2. **No standing effects on containers with effect-carrying children.**
+   If a container needs a persistent dim or tint, paint it (theme tokens,
+   a painter pass) instead of parking a `QGraphics*Effect` on it.
+
+`tests/test_effects_lifetime.py` pins the lifecycle (release, re-rent,
+newer-fade guard, deleted-host guard) and includes a composite-pixel probe
+asserting shadowed cards still render under a *finished* fade — the exact
+failure mode, caught on every CI run.
+
 ## What must not change
 
 Icons, the type scale, layout geometry, palette packs, wallpaper engine, and
