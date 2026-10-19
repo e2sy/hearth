@@ -731,6 +731,7 @@ keeps growing warmer with every release.
 
 <a href="https://github.com/e2sy"><img src="https://img.shields.io/badge/github-%40e2sy-ff7a18?style=for-the-badge&logo=github&logoColor=white&labelColor=1b1f2a" alt="@e2sy on GitHub"/></a>
 <a href="https://github.com/e2sy/hearth/issues/new"><img src="https://img.shields.io/badge/say%20hi-open%20an%20issue-7b2ff7?style=for-the-badge&labelColor=1b1f2a" alt="Open an issue and say hi"/></a>
+<a href="https://github.com/e2sy/hearth/discussions"><img src="https://img.shields.io/badge/ask%20away-GitHub%20Discussions-ff7a18?style=for-the-badge&labelColor=1b1f2a" alt="GitHub Discussions"/></a>
 
 <br/>
 
