@@ -40,10 +40,14 @@
 | v0.7.0 | The Big Burn | memory & rituals (On Repeat, day history, Glow Mix, queue persistence, stats, export/import), the wider stage (lyrics overlay, theater, style closet, Ctrl+K, smart shuffle, wake-up alarm), reach (MPRIS, update whisper, diagnostics, AUR/winget/brew drafts), the festival (crossfade, plugin hooks, local library, ambient mixer, i18n scaffold, Discord RPC) |
 | v0.7.1 | Smarts & reach | smart shelves (Most played, Recently loved, Rare gems), Rewind story, phone remote (LAN web remote) |
 | v0.7.2 | Ember tending | the completers: ☕ café ambience, per-track volume nudges, play-count-weighted smart shuffle, per-leg fetch counters in diagnostics, the shareable Rewind card (📋 copy + 🖼 save-PNG) |
+| v0.7.3 | The hardening pass | Windows SMTC bridge wired up (lockscreen + media keys), single-file PyInstaller builds, release-tag build CI, installer fixes |
+| v0.7.4 | Crash-proofing | three-layer crash dumper (stdout/stderr redirect + excepthook + faulthandler), Qt Multimedia FFmpeg DLLs bundled, `launch.bat` surfaces startup failures |
+| v0.7.5 | The ghost-effect guard | every Qt graphics effect bails cleanly via `_alive()` when its parent widget is deleted (track-change teardown crash) |
+| v0.7.6 | The self-healing stream | mid-song stop fix (truncated streams rejoin at the cut point), failed resolves retry with backoff, web-fallback search when the catalogue is bot-checked, network-hardened resolution |
 | v0.8.0 | The Long Winter Nights *(charted)* | the Sound Forge (EQ, loudness, karaoke, gapless), the Memory Palace (Rewind, rules, scrobbles, lyrics search, cache), Around the Fire (ambient mode, visualizer, share cards), the Far Reaches (web remote, parties, SMTC), the Open Hearth (gallery, docs, community kit) |
 | v0.9.0 | The Mindful Flame *(charted)* | the Ember Feed (weekly mix, release radar, daylist, queue autocomplete), the Long Arm (remote v2, device handoff, cast), the Pantry (stream cache, pre-fetch, offline replays), the Broadcast Tower (podcasts), the Parlor (collab playlists, Blend), the Wise Fire (prompt playlists, voice search, auto-tag), the Small Hours (folders, quality picker, YTM sync bridge) |
 
-646 tests and counting, headless on a 3 OS × 2 Python CI matrix. Every
+1,019 tests and counting, headless on a 3 OS × 2 Python CI matrix. Every
 network layer is *never-raises*; the UI never blocks on the world.
 
 ---
